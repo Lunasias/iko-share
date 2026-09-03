@@ -1,7 +1,5 @@
 {
-  "regions": ["sin1"],
-  "installCommand": "npm install --include=dev && npm install --prefix frontend --include=dev",
-  "buildCommand": "npm run build --prefix frontend",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
