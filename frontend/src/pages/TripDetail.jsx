@@ -4,7 +4,8 @@ import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TripChat from '../components/TripChat';
 import ReviewModal from '../components/ReviewModal';
-import { MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle, ArrowRight, Star, LogOut, ShieldCheck } from 'lucide-react';
+import OwnerProfileModal from '../components/OwnerProfileModal';
+import { MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle, ArrowRight, Star, LogOut, Trash2 } from 'lucide-react';
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -23,6 +24,9 @@ export default function TripDetail() {
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewTarget, setReviewTarget] = useState({ id: null, name: '' });
+
+  // Owner profile modal state
+  const [ownerModalOpen, setOwnerModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTripDetail();
@@ -97,6 +101,24 @@ export default function TripDetail() {
     }
   };
 
+  const handleDeleteTrip = async () => {
+    if (!window.confirm('คุณต้องการลบเที่ยวเดินทางนี้ใช่หรือไม่? ข้อมูลการจองและแชทจะถูกลบทั้งหมด')) return;
+    setSubmitting(true);
+    try {
+      const res = await API.delete(`/trips/${id}`);
+      if (res.data.success) {
+        alert(String(res.data.message || 'ลบเที่ยวเดินทางเรียบร้อยแล้ว'));
+        navigate('/trips');
+      } else {
+        setError(String(res.data.message || 'ไม่สามารถลบเที่ยวเดินทางได้'));
+      }
+    } catch (err) {
+      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการลบเที่ยวเดินทาง'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const openReviewModal = (targetId, targetName) => {
     setReviewTarget({ id: targetId, name: targetName });
     setReviewModalOpen(true);
@@ -131,9 +153,10 @@ export default function TripDetail() {
   const departureDate = new Date(trip.departure_time);
   const currentUserId = user ? (user.user_id || user.id) : null;
   const isDriver = currentUserId && currentUserId === trip.driver_id;
+  const isAdmin = user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com');
   const activeBooking = passengers.find((p) => p.user_id === currentUserId && p.booking_status === 'จองแล้ว');
   const isAlreadyJoined = Boolean(activeBooking);
-  const canAccessChat = isDriver || isAlreadyJoined || (user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com'));
+  const canAccessChat = isDriver || isAlreadyJoined || isAdmin;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
@@ -151,11 +174,24 @@ export default function TripDetail() {
             </div>
           </div>
 
-          <div className="text-right sm:text-right">
-            <div className="text-xs text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
-            <div className="text-3xl font-extrabold text-emerald-400">
-              {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-xs text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
+              <div className="text-3xl font-extrabold text-emerald-400">
+                {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
+              </div>
             </div>
+
+            {(isDriver || isAdmin) && (
+              <button
+                onClick={handleDeleteTrip}
+                disabled={submitting}
+                className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all"
+                title="ลบเที่ยวเดินทางนี้"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -205,18 +241,33 @@ export default function TripDetail() {
           </div>
         </div>
 
-        {/* Driver Info & Rating Trigger */}
+        {/* Clickable Driver Info & Rating Trigger */}
         <div className="p-5 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="text-xs text-sky-300 font-bold">ข้อมูลคนขับรถ</div>
-            <div className="text-sm font-semibold text-white">{trip.driver_name}</div>
-            {trip.driver_phone && <div className="text-xs text-slate-300">โทร: {trip.driver_phone}</div>}
-          </div>
+          <button
+            type="button"
+            onClick={() => setOwnerModalOpen(true)}
+            className="flex items-center gap-3 text-left group"
+          >
+            {trip.driver_avatar ? (
+              <img src={trip.driver_avatar} alt={trip.driver_name} className="w-12 h-12 rounded-full object-cover border-2 border-sky-400" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                {trip.driver_name?.charAt(0)}
+              </div>
+            )}
+            <div className="space-y-0.5">
+              <div className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">คนขับรถ (คลิกเพื่อดูโปรไฟล์)</div>
+              <div className="text-base font-bold text-white group-hover:text-sky-300 underline underline-offset-2 transition-colors">
+                {trip.driver_name}
+              </div>
+              {trip.driver_phone && <div className="text-xs text-slate-300">โทร: {trip.driver_phone}</div>}
+            </div>
+          </button>
 
           {user && !isDriver && isAlreadyJoined && (
             <button
               onClick={() => openReviewModal(trip.driver_id, trip.driver_name)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all"
             >
               <Star className="w-4 h-4 fill-amber-400" />
               <span>ให้คะแนนคนขับ</span>
@@ -325,6 +376,13 @@ export default function TripDetail() {
         tripId={parseInt(id)}
         targetUserId={reviewTarget.id}
         targetName={reviewTarget.name}
+      />
+
+      {/* Owner Profile Modal */}
+      <OwnerProfileModal
+        isOpen={ownerModalOpen}
+        onClose={() => setOwnerModalOpen(false)}
+        userId={trip.driver_id}
       />
     </div>
   );

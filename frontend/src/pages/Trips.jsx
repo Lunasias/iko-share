@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
-import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, Filter } from 'lucide-react';
+import OwnerProfileModal from '../components/OwnerProfileModal';
+import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, Filter, User } from 'lucide-react';
 
 export default function Trips() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,6 +14,10 @@ export default function Trips() {
   const [origin, setOrigin] = useState(searchParams.get('origin') || '');
   const [destination, setDestination] = useState(searchParams.get('destination') || '');
   const [selectedEventId, setSelectedEventId] = useState(searchParams.get('event_id') || '');
+
+  // Owner profile modal state
+  const [ownerModalOpen, setOwnerModalOpen] = useState(false);
+  const [selectedDriverId, setSelectedDriverId] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -54,6 +59,11 @@ export default function Trips() {
     if (destination) params.destination = destination;
     if (selectedEventId) params.event_id = selectedEventId;
     setSearchParams(params);
+  };
+
+  const openOwnerModal = (driverId) => {
+    setSelectedDriverId(driverId);
+    setOwnerModalOpen(true);
   };
 
   return (
@@ -201,12 +211,26 @@ export default function Trips() {
                     </div>
                   </div>
 
-                  {/* Driver Name & Price */}
+                  {/* Clickable Driver Name & Price */}
                   <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-                    <div>
-                      <div className="text-[10px] text-slate-400">คนขับ</div>
-                      <div className="text-sm font-semibold text-slate-200">{trip.driver_name}</div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openOwnerModal(trip.driver_id)}
+                      className="text-left group-hover:text-sky-300 transition-colors flex items-center gap-2"
+                    >
+                      {trip.driver_avatar ? (
+                        <img src={trip.driver_avatar} alt={trip.driver_name} className="w-7 h-7 rounded-full object-cover border border-sky-400" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-300 flex items-center justify-center text-xs font-bold">
+                          {trip.driver_name?.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-[10px] text-slate-400">คนขับ (คลิกดูโปรไฟล์)</div>
+                        <div className="text-xs font-bold text-white underline underline-offset-2">{trip.driver_name}</div>
+                      </div>
+                    </button>
+
                     <div className="text-right">
                       <div className="text-[10px] text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
                       <div className="text-lg font-extrabold text-emerald-400">
@@ -227,6 +251,13 @@ export default function Trips() {
           })}
         </div>
       )}
+
+      {/* Owner Profile Modal */}
+      <OwnerProfileModal
+        isOpen={ownerModalOpen}
+        onClose={() => setOwnerModalOpen(false)}
+        userId={selectedDriverId}
+      />
     </div>
   );
 }
