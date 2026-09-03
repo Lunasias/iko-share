@@ -51,6 +51,14 @@ export default function Navbar() {
                 <span>การเดินทางของฉัน</span>
               </Link>
 
+              <Link
+                to="/profile"
+                className="flex items-center gap-1.5 text-sm font-medium text-slate-300 hover:text-sky-400 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>โปรไฟล์</span>
+              </Link>
+
               {user.role === 'admin' && (
                 <Link
                   to="/admin"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import TripChat from '../components/TripChat';
 import { MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function TripDetail() {
@@ -101,6 +102,7 @@ export default function TripDetail() {
   const departureDate = new Date(trip.departure_time);
   const isDriver = user && user.id === trip.driver_id;
   const isAlreadyJoined = user && passengers.some((p) => p.user_id === user.id);
+  const canAccessChat = isDriver || isAlreadyJoined || (user && user.role === 'admin');
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
@@ -251,6 +253,9 @@ export default function TripDetail() {
           </form>
         )}
       </div>
+
+      {/* Trip Group Chat Section (for driver & confirmed passengers) */}
+      {canAccessChat && <TripChat tripId={id} />}
     </div>
   );
 }

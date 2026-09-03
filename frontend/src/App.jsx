@@ -9,6 +9,7 @@ import Trips from './pages/Trips';
 import TripDetail from './pages/TripDetail';
 import CreateTrip from './pages/CreateTrip';
 import MyTrips from './pages/MyTrips';
+import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/trips/:id" element={<TripDetail />} />
               <Route path="/create-trip" element={<CreateTrip />} />
               <Route path="/my-trips" element={<MyTrips />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>
