@@ -1,15 +1,18 @@
 const db = require('../config/db');
 
-// Get all / search trips
+// Get / Search trips
 const getTrips = async (req, res) => {
   try {
-    const { origin, destination, date } = req.query;
+    const { origin, destination, event_id } = req.query;
     let queryText = `
-      SELECT t.*, u.name as driver_name, u.phone as driver_phone,
-      (t.seats - COALESCE((SELECT SUM(seats_booked) FROM bookings WHERE trip_id = t.id AND status = 'confirmed'), 0)) as available_seats
+      SELECT t.*, c.model as car_model, c.capacity as car_capacity, c.user_id as driver_id,
+             u.name as driver_name, u.phone as driver_phone, u.avatar_url as driver_avatar,
+             e.event_name, e.category as event_category
       FROM trips t
-      JOIN users u ON t.driver_id = u.id
-      WHERE t.status = 'active'
+      JOIN cars c ON t.license_plate = c.license_plate
+      JOIN users u ON c.user_id = u.user_id
+      LEFT JOIN events e ON t.event_id = e.event_id
+      WHERE 1=1
     `;
     const params = [];
 
@@ -21,9 +24,9 @@ const getTrips = async (req, res) => {
       params.push(`%${destination}%`);
       queryText += ` AND t.destination ILIKE $${params.length}`;
     }
-    if (date) {
-      params.push(date);
-      queryText += ` AND DATE(t.departure_time) = $${params.length}`;
+    if (event_id) {
+      params.push(event_id);
+      queryText += ` AND t.event_id = $${params.length}`;
     }
 
     queryText += ` ORDER BY t.departure_time ASC`;
@@ -36,20 +39,23 @@ const getTrips = async (req, res) => {
     });
   } catch (error) {
     console.error('Get trips error:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลการเดินทาง: ' + (error.message || String(error)) });
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลเที่ยวเดินทาง: ' + (error.message || String(error)) });
   }
 };
 
-// Get single trip detail
+// Get single trip details with passengers
 const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
     const tripRes = await db.query(
-      `SELECT t.*, u.name as driver_name, u.phone as driver_phone, u.email as driver_email,
-       (t.seats - COALESCE((SELECT SUM(seats_booked) FROM bookings WHERE trip_id = t.id AND status = 'confirmed'), 0)) as available_seats
+      `SELECT t.*, c.model as car_model, c.capacity as car_capacity, c.user_id as driver_id,
+              u.name as driver_name, u.phone as driver_phone, u.email as driver_email, u.avatar_url as driver_avatar,
+              e.event_name, e.location as event_location
        FROM trips t
-       JOIN users u ON t.driver_id = u.id
-       WHERE t.id = $1`,
+       JOIN cars c ON t.license_plate = c.license_plate
+       JOIN users u ON c.user_id = u.user_id
+       LEFT JOIN events e ON t.event_id = e.event_id
+       WHERE t.trip_id = $1`,
       [id]
     );
 
@@ -58,10 +64,11 @@ const getTripById = async (req, res) => {
     }
 
     const bookingsRes = await db.query(
-      `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone
+      `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone, u.avatar_url as passenger_avatar
        FROM bookings b
-       JOIN users u ON b.user_id = u.id
-       WHERE b.trip_id = $1 AND b.status = 'confirmed'`,
+       JOIN users u ON b.user_id = u.user_id
+       WHERE b.trip_id = $1
+       ORDER BY b.booking_time DESC`,
       [id]
     );
 
@@ -79,24 +86,37 @@ const getTripById = async (req, res) => {
 // Create new trip
 const createTrip = async (req, res) => {
   try {
-    const { origin, destination, departure_time, seats, price, car_model, notes } = req.body;
-    const driver_id = req.user.id;
+    const userId = req.user.user_id || req.user.id;
+    const { license_plate, event_id, origin, destination, departure_time, available_seats, price_seat } = req.body;
 
-    if (!origin || !destination || !departure_time || !seats || price === undefined) {
+    if (!license_plate || !origin || !destination || !available_seats || price_seat === undefined) {
       return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลการเดินทางให้ครบถ้วน' });
     }
 
-    const result = await db.query(
-      `INSERT INTO trips (driver_id, origin, destination, departure_time, seats, price, car_model, notes, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', NOW())
+    // Verify car ownership & capacity check
+    const carRes = await db.query('SELECT capacity FROM cars WHERE license_plate = $1 AND user_id = $2', [license_plate, userId]);
+    if (!carRes.rows || carRes.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'ไม่พบข้อมูลรถของคุณ หรือเลือกรถไม่ถูกต้อง' });
+    }
+
+    const capacity = carRes.rows[0].capacity;
+    const seatsToOffer = parseInt(available_seats);
+
+    if (seatsToOffer > capacity) {
+      return res.status(400).json({ success: false, message: `จำนวนที่นั่งเปิดรับ (${seatsToOffer}) ต้องไม่เกินความจุที่นั่งของรถ (${capacity} ที่นั่ง)` });
+    }
+
+    const newTrip = await db.query(
+      `INSERT INTO trips (license_plate, event_id, origin, destination, departure_time, available_seats, price_seat, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
        RETURNING *`,
-      [driver_id, origin, destination, departure_time, parseInt(seats), parseFloat(price), car_model || null, notes || null]
+      [license_plate, event_id || null, origin.trim(), destination.trim(), departure_time || new Date(), seatsToOffer, parseFloat(price_seat)]
     );
 
     res.status(201).json({
       success: true,
-      message: 'สร้างรายการเดินทางเรียบร้อยแล้ว',
-      trip: result.rows && result.rows[0] ? result.rows[0] : null,
+      message: 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
+      trip: newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null,
     });
   } catch (error) {
     console.error('Create trip error:', error);
@@ -104,82 +124,30 @@ const createTrip = async (req, res) => {
   }
 };
 
-// Join trip
-const joinTrip = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user_id = req.user.id;
-    const { seats_booked = 1, notes } = req.body;
-
-    const tripRes = await db.query('SELECT * FROM trips WHERE id = $1', [id]);
-    if (!tripRes.rows || tripRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'ไม่พบเส้นทางการเดินทางนี้' });
-    }
-
-    const trip = tripRes.rows[0];
-    if (trip.driver_id === user_id) {
-      return res.status(400).json({ success: false, message: 'คุณไม่สามารถร่วมเดินทางในเส้นทางของตัวเองได้' });
-    }
-
-    const bookingsSum = await db.query(
-      "SELECT SUM(seats_booked) as booked FROM bookings WHERE trip_id = $1 AND status = 'confirmed'",
-      [id]
-    );
-    const booked = parseInt(bookingsSum.rows[0]?.booked || 0);
-    const available = trip.seats - booked;
-
-    if (available < parseInt(seats_booked)) {
-      return res.status(400).json({ success: false, message: 'ที่นั่งคงเหลือไม่เพียงพอ' });
-    }
-
-    const existingBooking = await db.query(
-      "SELECT id FROM bookings WHERE trip_id = $1 AND user_id = $2 AND status = 'confirmed'",
-      [id, user_id]
-    );
-    if (existingBooking.rows && existingBooking.rows.length > 0) {
-      return res.status(400).json({ success: false, message: 'คุณได้จองร่วมเดินทางในเที่ยวนี้แล้ว' });
-    }
-
-    const bookingResult = await db.query(
-      `INSERT INTO bookings (trip_id, user_id, seats_booked, notes, status, created_at)
-       VALUES ($1, $2, $3, $4, 'confirmed', NOW())
-       RETURNING *`,
-      [id, user_id, parseInt(seats_booked), notes || null]
-    );
-
-    res.json({
-      success: true,
-      message: 'เข้าร่วมการเดินทางสำเร็จแล้ว!',
-      booking: bookingResult.rows && bookingResult.rows[0] ? bookingResult.rows[0] : null,
-    });
-  } catch (error) {
-    console.error('Join trip error:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการร่วมเดินทาง: ' + (error.message || String(error)) });
-  }
-};
-
-// Get user trips (created & joined)
+// Get user's trips (created vs. joined)
 const getUserTrips = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const userId = req.user.user_id || req.user.id;
 
     const createdTrips = await db.query(
-      `SELECT t.*,
-       (t.seats - COALESCE((SELECT SUM(seats_booked) FROM bookings WHERE trip_id = t.id AND status = 'confirmed'), 0)) as available_seats
+      `SELECT t.*, c.model as car_model, c.capacity as car_capacity
        FROM trips t
-       WHERE t.driver_id = $1
-       ORDER BY t.departure_time DESC`,
-      [user_id]
+       JOIN cars c ON t.license_plate = c.license_plate
+       WHERE c.user_id = $1
+       ORDER BY t.created_at DESC`,
+      [userId]
     );
 
     const joinedTrips = await db.query(
-      `SELECT t.*, b.id as booking_id, b.seats_booked, b.status as booking_status, u.name as driver_name, u.phone as driver_phone
+      `SELECT t.*, b.booking_id, b.booking_status, b.location as meetup_location, b.booking_time,
+              c.user_id as driver_id, u.name as driver_name, u.phone as driver_phone
        FROM bookings b
-       JOIN trips t ON b.trip_id = t.id
-       JOIN users u ON t.driver_id = u.id
+       JOIN trips t ON b.trip_id = t.trip_id
+       JOIN cars c ON t.license_plate = c.license_plate
+       JOIN users u ON c.user_id = u.user_id
        WHERE b.user_id = $1
-       ORDER BY t.departure_time DESC`,
-      [user_id]
+       ORDER BY b.booking_time DESC`,
+      [userId]
     );
 
     res.json({
@@ -193,36 +161,9 @@ const getUserTrips = async (req, res) => {
   }
 };
 
-// Cancel trip or booking
-const cancelTrip = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user_id = req.user.id;
-
-    const tripRes = await db.query('SELECT * FROM trips WHERE id = $1', [id]);
-    if (tripRes.rows && tripRes.rows.length > 0 && tripRes.rows[0].driver_id === user_id) {
-      await db.query("UPDATE trips SET status = 'cancelled' WHERE id = $1", [id]);
-      return res.json({ success: true, message: 'ยกเลิกรายการเดินทางเรียบร้อยแล้ว' });
-    }
-
-    const bookingRes = await db.query('SELECT * FROM bookings WHERE trip_id = $1 AND user_id = $2', [id, user_id]);
-    if (bookingRes.rows && bookingRes.rows.length > 0) {
-      await db.query("UPDATE bookings SET status = 'cancelled' WHERE trip_id = $1 AND user_id = $2", [id, user_id]);
-      return res.json({ success: true, message: 'ยกเลิกการจองที่นั่งเรียบร้อยแล้ว' });
-    }
-
-    res.status(404).json({ success: false, message: 'ไม่พบรายการที่ต้องการยกเลิก' });
-  } catch (error) {
-    console.error('Cancel trip error:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการยกเลิก: ' + (error.message || String(error)) });
-  }
-};
-
 module.exports = {
   getTrips,
   getTripById,
   createTrip,
-  joinTrip,
   getUserTrips,
-  cancelTrip,
 };

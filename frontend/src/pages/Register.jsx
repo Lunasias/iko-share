@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, User, Mail, Lock, Phone, AlertCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Phone, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('Passenger');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await register(name, email, password, phone);
+      const res = await register(name, email, password, phone, role);
       if (res.success) {
         navigate('/trips');
       } else {
@@ -93,6 +94,40 @@ export default function Register() {
                 onChange={(e) => setPhone(e.target.value)}
                 className="bg-transparent border-none text-white text-sm focus:outline-none w-full"
               />
+            </div>
+          </div>
+
+          {/* Role Selection */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300">เลือกบทบาทผู้ใช้งาน</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setRole('Passenger')}
+                className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                  role === 'Passenger' ? 'bg-sky-500/30 border-sky-400 text-sky-200' : 'glass-input text-slate-400'
+                }`}
+              >
+                ผู้โดยสาร
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('Driver')}
+                className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                  role === 'Driver' ? 'bg-emerald-500/30 border-emerald-400 text-emerald-200' : 'glass-input text-slate-400'
+                }`}
+              >
+                คนขับรถ
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('Both')}
+                className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                  role === 'Both' ? 'bg-purple-500/30 border-purple-400 text-purple-200' : 'glass-input text-slate-400'
+                }`}
+              >
+                ทั้งสองอย่าง
+              </button>
             </div>
           </div>
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Phone, Car, Image, Save, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
+import { User, Phone, Car, Image, Save, AlertCircle, CheckCircle, Star, ShieldCheck } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -9,19 +10,22 @@ export default function Profile() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [carInfo, setCarInfo] = useState('');
 
   const [stats, setStats] = useState({ tripsCreated: 0, tripsJoined: 0 });
+  const [avgRating, setAvgRating] = useState('0.0');
+  const [reviewCount, setReviewCount] = useState(0);
+  const [reviews, setReviews] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    fetchProfile();
+    fetchProfileData();
   }, []);
 
-  const fetchProfile = async () => {
+  const fetchProfileData = async () => {
     setLoading(true);
     setError('');
     try {
@@ -31,8 +35,15 @@ export default function Profile() {
         setName(u.name || '');
         setPhone(u.phone || '');
         setAvatarUrl(u.avatar_url || '');
-        setCarInfo(u.car_info || '');
         setStats(res.data.stats || { tripsCreated: 0, tripsJoined: 0 });
+
+        const userId = u.user_id || u.id;
+        const reviewRes = await API.get(`/reviews/user/${userId}`);
+        if (reviewRes.data.success) {
+          setAvgRating(reviewRes.data.avgRating);
+          setReviewCount(reviewRes.data.reviewCount);
+          setReviews(reviewRes.data.reviews || []);
+        }
       } else {
         setError(String(res.data.message || 'ไม่สามารถดึงข้อมูลโปรไฟล์ได้'));
       }
@@ -55,7 +66,6 @@ export default function Profile() {
         name,
         phone,
         avatar_url: avatarUrl,
-        car_info: carInfo,
       });
 
       if (res.data.success) {
@@ -96,21 +106,39 @@ export default function Profile() {
         </div>
 
         <div className="space-y-2 flex-1">
-          <h2 className="text-2xl font-bold text-white">{name}</h2>
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            <h2 className="text-2xl font-bold text-white">{name}</h2>
+            <span className="bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold">
+              {user?.role}
+            </span>
+          </div>
+
           <p className="text-sm text-slate-400">{user?.email}</p>
 
-          <div className="flex flex-wrap gap-4 pt-2 justify-center sm:justify-start">
-            <div className="px-3 py-1.5 rounded-xl glass-panel text-xs text-sky-300">
-              เปิดการเดินทางแล้ว <span className="font-bold text-white">{stats.tripsCreated}</span> เที่ยว
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2 text-xs">
+            <div className="flex items-center gap-1 text-amber-400 font-bold glass-panel px-3 py-1 rounded-xl">
+              <Star className="w-4 h-4 fill-amber-400" />
+              <span>{avgRating} ({reviewCount} รีวิว)</span>
             </div>
-            <div className="px-3 py-1.5 rounded-xl glass-panel text-xs text-indigo-300">
-              เข้าร่วมเดินทางแล้ว <span className="font-bold text-white">{stats.tripsJoined}</span> เที่ยว
+            <div className="px-3 py-1 rounded-xl glass-panel text-sky-300">
+              สร้างทริป <span className="font-bold text-white">{stats.tripsCreated}</span> เที่ยว
+            </div>
+            <div className="px-3 py-1 rounded-xl glass-panel text-indigo-300">
+              ร่วมทริป <span className="font-bold text-white">{stats.tripsJoined}</span> เที่ยว
             </div>
           </div>
         </div>
+
+        <Link
+          to="/cars"
+          className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+        >
+          <Car className="w-4 h-4" />
+          <span>การจัดการรถยนต์</span>
+        </Link>
       </div>
 
-      {/* Edit Form */}
+      {/* Edit Profile Form */}
       <div className="glass-card p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6">
         <h3 className="text-lg font-bold text-white border-b border-slate-700/60 pb-3">แก้ไขข้อมูลโปรไฟล์</h3>
 
@@ -171,20 +199,6 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">ข้อมูลรถยนต์ (สำหรับคนขับ)</label>
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl glass-input">
-              <Car className="w-5 h-5 text-slate-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="เช่น Honda Civic สีขาว ทะเบียน กก-1234"
-                value={carInfo}
-                onChange={(e) => setCarInfo(e.target.value)}
-                className="bg-transparent border-none text-white text-sm focus:outline-none w-full"
-              />
-            </div>
-          </div>
-
           <button
             type="submit"
             disabled={saving}
@@ -195,6 +209,32 @@ export default function Profile() {
           </button>
         </form>
       </div>
+
+      {/* Received Reviews Section */}
+      {reviews.length > 0 && (
+        <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+            <span>รีวิวที่คุณได้รับจากเพื่อนร่วมทาง ({reviews.length})</span>
+          </h3>
+
+          <div className="space-y-3">
+            {reviews.map((rev) => (
+              <div key={rev.review_id} className="p-4 rounded-2xl glass-panel space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="font-bold text-sky-200">{rev.reviewer_name}</div>
+                  <div className="flex items-center gap-1 text-amber-400 font-bold">
+                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                    <span>{rev.rating} / 5</span>
+                  </div>
+                </div>
+                {rev.comment && <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>}
+                <div className="text-[10px] text-slate-500">{new Date(rev.created_at).toLocaleDateString('th-TH')}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

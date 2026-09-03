@@ -1,13 +1,16 @@
 const db = require('../config/db');
 
-// Check if user is driver or confirmed passenger in the trip
+// Access Check: Driver OR Passengers with status 'จองแล้ว'
 const checkTripAccess = async (tripId, userId) => {
-  const tripRes = await db.query('SELECT driver_id FROM trips WHERE id = $1', [tripId]);
+  const tripRes = await db.query(
+    'SELECT c.user_id as driver_id FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+    [tripId]
+  );
   if (!tripRes.rows || tripRes.rows.length === 0) return false;
   if (tripRes.rows[0].driver_id === userId) return true;
 
   const bookingRes = await db.query(
-    "SELECT id FROM bookings WHERE trip_id = $1 AND user_id = $2 AND status = 'confirmed'",
+    "SELECT booking_id FROM bookings WHERE trip_id = $1 AND user_id = $2 AND booking_status = 'จองแล้ว'",
     [tripId, userId]
   );
   return bookingRes.rows && bookingRes.rows.length > 0;
@@ -17,17 +20,17 @@ const checkTripAccess = async (tripId, userId) => {
 const getTripMessages = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.user_id || req.user.id;
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'คุณต้องเป็นผู้ร่วมเดินทางในเที่ยวนี้จึงจะเข้าชมแชทได้' });
+    if (!hasAccess && req.user.role !== 'Admin') {
+      return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถแชทได้' });
     }
 
     const messagesRes = await db.query(
       `SELECT cm.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role
        FROM chat_messages cm
-       JOIN users u ON cm.user_id = u.id
+       JOIN users u ON cm.user_id = u.user_id
        WHERE cm.trip_id = $1
        ORDER BY cm.created_at ASC`,
       [id]
@@ -39,7 +42,7 @@ const getTripMessages = async (req, res) => {
     });
   } catch (error) {
     console.error('Get trip messages error:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการโหลดข้อความแชท: ' + (error.message || String(error)) });
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการโหลดข้อความ: ' + (error.message || String(error)) });
   }
 };
 
@@ -47,7 +50,7 @@ const getTripMessages = async (req, res) => {
 const sendMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.user_id || req.user.id;
     const { message } = req.body;
 
     if (!message || !message.trim()) {
@@ -55,8 +58,8 @@ const sendMessage = async (req, res) => {
     }
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'คุณต้องเป็นผู้ร่วมเดินทางในเที่ยวนี้จึงจะส่งข้อความได้' });
+    if (!hasAccess && req.user.role !== 'Admin') {
+      return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถส่งข้อความได้' });
     }
 
     const newMsg = await db.query(

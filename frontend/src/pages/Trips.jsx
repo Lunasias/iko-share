@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
-import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, Filter } from 'lucide-react';
 
 export default function Trips() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [trips, setTrips] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [origin, setOrigin] = useState(searchParams.get('origin') || '');
   const [destination, setDestination] = useState(searchParams.get('destination') || '');
-  const [date, setDate] = useState(searchParams.get('date') || '');
+  const [selectedEventId, setSelectedEventId] = useState(searchParams.get('event_id') || '');
 
   useEffect(() => {
+    fetchEvents();
     fetchTrips();
   }, [searchParams]);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await API.get('/events');
+      if (res.data.success) {
+        setEvents(res.data.events || []);
+      }
+    } catch (e) {}
+  };
 
   const fetchTrips = async () => {
     setLoading(true);
@@ -41,7 +52,7 @@ export default function Trips() {
     const params = {};
     if (origin) params.origin = origin;
     if (destination) params.destination = destination;
-    if (date) params.date = date;
+    if (selectedEventId) params.event_id = selectedEventId;
     setSearchParams(params);
   };
 
@@ -51,7 +62,7 @@ export default function Trips() {
       <div className="glass-card p-6 rounded-3xl border border-sky-500/20 shadow-xl space-y-4">
         <h2 className="text-xl font-bold text-sky-200 flex items-center gap-2">
           <Search className="w-5 h-5 text-sky-400" />
-          <span>ค้นหาเส้นทางคาร์พูล</span>
+          <span>ค้นหาเที่ยวคาร์พูลร่วมเดินทาง</span>
         </h2>
 
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -78,13 +89,19 @@ export default function Trips() {
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl glass-input">
-            <Calendar className="w-5 h-5 text-sky-400 shrink-0" />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+            <Filter className="w-5 h-5 text-purple-400 shrink-0" />
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
               className="bg-transparent border-none text-white text-sm focus:outline-none w-full text-slate-300"
-            />
+            >
+              <option value="" className="bg-slate-900 text-slate-400">-- ทุกกิจกรรม/อีเวนต์ --</option>
+              {events.map((ev) => (
+                <option key={ev.event_id} value={ev.event_id} className="bg-slate-900 text-white">
+                  {ev.event_name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button
@@ -128,10 +145,31 @@ export default function Trips() {
             const departureDate = new Date(trip.departure_time);
             return (
               <div
-                key={trip.id}
+                key={trip.trip_id}
                 className="glass-card p-6 rounded-3xl border border-white/10 flex flex-col justify-between hover:border-sky-500/40 transition-all group"
               >
                 <div className="space-y-4">
+                  {/* Status Badge & Event Tag */}
+                  <div className="flex items-center justify-between gap-2">
+                    {trip.event_name ? (
+                      <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-semibold truncate">
+                        {trip.event_name}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">ทั่วไป</span>
+                    )}
+
+                    {trip.available_seats > 0 ? (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        มีที่ว่าง ({trip.available_seats} ที่)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        เต็มแล้ว
+                      </span>
+                    )}
+                  </div>
+
                   {/* Origin -> Destination */}
                   <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-3">
                     <div className="space-y-1">
@@ -149,7 +187,7 @@ export default function Trips() {
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
-                      <span>{departureDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span>{departureDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-slate-300">
@@ -157,19 +195,14 @@ export default function Trips() {
                       <span>{departureDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <Users className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>ว่าง {trip.available_seats !== undefined ? trip.available_seats : trip.seats} ที่นั่ง</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-slate-300">
+                    <div className="flex items-center gap-1.5 text-slate-300 col-span-2">
                       <Car className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span>{trip.car_model || 'รถยนต์ส่วนตัว'}</span>
+                      <span>{trip.car_model} ({trip.license_plate})</span>
                     </div>
                   </div>
 
                   {/* Driver Name & Price */}
-                  <div className="pt-2 flex items-center justify-between">
+                  <div className="pt-2 flex items-center justify-between border-t border-slate-800">
                     <div>
                       <div className="text-[10px] text-slate-400">คนขับ</div>
                       <div className="text-sm font-semibold text-slate-200">{trip.driver_name}</div>
@@ -177,14 +210,14 @@ export default function Trips() {
                     <div className="text-right">
                       <div className="text-[10px] text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
                       <div className="text-lg font-extrabold text-emerald-400">
-                        {parseFloat(trip.price) > 0 ? `฿${trip.price}` : 'ฟรี'}
+                        {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <Link
-                  to={`/trips/${trip.id}`}
+                  to={`/trips/${trip.trip_id}`}
                   className="mt-5 w-full block text-center py-2.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-semibold rounded-xl border border-sky-500/30 transition-all text-sm"
                 >
                   ดูรายละเอียด & ร่วมเดินทาง

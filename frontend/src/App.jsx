@@ -10,6 +10,7 @@ import TripDetail from './pages/TripDetail';
 import CreateTrip from './pages/CreateTrip';
 import MyTrips from './pages/MyTrips';
 import Profile from './pages/Profile';
+import Cars from './pages/Cars';
 import Admin from './pages/Admin';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/create-trip" element={<CreateTrip />} />
               <Route path="/my-trips" element={<MyTrips />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/cars" element={<Cars />} />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>

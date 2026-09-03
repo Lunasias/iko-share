@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TripChat from '../components/TripChat';
-import { MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import ReviewModal from '../components/ReviewModal';
+import { MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle, ArrowRight, Star, LogOut, ShieldCheck } from 'lucide-react';
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -15,9 +16,13 @@ export default function TripDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
-  const [seatsBooked, setSeatsBooked] = useState(1);
-  const [notes, setNotes] = useState('');
+
+  const [meetupLocation, setMeetupLocation] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Review modal state
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewTarget, setReviewTarget] = useState({ id: null, name: '' });
 
   useEffect(() => {
     fetchTripDetail();
@@ -54,13 +59,13 @@ export default function TripDetail() {
     setJoinSuccess('');
 
     try {
-      const res = await API.post(`/trips/${id}/join`, {
-        seats_booked: parseInt(seatsBooked),
-        notes,
+      const res = await API.post('/bookings', {
+        trip_id: parseInt(id),
+        location: meetupLocation,
       });
 
       if (res.data.success) {
-        setJoinSuccess(String(res.data.message || 'จองที่นั่งเรียบร้อยแล้ว'));
+        setJoinSuccess(String(res.data.message || 'จองร่วมเดินทางเรียบร้อยแล้ว'));
         fetchTripDetail();
       } else {
         setError(String(res.data.message || 'ไม่สามารถร่วมเดินทางได้'));
@@ -71,6 +76,30 @@ export default function TripDetail() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleLeaveTrip = async () => {
+    if (!window.confirm('คุณต้องการยกเลิกการจองและออกจากเที่ยวเดินทางนี้ใช่หรือไม่?')) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await API.delete(`/bookings/${id}`);
+      if (res.data.success) {
+        setJoinSuccess(String(res.data.message || 'ยกเลิกการจองเรียบร้อยแล้ว'));
+        fetchTripDetail();
+      } else {
+        setError(String(res.data.message || 'ไม่สามารถยกเลิกได้'));
+      }
+    } catch (err) {
+      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการยกเลิกการจอง'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openReviewModal = (targetId, targetName) => {
+    setReviewTarget({ id: targetId, name: targetName });
+    setReviewModalOpen(true);
   };
 
   if (loading) {
@@ -100,9 +129,11 @@ export default function TripDetail() {
   }
 
   const departureDate = new Date(trip.departure_time);
-  const isDriver = user && user.id === trip.driver_id;
-  const isAlreadyJoined = user && passengers.some((p) => p.user_id === user.id);
-  const canAccessChat = isDriver || isAlreadyJoined || (user && user.role === 'admin');
+  const currentUserId = user ? (user.user_id || user.id) : null;
+  const isDriver = currentUserId && currentUserId === trip.driver_id;
+  const activeBooking = passengers.find((p) => p.user_id === currentUserId && p.booking_status === 'จองแล้ว');
+  const isAlreadyJoined = Boolean(activeBooking);
+  const canAccessChat = isDriver || isAlreadyJoined || (user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com'));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
@@ -110,7 +141,9 @@ export default function TripDetail() {
       <div className="glass-card p-8 rounded-3xl border border-sky-500/20 shadow-2xl space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-700/60 pb-6">
           <div className="space-y-1">
-            <div className="text-xs text-sky-400 font-semibold tracking-wider uppercase">เส้นทางการเดินทาง</div>
+            <div className="text-xs text-sky-400 font-semibold tracking-wider uppercase">
+              {trip.event_name ? `เที่ยวรถงาน: ${trip.event_name}` : 'เส้นทางการเดินทาง'}
+            </div>
             <div className="flex items-center gap-3 text-2xl sm:text-3xl font-extrabold text-white">
               <span>{trip.origin}</span>
               <ArrowRight className="w-6 h-6 text-sky-400 shrink-0" />
@@ -121,7 +154,7 @@ export default function TripDetail() {
           <div className="text-right sm:text-right">
             <div className="text-xs text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
             <div className="text-3xl font-extrabold text-emerald-400">
-              {parseFloat(trip.price) > 0 ? `฿${trip.price}` : 'ฟรี'}
+              {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
             </div>
           </div>
         </div>
@@ -151,51 +184,45 @@ export default function TripDetail() {
           <div className="p-4 rounded-2xl glass-panel space-y-1">
             <div className="flex items-center gap-2 text-slate-400 text-xs">
               <Users className="w-4 h-4 text-emerald-400" />
-              <span>ที่นั่งว่าง</span>
+              <span>สถานะที่นั่ง</span>
             </div>
             <div className="text-sm font-bold text-white">
-              {trip.available_seats !== undefined ? trip.available_seats : trip.seats} / {trip.seats} ที่นั่ง
+              {trip.available_seats > 0 ? (
+                <span className="text-emerald-400">มีที่ว่าง ({trip.available_seats} ที่)</span>
+              ) : (
+                <span className="text-red-400">เต็มแล้ว</span>
+              )}
             </div>
           </div>
 
           <div className="p-4 rounded-2xl glass-panel space-y-1">
             <div className="flex items-center gap-2 text-slate-400 text-xs">
               <Car className="w-4 h-4 text-purple-400" />
-              <span>รุ่นรถยนต์</span>
+              <span>ข้อมูลรถยนต์</span>
             </div>
-            <div className="text-sm font-bold text-white">{trip.car_model || 'ไม่ระบุ'}</div>
+            <div className="text-sm font-bold text-white">{trip.car_model || 'รถส่วนตัว'}</div>
+            <div className="text-[10px] text-slate-400 font-mono">{trip.license_plate}</div>
           </div>
         </div>
 
-        {/* Driver Info */}
-        <div className="p-5 rounded-2xl glass-panel space-y-3">
-          <h4 className="text-sm font-bold text-sky-300">ข้อมูลคนขับรถ</h4>
-          <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate-200">
-            <div>
-              <span className="text-slate-400">ชื่อ:</span> <span className="font-semibold text-white">{trip.driver_name}</span>
-            </div>
-            {trip.driver_phone && (
-              <div className="flex items-center gap-1.5 text-sky-400">
-                <Phone className="w-4 h-4" />
-                <span>{trip.driver_phone}</span>
-              </div>
-            )}
-            {trip.driver_email && (
-              <div className="flex items-center gap-1.5 text-slate-300 text-xs">
-                <Mail className="w-4 h-4 text-slate-400" />
-                <span>{trip.driver_email}</span>
-              </div>
-            )}
+        {/* Driver Info & Rating Trigger */}
+        <div className="p-5 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-xs text-sky-300 font-bold">ข้อมูลคนขับรถ</div>
+            <div className="text-sm font-semibold text-white">{trip.driver_name}</div>
+            {trip.driver_phone && <div className="text-xs text-slate-300">โทร: {trip.driver_phone}</div>}
           </div>
-        </div>
 
-        {/* Notes */}
-        {trip.notes && (
-          <div className="p-4 rounded-2xl glass-panel text-slate-300 text-sm space-y-1">
-            <div className="text-xs font-semibold text-slate-400">หมายเหตุเพิ่มเติมจากคนขับ</div>
-            <p>{trip.notes}</p>
-          </div>
-        )}
+          {user && !isDriver && isAlreadyJoined && (
+            <button
+              onClick={() => openReviewModal(trip.driver_id, trip.driver_name)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all"
+            >
+              <Star className="w-4 h-4 fill-amber-400" />
+              <span>ให้คะแนนคนขับ</span>
+            </button>
+          )}
+        </div>
 
         {/* Status Alerts */}
         {joinSuccess && (
@@ -205,42 +232,76 @@ export default function TripDetail() {
           </div>
         )}
 
-        {/* Booking Form or Driver View */}
+        {/* Passenger Status Check List */}
+        <div className="space-y-3 pt-2">
+          <h4 className="text-sm font-bold text-sky-300 flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span>รายชื่อผู้โดยสารร่วมเดินทาง ({passengers.filter((p) => p.booking_status === 'จองแล้ว').length} คน)</span>
+          </h4>
+
+          {passengers.length === 0 ? (
+            <div className="p-4 rounded-xl glass-panel text-center text-slate-400 text-xs">
+              ยังไม่มีผู้โดยสารร่วมเดินทางในเที่ยวนี้
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {passengers.map((p) => (
+                <div key={p.booking_id} className="p-3 rounded-xl glass-panel flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-semibold text-white">{p.passenger_name}</div>
+                    <div className="text-slate-400 text-[10px]">โทร: {p.passenger_phone || '-'}</div>
+                    {p.location && <div className="text-sky-300 text-[10px]">จุดนัดพบ: {p.location}</div>}
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${p.booking_status === 'จองแล้ว' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                      {p.booking_status}
+                    </span>
+                    {isDriver && p.booking_status === 'จองแล้ว' && (
+                      <button
+                        onClick={() => openReviewModal(p.user_id, p.passenger_name)}
+                        className="text-[10px] text-amber-300 hover:underline flex items-center gap-0.5"
+                      >
+                        <Star className="w-3 h-3 fill-amber-300" />
+                        <span>ให้คะแนน</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Actions: Join or Leave Trip */}
         {isDriver ? (
           <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-300 text-center text-sm font-medium">
-            นี่คือเส้นทางที่คุณเป็นคนสร้าง (มีผู้โดยสารร่วมเดินทางแล้ว {passengers.length} คน)
+            นี่คือเที่ยวเดินทางที่คุณเปิดให้บริการ
           </div>
         ) : isAlreadyJoined ? (
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-center text-sm font-medium">
-            คุณได้จองร่วมเดินทางในเส้นทางนี้เรียบร้อยแล้ว
+          <div className="p-4 rounded-2xl glass-panel space-y-3 text-center">
+            <div className="text-emerald-300 text-sm font-medium">คุณได้จองร่วมเดินทางในเส้นทางนี้แล้ว</div>
+            <button
+              onClick={handleLeaveTrip}
+              disabled={submitting}
+              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 mx-auto"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>ออกจากทริป / ยกเลิกการจอง</span>
+            </button>
           </div>
         ) : (
           <form onSubmit={handleJoin} className="p-6 rounded-2xl glass-panel space-y-4">
-            <h3 className="text-lg font-bold text-white">จองที่นั่งร่วมเดินทาง</h3>
+            <h3 className="text-lg font-bold text-white">จองร่วมเดินทาง</h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">จำนวนที่นั่งที่ต้องการจอง</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={trip.available_seats || 1}
-                  value={seatsBooked}
-                  onChange={(e) => setSeatsBooked(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl glass-input text-sm"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">ข้อความถึงคนขับ (ถ้ามี)</label>
-                <input
-                  type="text"
-                  placeholder="เช่น จุดรับ-ส่ง หรือสัมภาระ"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl glass-input text-sm"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-300">ระบุจุดขึ้นรถ / จุดนัดพบที่สะดวก</label>
+              <input
+                type="text"
+                placeholder="เช่น ป้ายรถเมล์หน้าสวนสาธารณะ หรือ สถานี BTS"
+                value={meetupLocation}
+                onChange={(e) => setMeetupLocation(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl glass-input text-sm"
+              />
             </div>
 
             <button
@@ -248,14 +309,23 @@ export default function TripDetail() {
               disabled={submitting || trip.available_seats <= 0}
               className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/25 transition-all disabled:opacity-50"
             >
-              {submitting ? 'กำลังส่งคำขอ...' : trip.available_seats <= 0 ? 'ที่นั่งเต็มแล้ว' : 'ยืนยันจองที่นั่ง'}
+              {submitting ? 'กำลังส่งคำขอจอง...' : trip.available_seats <= 0 ? 'ที่นั่งเต็มแล้ว' : 'ยืนยันจองที่นั่ง'}
             </button>
           </form>
         )}
       </div>
 
-      {/* Trip Group Chat Section (for driver & confirmed passengers) */}
+      {/* Real-time Group Chat */}
       {canAccessChat && <TripChat tripId={id} />}
+
+      {/* Rating & Review Modal */}
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        tripId={parseInt(id)}
+        targetUserId={reviewTarget.id}
+        targetName={reviewTarget.name}
+      />
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function TripChat({ tripId }) {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000); // Poll every 5s
+    const interval = setInterval(fetchMessages, 2500); // Poll every 2.5 seconds
     return () => clearInterval(interval);
   }, [tripId]);
 
@@ -36,8 +36,7 @@ export default function TripChat({ tripId }) {
         setError(String(res.data.message || 'ไม่สามารถโหลดแชทได้'));
       }
     } catch (err) {
-      console.error('Fetch chat error:', err);
-      // Silence network errors on polling, only show explicitly
+      // Silence intermittent polling network errors
     } finally {
       setLoading(false);
     }
@@ -70,7 +69,7 @@ export default function TripChat({ tripId }) {
       <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
         <h3 className="text-base font-bold text-sky-200 flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-sky-400" />
-          <span>แชทกลุ่มสำหรับการเดินทางนี้</span>
+          <span>แชทกลุ่มสำหรับการเดินทางนี้ (Real-time Chat)</span>
         </h3>
         <button
           onClick={fetchMessages}
@@ -97,11 +96,11 @@ export default function TripChat({ tripId }) {
           <div className="text-center py-10 text-slate-500 text-xs">ยังไม่มีข้อความในแชทกลุ่มนี้ เริ่มพูดคุยกันได้เลย</div>
         ) : (
           messages.map((msg) => {
-            const isMe = user && user.id === msg.user_id;
+            const isMe = user && (user.user_id === msg.user_id || user.id === msg.user_id);
             return (
-              <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+              <div key={msg.message_id || msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div className="text-[10px] text-slate-400 mb-0.5 px-1">
-                  {msg.sender_name} {msg.sender_role === 'admin' ? '(แอดมิน)' : ''}
+                  {msg.sender_name} {msg.sender_role === 'Admin' ? '(แอดมิน)' : ''}
                 </div>
                 <div
                   className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-xs space-y-1 ${
