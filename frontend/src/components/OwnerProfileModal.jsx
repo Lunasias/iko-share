@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
-import { X, Star, Car, Phone, ShieldCheck, User, Calendar, AlertCircle } from 'lucide-react';
+import { X, Star, Car, Phone, ShieldCheck, User, Calendar, AlertCircle, FileText } from 'lucide-react';
 
 export default function OwnerProfileModal({ isOpen, onClose, userId }) {
   const [data, setData] = useState(null);
@@ -89,8 +89,19 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
               </div>
             </div>
 
+            {/* Bio Description Section */}
+            <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-sky-500/10">
+              <div className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" />
+                <span>คำอธิบายตัวตน / Bio</span>
+              </div>
+              <p className="text-xs text-slate-200 italic leading-relaxed">
+                "{data.owner.bio || 'ยังไม่มีคำอธิบายตัวตน'}"
+              </p>
+            </div>
+
             {/* Vehicle Details */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-1">
               <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Car className="w-4 h-4 text-emerald-400" />
                 <span>ข้อมูลรถยนต์ที่ลงทะเบียน ({data.cars.length} คัน)</span>

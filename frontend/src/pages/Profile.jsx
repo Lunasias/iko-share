@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Phone, Car, Image, Save, AlertCircle, CheckCircle, Star, Plus, Trash2 } from 'lucide-react';
+import { User, Phone, Car, Image, Save, AlertCircle, CheckCircle, Star, Plus, Trash2, FileText } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -10,6 +10,7 @@ export default function Profile() {
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [role, setRole] = useState('Passenger');
+  const [bio, setBio] = useState('');
 
   const [stats, setStats] = useState({ tripsCreated: 0, tripsJoined: 0 });
   const [avgRating, setAvgRating] = useState('0.0');
@@ -42,6 +43,7 @@ export default function Profile() {
         setPhone(u.phone || '');
         setAvatarUrl(u.avatar_url || '');
         setRole(u.role || 'Passenger');
+        setBio(u.bio || 'ยังไม่มีคำอธิบายตัวตน');
         setStats(res.data.stats || { tripsCreated: 0, tripsJoined: 0 });
 
         const userId = u.user_id || u.id;
@@ -79,6 +81,7 @@ export default function Profile() {
         phone,
         avatar_url: avatarUrl,
         role,
+        bio,
       });
 
       if (res.data.success) {
@@ -167,6 +170,7 @@ export default function Profile() {
           </div>
 
           <p className="text-sm text-slate-400">{user?.email}</p>
+          <p className="text-xs text-sky-200 italic">"{bio}"</p>
 
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2 text-xs">
             <div className="flex items-center gap-1 text-amber-400 font-bold glass-panel px-3 py-1 rounded-xl">
@@ -247,6 +251,20 @@ export default function Profile() {
                 onChange={(e) => setName(e.target.value)}
                 className="bg-transparent border-none text-white text-sm focus:outline-none w-full"
               />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300">คำอธิบายตัวตน / Bio</label>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl glass-input">
+              <FileText className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+              <textarea
+                rows="3"
+                placeholder="อธิบายสไตล์การขับรถ ความตรงต่อเวลา สิ่งที่ชอบ หรือข้อแนะนำในการเดินทาง..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="bg-transparent border-none text-white text-sm focus:outline-none w-full resize-none"
+              ></textarea>
             </div>
           </div>
 

@@ -5,7 +5,7 @@ const getProfile = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
     const userRes = await db.query(
-      'SELECT user_id, name, email, phone, role, avatar_url, created_at FROM users WHERE user_id = $1',
+      'SELECT user_id, name, email, phone, role, avatar_url, bio, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 
@@ -36,11 +36,11 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Update profile including Role Switcher
+// Update profile including Role & Bio
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
-    const { name, phone, avatar_url, role } = req.body;
+    const { name, phone, avatar_url, role, bio } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อ-นามสกุล' });
@@ -50,9 +50,9 @@ const updateProfile = async (req, res) => {
 
     let updateQuery = `
       UPDATE users
-      SET name = $1, phone = $2, avatar_url = $3
+      SET name = $1, phone = $2, avatar_url = $3, bio = $4
     `;
-    const queryParams = [name, phone || null, avatar_url || null];
+    const queryParams = [name, phone || null, avatar_url || null, bio || 'ยังไม่มีคำอธิบายตัวตน'];
 
     if (validRole) {
       queryParams.push(validRole);
@@ -60,10 +60,10 @@ const updateProfile = async (req, res) => {
     }
 
     queryParams.push(userId);
-    updateQuery += ` WHERE user_id = $${queryParams.length} RETURNING user_id, name, email, phone, role, avatar_url, created_at`;
+    updateQuery += ` WHERE user_id = $${queryParams.length} RETURNING user_id, name, email, phone, role, avatar_url, bio, created_at`;
 
     const updatedRes = await db.query(updateQuery, queryParams);
-    const user = updatedRes.rows && updatedRes.rows[0] ? updatedRes.rows[0] : { user_id: userId, name, phone, avatar_url, role: validRole };
+    const user = updatedRes.rows && updatedRes.rows[0] ? updatedRes.rows[0] : { user_id: userId, name, phone, avatar_url, role: validRole, bio };
 
     res.json({
       success: true,
@@ -82,7 +82,7 @@ const getPublicProfile = async (req, res) => {
     const { userId } = req.params;
 
     const userRes = await db.query(
-      'SELECT user_id, name, email, phone, role, avatar_url, created_at FROM users WHERE user_id = $1',
+      'SELECT user_id, name, email, phone, role, avatar_url, bio, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 

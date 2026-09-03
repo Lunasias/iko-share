@@ -1,13 +1,14 @@
--- ER Diagram Aligned Schema for Iko Share (Neon PostgreSQL)
+-- ER Diagram Aligned Schema for Iko Share (Neon PostgreSQL) with Bio Column
 
 CREATE TABLE IF NOT EXISTS users (
   user_id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  email VARCHAR(150) UNIQUE NOT NULL,
-  phone VARCHAR(20),
+  email VARCHAR(100) UNIQUE NOT NULL,
+  phone VARCHAR(15),
   role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both')),
   password VARCHAR(255) NOT NULL,
   avatar_url TEXT,
+  bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -66,8 +67,8 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 -- Seed Initial Admin User (Password: admin123456)
-INSERT INTO users (name, email, phone, role, password)
-VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Both', '$2a$10$wO7vE1kY6u/7uVlQpUeD7.E2z6k/u9L5b.xO7nO9qO1n1uO8P8m4C')
+INSERT INTO users (name, email, phone, role, password, bio)
+VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Both', '$2a$10$wO7vE1kY6u/7uVlQpUeD7.E2z6k/u9L5b.xO7nO9qO1n1uO8P8m4C', 'ผู้ดูแลระบบส่วนกลาง ยินดีให้บริการผู้ใช้งานทุกคนครับ')
 ON CONFLICT (email) DO NOTHING;
 
 -- Seed Sample Event
