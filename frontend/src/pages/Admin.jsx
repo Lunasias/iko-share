@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
-import { Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle, BookmarkCheck } from 'lucide-react';
+import { Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle } from 'lucide-react';
 
 export default function Admin() {
   const [stats, setStats] = useState({ totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0, totalBookings: 0 });
@@ -64,8 +64,8 @@ export default function Admin() {
   if (loading) {
     return (
       <div className="text-center py-20 space-y-3">
-        <div className="inline-block w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-400 text-sm">กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)...</p>
+        <div className="inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[#6B7280] text-xs font-semibold">กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)...</p>
       </div>
     );
   }
@@ -73,17 +73,17 @@ export default function Admin() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
       <div className="flex items-center gap-3">
-        <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400">
+        <div className="p-3.5 rounded-2xl neu-inset text-amber-600">
           <Shield className="w-8 h-8" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">ระบบจัดการผู้ดูแลระบบ (Admin Dashboard)</h2>
-          <p className="text-sm text-slate-400">ภาพรวมสถิติแพลตฟอร์มและการจัดการข้อมูลสมาชิก / เที่ยวรถ</p>
+          <h2 className="text-2xl font-black text-[#3D4852] font-['Plus_Jakarta_Sans',sans-serif]">ระบบจัดการผู้ดูแลระบบ (Admin Dashboard)</h2>
+          <p className="text-xs text-[#6B7280]">ภาพรวมสถิติแพลตฟอร์มและการจัดการข้อมูลสมาชิก / เที่ยวรถ</p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-3">
+        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-center gap-3 font-medium">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -91,43 +91,43 @@ export default function Admin() {
 
       {/* ER Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div className="glass-card p-5 rounded-2xl border border-sky-500/20 space-y-1">
-          <div className="text-slate-400 text-[10px] font-semibold uppercase">สมาชิก (Users)</div>
-          <div className="text-2xl font-extrabold text-sky-300">{stats.totalUsers} คน</div>
+        <div className="neu-card p-5 space-y-1">
+          <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">สมาชิก (Users)</div>
+          <div className="text-2xl font-black text-[#6C63FF]">{stats.totalUsers} คน</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-emerald-500/20 space-y-1">
-          <div className="text-slate-400 text-[10px] font-semibold uppercase">รถยนต์ (Cars)</div>
-          <div className="text-2xl font-extrabold text-emerald-300">{stats.totalCars} คัน</div>
+        <div className="neu-card p-5 space-y-1">
+          <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">รถยนต์ (Cars)</div>
+          <div className="text-2xl font-black text-[#38B2AC]">{stats.totalCars} คัน</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-purple-500/20 space-y-1">
-          <div className="text-slate-400 text-[10px] font-semibold uppercase">อีเวนต์ (Events)</div>
-          <div className="text-2xl font-extrabold text-purple-300">{stats.totalEvents} งาน</div>
+        <div className="neu-card p-5 space-y-1">
+          <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">อีเวนต์ (Events)</div>
+          <div className="text-2xl font-black text-purple-600">{stats.totalEvents} งาน</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-amber-500/20 space-y-1">
-          <div className="text-slate-400 text-[10px] font-semibold uppercase">เที่ยวรถ (Trips)</div>
-          <div className="text-2xl font-extrabold text-amber-300">{stats.totalTrips} เที่ยว</div>
+        <div className="neu-card p-5 space-y-1">
+          <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">เที่ยวรถ (Trips)</div>
+          <div className="text-2xl font-black text-amber-600">{stats.totalTrips} เที่ยว</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-pink-500/20 space-y-1 col-span-2 sm:col-span-1">
-          <div className="text-slate-400 text-[10px] font-semibold uppercase">การจองสำเร็จ (Bookings)</div>
-          <div className="text-2xl font-extrabold text-pink-300">{stats.totalBookings} รายการ</div>
+        <div className="neu-card p-5 space-y-1 col-span-2 sm:col-span-1">
+          <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">การจองสำเร็จ (Bookings)</div>
+          <div className="text-2xl font-black text-pink-600">{stats.totalBookings} รายการ</div>
         </div>
       </div>
 
-      {/* Modern Table: Recent Trips */}
-      <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          <Car className="w-5 h-5 text-amber-400" />
+      {/* Table: Recent Trips */}
+      <div className="neu-card p-6 space-y-4">
+        <h3 className="text-lg font-bold text-[#3D4852] flex items-center gap-2">
+          <Car className="w-5 h-5 text-amber-500" />
           <span>เที่ยวเดินทางล่าสุด</span>
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-400 uppercase">
+              <tr className="border-b border-slate-300 text-[#6B7280] uppercase font-bold">
                 <th className="py-3 px-4">Trip ID</th>
                 <th className="py-3 px-4">เส้นทาง</th>
                 <th className="py-3 px-4">คนขับ</th>
@@ -135,17 +135,17 @@ export default function Admin() {
                 <th className="py-3 px-4 text-right">จัดการ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 text-slate-200">
+            <tbody className="divide-y divide-slate-300 text-[#3D4852]">
               {recentTrips.map((t) => (
-                <tr key={t.trip_id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-4 font-mono text-slate-400">#{t.trip_id}</td>
-                  <td className="py-3 px-4 font-semibold text-white">{t.origin} ➔ {t.destination}</td>
-                  <td className="py-3 px-4 text-slate-300">{t.driver_name}</td>
-                  <td className="py-3 px-4 text-slate-300 font-mono">{t.license_plate}</td>
+                <tr key={t.trip_id} className="hover:bg-[#E0E5EC]/80 transition-colors">
+                  <td className="py-3 px-4 font-mono font-bold text-slate-500">#{t.trip_id}</td>
+                  <td className="py-3 px-4 font-extrabold text-[#3D4852]">{t.origin} ➔ {t.destination}</td>
+                  <td className="py-3 px-4 font-semibold">{t.driver_name}</td>
+                  <td className="py-3 px-4 font-mono">{t.license_plate}</td>
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => handleDeleteTrip(t.trip_id)}
-                      className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                      className="p-2 rounded-xl neu-button text-red-500 hover:text-red-600"
                       title="ลบเที่ยวเดินทาง"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -159,16 +159,16 @@ export default function Admin() {
       </div>
 
       {/* Users Management Table */}
-      <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          <Users className="w-5 h-5 text-sky-400" />
+      <div className="neu-card p-6 space-y-4">
+        <h3 className="text-lg font-bold text-[#3D4852] flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#6C63FF]" />
           <span>รายการสมาชิกในระบบ</span>
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-400 uppercase">
+              <tr className="border-b border-slate-300 text-[#6B7280] uppercase font-bold">
                 <th className="py-3 px-4">User ID</th>
                 <th className="py-3 px-4">ชื่อ</th>
                 <th className="py-3 px-4">อีเมล</th>
@@ -177,17 +177,17 @@ export default function Admin() {
                 <th className="py-3 px-4 text-right">จัดการ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 text-slate-200">
+            <tbody className="divide-y divide-slate-300 text-[#3D4852]">
               {users.map((u) => {
                 const uid = u.user_id || u.id;
                 return (
-                  <tr key={uid} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3 px-4 font-mono text-slate-400">#{uid}</td>
-                    <td className="py-3 px-4 font-semibold text-white">{u.name}</td>
-                    <td className="py-3 px-4 text-slate-300">{u.email}</td>
-                    <td className="py-3 px-4 text-slate-300">{u.phone || '-'}</td>
+                  <tr key={uid} className="hover:bg-[#E0E5EC]/80 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-500">#{uid}</td>
+                    <td className="py-3 px-4 font-extrabold text-[#3D4852]">{u.name}</td>
+                    <td className="py-3 px-4 font-medium">{u.email}</td>
+                    <td className="py-3 px-4 font-medium">{u.phone || '-'}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] ${u.role === 'Driver' ? 'bg-emerald-500/20 text-emerald-300' : u.role === 'Both' ? 'bg-purple-500/20 text-purple-300' : 'bg-sky-500/20 text-sky-300'}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold neu-pill ${u.role === 'Driver' ? 'text-[#2C7A7B]' : u.role === 'Both' ? 'text-purple-600' : 'text-[#6C63FF]'}`}>
                         {u.role}
                       </span>
                     </td>
@@ -195,7 +195,7 @@ export default function Admin() {
                       {u.email !== 'admin@ikoshare.com' && (
                         <button
                           onClick={() => handleDeleteUser(uid)}
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                          className="p-2 rounded-xl neu-button text-red-500 hover:text-red-600"
                           title="ลบสมาชิก"
                         >
                           <Trash2 className="w-4 h-4" />

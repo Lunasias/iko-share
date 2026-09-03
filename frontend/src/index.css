@@ -3,29 +3,86 @@
 @tailwind utilities;
 
 @layer utilities {
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-  }
-  
-  .glass-card {
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Extruded Neumorphic Card */
+  .neu-card {
+    background-color: #E0E5EC;
+    border-radius: 32px;
+    box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
   }
 
-  .glass-input {
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #ffffff;
+  .neu-card-hover:hover {
+    box-shadow: 12px 12px 20px rgba(163, 177, 198, 0.7), -12px -12px 20px rgba(255, 255, 255, 0.6);
   }
 
-  .glass-input:focus {
-    border-color: #38bdf8;
+  .neu-card-sm {
+    background-color: #E0E5EC;
+    border-radius: 20px;
+    box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
+  }
+
+  /* Inset Input Well */
+  .neu-input {
+    background-color: #E0E5EC;
+    border-radius: 16px;
+    box-shadow: inset 6px 6px 12px rgba(163, 177, 198, 0.7), inset -6px -6px 12px rgba(255, 255, 255, 0.6);
+    color: #3D4852;
+    transition: all 0.2s ease;
+  }
+
+  .neu-input:focus {
     outline: none;
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    box-shadow: inset 8px 8px 14px rgba(163, 177, 198, 0.8), inset -8px -8px 14px rgba(255, 255, 255, 0.7), 0 0 0 2px #6C63FF;
+  }
+
+  /* Neumorphic Button Default */
+  .neu-button {
+    background-color: #E0E5EC;
+    color: #3D4852;
+    border-radius: 16px;
+    box-shadow: 6px 6px 12px rgba(163, 177, 198, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+    min-height: 44px;
+  }
+
+  .neu-button:hover {
+    box-shadow: 8px 8px 14px rgba(163, 177, 198, 0.7), -8px -8px 14px rgba(255, 255, 255, 0.6);
+    color: #6C63FF;
+  }
+
+  .neu-button:active {
+    box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+  }
+
+  /* Neumorphic Primary Button (Violet Accent) */
+  .neu-button-primary {
+    background: linear-gradient(135deg, #6C63FF, #5A52E0);
+    color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 6px 6px 12px rgba(108, 99, 255, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+    min-height: 44px;
+  }
+
+  .neu-button-primary:hover {
+    box-shadow: 8px 8px 16px rgba(108, 99, 255, 0.5), -8px -8px 16px rgba(255, 255, 255, 0.6);
+  }
+
+  .neu-button-primary:active {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Inset Well Container */
+  .neu-inset {
+    background-color: #E0E5EC;
+    border-radius: 20px;
+    box-shadow: inset 8px 8px 16px rgba(163, 177, 198, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.6);
+  }
+
+  /* Pill Badge */
+  .neu-pill {
+    background-color: #E0E5EC;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5);
   }
 }

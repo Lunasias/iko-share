@@ -65,15 +65,15 @@ export default function TripChat({ tripId }) {
   };
 
   return (
-    <div className="glass-card p-6 rounded-3xl border border-sky-500/20 shadow-2xl space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
-        <h3 className="text-base font-bold text-sky-200 flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-sky-400" />
+    <div className="neu-card p-6 space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3">
+        <h3 className="text-sm font-extrabold text-[#3D4852] flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-[#6C63FF]" />
           <span>แชทกลุ่มสำหรับการเดินทางนี้ (Real-time Chat)</span>
         </h3>
         <button
           onClick={fetchMessages}
-          className="text-xs text-slate-400 hover:text-sky-300 flex items-center gap-1"
+          className="text-xs font-bold text-[#6B7280] hover:text-[#6C63FF] flex items-center gap-1"
           title="รีเฟรชข้อความ"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -82,34 +82,34 @@ export default function TripChat({ tripId }) {
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+        <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-center gap-2 font-medium">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Messages Box */}
-      <div className="h-64 overflow-y-auto space-y-3 p-3 rounded-2xl glass-panel text-sm">
+      <div className="h-64 overflow-y-auto space-y-3 p-4 neu-inset text-xs">
         {loading ? (
-          <div className="text-center py-10 text-slate-400 text-xs">กำลังโหลดข้อความ...</div>
+          <div className="text-center py-10 text-[#6B7280] font-semibold">กำลังโหลดข้อความ...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 text-xs">ยังไม่มีข้อความในแชทกลุ่มนี้ เริ่มพูดคุยกันได้เลย</div>
+          <div className="text-center py-10 text-[#6B7280] font-semibold">ยังไม่มีข้อความในแชทกลุ่มนี้ เริ่มพูดคุยกันได้เลย</div>
         ) : (
           messages.map((msg) => {
             const isMe = user && (user.user_id === msg.user_id || user.id === msg.user_id);
             return (
               <div key={msg.message_id || msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div className="text-[10px] text-slate-400 mb-0.5 px-1">
+                <div className="text-[10px] font-bold text-[#6B7280] mb-0.5 px-1">
                   {msg.sender_name} {msg.sender_role === 'Admin' ? '(แอดมิน)' : ''}
                 </div>
                 <div
-                  className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-xs space-y-1 ${
+                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-1 ${
                     isMe
-                      ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-br-none'
-                      : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none'
+                      ? 'neu-button-primary text-white rounded-br-none'
+                      : 'neu-card-sm text-[#3D4852] rounded-bl-none'
                   }`}
                 >
-                  <p className="break-words">{msg.message}</p>
+                  <p className="break-words font-medium">{msg.message}</p>
                   <div className="text-[9px] opacity-75 text-right">
                     {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                   </div>
@@ -122,18 +122,18 @@ export default function TripChat({ tripId }) {
       </div>
 
       {/* Send Input */}
-      <form onSubmit={handleSend} className="flex gap-2">
+      <form onSubmit={handleSend} className="flex gap-3">
         <input
           type="text"
           placeholder="พิมพ์ข้อความถึงเพื่อนร่วมทาง..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-xl glass-input text-xs"
+          className="flex-1 px-4 py-3 neu-input text-xs"
         />
         <button
           type="submit"
           disabled={sending || !newMessage.trim()}
-          className="px-4 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition-all disabled:opacity-50 flex items-center gap-1"
+          className="px-5 py-3 neu-button-primary font-bold text-xs disabled:opacity-50 flex items-center gap-1"
         >
           <Send className="w-4 h-4" />
           <span>ส่ง</span>
