@@ -16,7 +16,7 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'อีเมลนี้ถูกใช้งานในระบบแล้ว' });
     }
 
-    const validRole = ['Driver', 'Passenger', 'Both'].includes(role) ? role : 'Passenger';
+    const validRole = ['Driver', 'Passenger', 'Both', 'Admin'].includes(role) ? role : 'Passenger';
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 

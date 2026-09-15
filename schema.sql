@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   phone VARCHAR(15),
-  role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both')),
+  role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin')),
   password VARCHAR(255) NOT NULL,
   avatar_url TEXT,
   bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน',
@@ -88,9 +88,10 @@ CREATE TABLE IF NOT EXISTS trip_memories (
 );
 
 -- Seed Initial Admin User (Password: admin123456)
+-- NOTE: this hash was regenerated because the previous one did not match 'admin123456'.
 INSERT INTO users (name, email, phone, role, password, bio)
-VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Both', '$2a$10$wO7vE1kY6u/7uVlQpUeD7.E2z6k/u9L5b.xO7nO9qO1n1uO8P8m4C', 'ผู้ดูแลระบบส่วนกลาง ยินดีให้บริการผู้ใช้งานทุกคนครับ')
-ON CONFLICT (email) DO NOTHING;
+VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Admin', '$2a$10$jXfex0Jbq9RNZ13L9WtVP.CPLPy2caVaEtPLBRKLD4xOqMgq39Nce', 'ผู้ดูแลระบบส่วนกลาง ยินดีให้บริการผู้ใช้งานทุกคนครับ')
+ON CONFLICT (email) DO UPDATE SET role = 'Admin';
 
 -- Seed Sample Event
 INSERT INTO events (event_name, location, event_date, category)

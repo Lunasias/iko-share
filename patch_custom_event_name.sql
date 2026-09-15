@@ -107,11 +107,16 @@ CREATE TABLE IF NOT EXISTS trip_memories (
 );
 
 -- 4) Seed data
+-- The original CHECK constraint rejected 'Admin', so rebuild it to include the role.
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check
+  CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin'));
+
 INSERT INTO users (name, email, phone, role, password, bio)
-VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Both',
-        '$2a$10$wO7vE1kY6u/7uVlQpUeD7.E2z6k/u9L5b.xO7nO9qO1n1uO8P8m4C',
+VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Admin',
+        '$2a$10$jXfex0Jbq9RNZ13L9WtVP.CPLPy2caVaEtPLBRKLD4xOqMgq39Nce',
         'ผู้ดูแลระบบส่วนกลาง ยินดีให้บริการผู้ใช้งานทุกคนครับ')
-ON CONFLICT (email) DO NOTHING;
+ON CONFLICT (email) DO UPDATE SET role = 'Admin';
 
 INSERT INTO events (event_name, location, event_date, category)
 SELECT 'มหกรรมคอนเสิร์ตดนตรีในสวน', 'สวนลุมพินี กรุงเทพฯ', NOW() + INTERVAL '7 days', 'Concert'

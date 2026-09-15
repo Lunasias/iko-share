@@ -14,8 +14,12 @@ export default function Navbar() {
     navigate('/login');
   };
 
+  const isAdmin = !!user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com');
+
   const getRoleBadge = (role) => {
     switch (role) {
+      case 'Admin':
+        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้ดูแลระบบ (Admin)</span>;
       case 'Driver':
         return <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ (Driver)</span>;
       case 'Both':
@@ -86,7 +90,7 @@ export default function Navbar() {
                 <span>โปรไฟล์</span>
               </Link>
 
-              {(user.role === 'Admin' || user.email === 'admin@ikoshare.com') && (
+              {isAdmin && (
                 <Link
                   to="/admin"
                   className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100"
@@ -192,7 +196,7 @@ export default function Navbar() {
                 <span>โปรไฟล์ ({user.name})</span>
               </Link>
 
-              {(user.role === 'Admin' || user.email === 'admin@ikoshare.com') && (
+              {isAdmin && (
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}

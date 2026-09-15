@@ -46,7 +46,7 @@ const updateProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อ-นามสกุล' });
     }
 
-    const validRole = ['Driver', 'Passenger', 'Both'].includes(role) ? role : undefined;
+    const validRole = ['Driver', 'Passenger', 'Both', 'Admin'].includes(role) ? role : undefined;
 
     let updateQuery = `
       UPDATE users
