@@ -14,12 +14,11 @@ const createReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'คะแนนเรตติ้งต้องอยู่ระหว่าง 1 ถึง 5 ดาว' });
     }
 
-    // Insert review
     const reviewRes = await db.query(
       `INSERT INTO reviews (trip_id, reviewer_id, target_user_id, rating, comment, created_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
-      [trip_id, target_user_id, parseInt(rating), comment || null]
+      [trip_id, reviewerId, target_user_id, parseInt(rating), comment ? comment.trim() : null]
     );
 
     res.status(201).json({

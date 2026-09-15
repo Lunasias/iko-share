@@ -19,6 +19,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const { ensureSchema, runMigrations } = require('./config/migrate');
 
 const app = express();
 
@@ -41,9 +42,33 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/memories', memoryRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Iko Share API', timestamp: new Date() });
+// Health check endpoint (also self-heals a missing schema, e.g. on Vercel cold start)
+app.get('/api/health', async (req, res) => {
+  const migration = await ensureSchema();
+  res.json({
+    status: 'ok',
+    service: 'Iko Share API',
+    database: migration.success ? 'ready' : 'not-ready',
+    migrationError: migration.success ? undefined : migration.error,
+    timestamp: new Date(),
+  });
+});
+
+// Explicit endpoint to create / repair tables in Neon PostgreSQL
+app.post('/api/migrate', async (req, res) => {
+  try {
+    const result = await runMigrations();
+    if (!result.success) {
+      return res.status(503).json({
+        success: false,
+        message: 'ยังไม่ได้ตั้งค่า DATABASE_URL จึงไม่สามารถซิงค์ฐานข้อมูลได้',
+        ...result,
+      });
+    }
+    res.json({ success: true, message: 'ซิงค์โครงสร้างฐานข้อมูลเรียบร้อยแล้ว', ...result });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'ไม่สามารถซิงค์โครงสร้างฐานข้อมูลได้: ' + (error.message || String(error)) });
+  }
 });
 
 // 404 handler for API routes
@@ -62,8 +87,11 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Iko Share Backend Server running on port ${PORT}`);
+  // Ensure the Neon schema exists before accepting traffic, then start listening.
+  ensureSchema().finally(() => {
+    app.listen(PORT, () => {
+      console.log(`Iko Share Backend Server running on port ${PORT}`);
+    });
   });
 }
 
