@@ -23,7 +23,7 @@ const getTripMessages = async (req, res) => {
     const userId = req.user.user_id || req.user.id;
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'Admin') {
+    if (!hasAccess && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถแชทได้' });
     }
 
@@ -58,7 +58,7 @@ const sendMessage = async (req, res) => {
     }
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'Admin') {
+    if (!hasAccess && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถส่งข้อความได้' });
     }
 
@@ -80,7 +80,31 @@ const sendMessage = async (req, res) => {
   }
 };
 
+// Report inappropriate message / profanity
+const reportMessage = async (req, res) => {
+  try {
+    const { id } = req.params; // message_id
+    const reporterId = req.user.user_id || req.user.id;
+    const { reason } = req.body;
+
+    await db.query(
+      `INSERT INTO chat_reports (message_id, reporter_id, reason, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [id, reporterId, reason || 'ข้อความไม่เหมาะสม / คำหยาบคาย']
+    );
+
+    res.json({
+      success: true,
+      message: 'ส่งรายงานข้อความไม่เหมาะสมไปยังแอดมินเรียบร้อยแล้ว ขอบคุณที่ช่วยดูแลความปลอดภัยของชุมชน',
+    });
+  } catch (error) {
+    console.error('Report message error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการส่งรายงาน: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getTripMessages,
   sendMessage,
+  reportMessage,
 };

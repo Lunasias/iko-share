@@ -42,31 +42,38 @@ export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, tar
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="neu-card max-w-md w-full p-6 sm:p-8 relative space-y-4">
-        <button onClick={onClose} className="absolute top-5 right-5 text-slate-500 hover:text-[#3D4852]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div className="travel-card max-w-md w-full p-6 sm:p-8 relative space-y-4 border border-slate-200 shadow-2xl">
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 p-1.5 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+        >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-lg font-black text-[#3D4852] font-['Plus_Jakarta_Sans',sans-serif]">ให้คะแนนและรีวิวผู้ร่วมเดินทาง</h3>
-        <p className="text-xs text-[#6B7280]">ให้คะแนนประสบการณ์เดินทางของคุณกับ <span className="font-bold text-[#6C63FF]">{targetName}</span></p>
+        <h3 className="text-lg font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
+          ให้คะแนนและรีวิวเพื่อนร่วมทาง
+        </h3>
+        <p className="text-xs text-slate-500 font-medium">
+          แชร์ความประทับใจที่คุณมีต่อ <span className="font-bold text-emerald-700">{targetName}</span>
+        </p>
 
         {success ? (
-          <div className="p-4 rounded-2xl bg-[#38B2AC]/10 border border-[#38B2AC]/20 text-[#2C7A7B] text-xs font-bold text-center flex flex-col items-center gap-2">
-            <CheckCircle className="w-8 h-8" />
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold text-center flex flex-col items-center gap-2">
+            <CheckCircle className="w-8 h-8 text-emerald-600" />
             <span>ขอบคุณสำหรับคะแนนและรีวิวของคุณ!</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-center gap-2 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Rating Stars */}
-            <div className="flex justify-center items-center gap-3 py-3 neu-inset">
+            <div className="flex justify-center items-center gap-3 py-3 bg-slate-50 rounded-2xl border border-slate-200">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   type="button"
@@ -80,20 +87,20 @@ export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, tar
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">ความคิดเห็นเพิ่มเติม (Optional)</label>
+              <label className="text-xs font-bold text-slate-800">ความคิดเห็นเพิ่มเติม (Optional)</label>
               <textarea
                 rows="3"
-                placeholder="แบ่งปันความประทับใจเกี่ยวกับความตรงต่อเวลา อัธยาศัย หรือความปลอดภัย..."
+                placeholder="แบ่งปันความประทับใจเกี่ยวกับความตรงต่อเวลา อัธยาศัยดี หรือความปลอดภัย..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full px-4 py-3 neu-input text-xs resize-none"
+                className="w-full px-4 py-3 travel-input text-xs resize-none"
               ></textarea>
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 neu-button-primary font-bold text-xs disabled:opacity-50"
+              className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-sm"
             >
               {submitting ? 'กำลังส่งรีวิว...' : 'บันทึกคะแนนรีวิว'}
             </button>

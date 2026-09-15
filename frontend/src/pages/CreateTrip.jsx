@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, MapPin, Calendar, Clock, Users, DollarSign, Car, AlertCircle, ShieldAlert } from 'lucide-react';
+import CarLoader from '../components/CarLoader';
+import { PlusCircle, MapPin, Calendar, Clock, Users, DollarSign, Car, AlertCircle, ShieldAlert, Sparkles, HeartHandshake, Tag } from 'lucide-react';
 
 export default function CreateTrip() {
   const { user } = useAuth();
@@ -11,13 +12,18 @@ export default function CreateTrip() {
   const [cars, setCars] = useState([]);
   const [events, setEvents] = useState([]);
   const [licensePlate, setLicensePlate] = useState('');
-  const [eventId, setEventId] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [customEventName, setCustomEventName] = useState('');
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [seats, setSeats] = useState(4);
   const [price, setPrice] = useState(0);
+
+  // New fields requested by user: Driver personality & passenger requirements
+  const [driverPersonality, setDriverPersonality] = useState('สายชิล ชอบฟังเพลง ขับนิ่มปลอดภัย');
+  const [passengerRequirements, setPassengerRequirements] = useState('ตรงต่อเวลา สัมภาระปานกลาง พูดคุยเป็นกันเอง');
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -70,12 +76,15 @@ export default function CreateTrip() {
       const departureTime = `${date}T${time}:00`;
       const res = await API.post('/trips', {
         license_plate: licensePlate,
-        event_id: eventId ? parseInt(eventId) : null,
+        event_id: selectedEventId ? parseInt(selectedEventId) : null,
+        custom_event_name: customEventName ? customEventName.trim() : null,
         origin,
         destination,
         departure_time: departureTime,
         available_seats: parseInt(seats),
         price_seat: parseFloat(price),
+        driver_personality: driverPersonality,
+        passenger_requirements: passengerRequirements,
       });
 
       if (res.data.success) {
@@ -92,26 +101,21 @@ export default function CreateTrip() {
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-20 space-y-3">
-        <div className="inline-block w-8 h-8 border-4 border-[#6C63FF] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[#6B7280] text-xs font-semibold">กำลังตรวจสอบสิทธิ์ข้อมูลคนขับและรถยนต์...</p>
-      </div>
-    );
+    return <CarLoader text="กำลังตรวจสอบสิทธิ์ข้อมูลคนขับและรถยนต์..." />;
   }
 
   if (cars.length === 0) {
     return (
       <div className="max-w-xl mx-auto my-12 px-4">
-        <div className="neu-card p-8 text-center space-y-4">
+        <div className="travel-card p-8 text-center space-y-4 border-amber-200 bg-amber-50/50">
           <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" />
-          <h3 className="text-xl font-black text-[#3D4852]">ยังไม่สามารถสร้างเที่ยวรถได้</h3>
-          <p className="text-[#6B7280] text-xs font-medium">
+          <h3 className="text-xl font-black text-slate-900">ยังไม่สามารถสร้างเที่ยวรถได้</h3>
+          <p className="text-slate-600 text-xs font-medium">
             กรุณาลงทะเบียนข้อมูลรถของคุณก่อนสร้างทริป (Driver Verification System)
           </p>
           <Link
             to="/cars"
-            className="inline-block neu-button-primary px-6 py-3 text-xs font-bold"
+            className="inline-block travel-btn-primary px-6 py-3 text-xs font-bold"
           >
             + ลงทะเบียนรถยนต์ตอนนี้
           </Link>
@@ -123,37 +127,39 @@ export default function CreateTrip() {
   const selectedCar = cars.find((c) => c.license_plate === licensePlate);
 
   return (
-    <div className="max-w-2xl mx-auto my-10 px-4">
-      <div className="neu-card p-8 space-y-6">
+    <div className="max-w-3xl mx-auto my-8 px-4">
+      <div className="travel-card p-6 sm:p-8 space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-4 rounded-2xl neu-inset text-[#6C63FF] mb-2">
+          <div className="inline-flex p-4 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 mb-1">
             <PlusCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-[#3D4852] font-['Plus_Jakarta_Sans',sans-serif]">เปิดการเดินทางใหม่ (คาร์พูล)</h2>
-          <p className="text-xs text-[#6B7280]">เลือกรถที่ลงทะเบียนไว้เพื่อเปิดรับเพื่อนร่วมเดินทาง</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
+            เปิดการเดินทางใหม่ (สร้างทริปท่องเที่ยว)
+          </h2>
+          <p className="text-xs text-slate-500 font-medium">เลือกรถที่ลงทะเบียนไว้ กำหนดคุณสมบัติผู้ร่วมทริป และเปิดรับเพื่อนร่วมทาง</p>
         </div>
 
         {error && (
-          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-start gap-2 font-medium">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 font-semibold">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Select Registered Car */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#3D4852]">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
-            <div className="flex items-center gap-2 px-4 py-3 neu-input">
-              <Car className="w-5 h-5 text-[#6C63FF] shrink-0" />
+            <label className="text-xs font-bold text-slate-800">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
+            <div className="flex items-center gap-2 px-4 py-3 travel-input">
+              <Car className="w-5 h-5 text-emerald-600 shrink-0" />
               <select
                 required
                 value={licensePlate}
                 onChange={(e) => handleCarChange(e.target.value)}
-                className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-semibold"
               >
                 {cars.map((c) => (
-                  <option key={c.license_plate} value={c.license_plate} className="bg-[#E0E5EC] text-[#3D4852]">
+                  <option key={c.license_plate} value={c.license_plate}>
                     {c.license_plate} - {c.model} (ความจุ {c.capacity} ที่นั่ง)
                   </option>
                 ))}
@@ -161,53 +167,76 @@ export default function CreateTrip() {
             </div>
           </div>
 
-          {/* Select Event (Optional) */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#3D4852]">เชื่อมโยงกับกิจกรรม/อีเวนต์ (ถ้ามี)</label>
-            <div className="flex items-center gap-2 px-4 py-3 neu-input">
-              <Calendar className="w-5 h-5 text-purple-600 shrink-0" />
-              <select
-                value={eventId}
-                onChange={(e) => setEventId(e.target.value)}
-                className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
-              >
-                <option value="" className="bg-[#E0E5EC] text-slate-500">-- ไม่ระบุอีเวนต์ (เส้นทางทั่วไป) --</option>
-                {events.map((ev) => (
-                  <option key={ev.event_id} value={ev.event_id} className="bg-[#E0E5EC] text-[#3D4852]">
-                    {ev.event_name} ({ev.location})
-                  </option>
-                ))}
-              </select>
+          {/* Event Selection & Custom Event Name (PDF Page 3 note: ยังไม่มีใส่ชื่อ EVEN) */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Tag className="w-4 h-4 text-purple-600" />
+              <span>กิจกรรมหรืออีเวนต์ที่เกี่ยวข้อง (Event)</span>
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-600 font-bold">เลือกอีเวนต์ที่มีในระบบ</span>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => {
+                    setSelectedEventId(e.target.value);
+                    if (e.target.value) setCustomEventName('');
+                  }}
+                  className="w-full px-4 py-2.5 travel-input text-xs"
+                >
+                  <option value="">-- ไม่ระบุ (เที่ยวทั่วไป) --</option>
+                  {events.map((ev) => (
+                    <option key={ev.event_id} value={ev.event_id}>
+                      {ev.event_name} ({ev.location})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-600 font-bold">หรือ พิมพ์ระบุชื่ออีเวนต์เอง</span>
+                <input
+                  type="text"
+                  placeholder="เช่น Wonderfruit, คอนเสิร์ตเขาใหญ่, บิ๊กเมาน์เท่น"
+                  value={customEventName}
+                  onChange={(e) => {
+                    setCustomEventName(e.target.value);
+                    if (e.target.value) setSelectedEventId('');
+                  }}
+                  className="w-full px-4 py-2.5 travel-input text-xs"
+                />
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">ต้นทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
-                <MapPin className="w-5 h-5 text-[#6C63FF] shrink-0" />
+              <label className="text-xs font-bold text-slate-800">จุดเริ่มต้น (ต้นทาง)</label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
                 <input
                   type="text"
                   required
-                  placeholder="เช่น อนุสาวรีย์ชัยฯ"
+                  placeholder="เช่น อนุสาวรีย์ชัยฯ, เซ็นทรัลพระราม 9"
                   value={origin}
                   onChange={(e) => setOrigin(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">ปลายทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
-                <MapPin className="w-5 h-5 text-[#38B2AC] shrink-0" />
+              <label className="text-xs font-bold text-slate-800">จุดหมายปลายทาง</label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <MapPin className="w-5 h-5 text-teal-600 shrink-0" />
                 <input
                   type="text"
                   required
-                  placeholder="เช่น สวนลุมพินี"
+                  placeholder="เช่น พัทยา, เขาใหญ่, เชียงใหม่"
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                 />
               </div>
             </div>
@@ -215,29 +244,29 @@ export default function CreateTrip() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">วันที่เดินทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
-                <Calendar className="w-5 h-5 text-[#6C63FF] shrink-0" />
+              <label className="text-xs font-bold text-slate-800">วันที่เดินทาง</label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
                 <input
                   type="date"
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">เวลาออกเดินทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
+              <label className="text-xs font-bold text-slate-800">เวลาออกเดินทาง</label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
                 <Clock className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="time"
                   required
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                 />
               </div>
             </div>
@@ -245,11 +274,11 @@ export default function CreateTrip() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">
+              <label className="text-xs font-bold text-slate-800">
                 จำนวนที่นั่งเปิดรับ (สูงสุด {selectedCar?.capacity || 4} ที่นั่ง)
               </label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
-                <Users className="w-5 h-5 text-[#38B2AC] shrink-0" />
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <Users className="w-5 h-5 text-teal-600 shrink-0" />
                 <input
                   type="number"
                   min="1"
@@ -257,33 +286,64 @@ export default function CreateTrip() {
                   required
                   value={seats}
                   onChange={(e) => setSeats(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-bold"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#3D4852]">ค่าโดยสาร / ที่นั่ง (บาท)</label>
-              <div className="flex items-center gap-2 px-4 py-3 neu-input">
-                <DollarSign className="w-5 h-5 text-[#38B2AC] shrink-0" />
+              <label className="text-xs font-bold text-slate-800">ค่าโดยสารหารเฉลี่ย / ที่นั่ง (บาท)</label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <DollarSign className="w-5 h-5 text-emerald-600 shrink-0" />
                 <input
                   type="number"
                   min="0"
                   required
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  className="bg-transparent border-none text-[#3D4852] text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-bold"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Personality of Driver & Passenger Criteria (User Request) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-emerald-900 flex items-center gap-1">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span>นิสัยและสไตล์ของคนขับ</span>
+              </label>
+              <input
+                type="text"
+                placeholder="เช่น สายชิล, เปิดเพลงเพราะ, ขับนิ่ม, ไม่สูบบุหรี่"
+                value={driverPersonality}
+                onChange={(e) => setDriverPersonality(e.target.value)}
+                className="w-full px-4 py-2.5 travel-input text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-emerald-900 flex items-center gap-1">
+                <HeartHandshake className="w-4 h-4 text-emerald-600" />
+                <span>คุณสมบัติผู้ร่วมทริปที่ต้องการ</span>
+              </label>
+              <input
+                type="text"
+                placeholder="เช่น ตรงต่อเวลา, สัมภาระน้อย, เป็นกันเอง"
+                value={passengerRequirements}
+                onChange={(e) => setPassengerRequirements(e.target.value)}
+                className="w-full px-4 py-2.5 travel-input text-xs"
+              />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 neu-button-primary font-bold text-sm disabled:opacity-50 mt-2"
+            className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg"
           >
-            {submitting ? 'กำลังเปิดการเดินทาง...' : 'บันทึกเปิดการเดินทาง'}
+            {submitting ? 'กำลังเปิดการเดินทาง...' : '🚀 ยืนยันเปิดทริปท่องเที่ยว'}
           </button>
         </form>
       </div>

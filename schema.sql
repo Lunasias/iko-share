@@ -1,4 +1,4 @@
--- ER Diagram Aligned Schema for Iko Share (Neon PostgreSQL) with Bio Column
+-- ER Diagram Aligned Schema for Iko Share (Neon PostgreSQL) with Travel Enhancements
 
 CREATE TABLE IF NOT EXISTS users (
   user_id SERIAL PRIMARY KEY,
@@ -31,11 +31,15 @@ CREATE TABLE IF NOT EXISTS trips (
   trip_id SERIAL PRIMARY KEY,
   license_plate VARCHAR(50) REFERENCES cars(license_plate) ON DELETE CASCADE,
   event_id INT REFERENCES events(event_id) ON DELETE SET NULL,
+  custom_event_name VARCHAR(255),
   origin VARCHAR(255) NOT NULL,
   destination VARCHAR(255) NOT NULL,
   departure_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   available_seats INT NOT NULL DEFAULT 4,
   price_seat NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  driver_personality VARCHAR(255),
+  passenger_requirements VARCHAR(255),
+  trip_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (trip_status IN ('active', 'completed', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -43,7 +47,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
-  booking_status VARCHAR(20) NOT NULL DEFAULT 'จองแล้ว' CHECK (booking_status IN ('จองแล้ว', 'ยกเลิกแล้ว')),
+  booking_status VARCHAR(20) NOT NULL DEFAULT 'รอการอนุมัติ' CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว')),
   location VARCHAR(255),
   booking_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -56,6 +60,14 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS chat_reports (
+  report_id SERIAL PRIMARY KEY,
+  message_id INT REFERENCES chat_messages(message_id) ON DELETE CASCADE,
+  reporter_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS reviews (
   review_id SERIAL PRIMARY KEY,
   trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
@@ -63,6 +75,15 @@ CREATE TABLE IF NOT EXISTS reviews (
   target_user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS trip_memories (
+  memory_id SERIAL PRIMARY KEY,
+  trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
+  user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+  photo_url TEXT NOT NULL,
+  caption TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

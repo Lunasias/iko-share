@@ -17,15 +17,16 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const memoryRoutes = require('./routes/memoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
-// Security and middleware
+// Security and middleware (increased payload limit for direct Base64 photo uploads)
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // API Routes
@@ -37,6 +38,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/memories', memoryRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
