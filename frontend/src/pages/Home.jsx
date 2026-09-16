@@ -7,8 +7,17 @@ export default function Home() {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
   const { t } = useTheme();
+
+  const handlePointerMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPointer({
+      x: ((event.clientX - rect.left) / rect.width - 0.5) * 2,
+      y: ((event.clientY - rect.top) / rect.height - 0.5) * 2,
+    });
+  };
 
   useEffect(() => {
     const revealItems = document.querySelectorAll('.reveal-on-scroll');
@@ -34,11 +43,18 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-16 pb-16">
+    <div className="home-page space-y-16 pb-16">
       {/* Hero Section */}
-      <section className="relative pt-12 pb-16 text-center px-4 reveal-on-scroll">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--muted)] border border-[var(--border)] text-[var(--accent)] motion-shimmer rounded-full text-xs font-black shadow-2xs">
+      <section
+        className="home-hero relative pt-16 pb-20 text-center px-4 reveal-on-scroll"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={() => setPointer({ x: 0, y: 0 })}
+      >
+        <div
+          className="max-w-4xl mx-auto space-y-6 home-hero-content"
+          style={{ '--pointer-x': `${pointer.x * 3}px`, '--pointer-y': `${pointer.y * 3}px` }}
+        >
+          <div className="home-badge inline-flex items-center gap-2 px-4 py-2 text-[var(--accent-secondary)] motion-shimmer rounded-full text-xs font-black">
             <Compass className="w-4 h-4 text-[var(--accent)] motion-orbit" />
             <span>{t('badge')}</span>
           </div>
@@ -55,7 +71,7 @@ export default function Home() {
           {/* Search Box */}
           <form
             onSubmit={handleSearch}
-            className="max-w-3xl mx-auto travel-card p-4 sm:p-5 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 shadow-lg border border-slate-200 transition-shadow duration-[600ms] focus-within:shadow-xl"
+            className="max-w-3xl mx-auto home-search-glass p-4 sm:p-5 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 transition-shadow duration-[600ms] focus-within:shadow-xl"
           >
             <div className="flex-1 flex items-center gap-2 px-4 py-3 travel-input">
               <MapPin className="w-5 h-5 text-[var(--accent)] shrink-0" />
@@ -101,7 +117,7 @@ export default function Home() {
       </section>
 
       {/* Feature Highlights */}
-      <section className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="home-features max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="travel-card p-8 space-y-4 travel-card-hover border border-slate-200">
           <div className="w-12 h-12 rounded-2xl bg-[var(--muted)] text-[var(--accent)] border border-[var(--border)] flex items-center justify-center">
             <Users className="w-6 h-6" />
