@@ -92,6 +92,34 @@ button, a, input { touch-action: manipulation; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Shared motion language: fast, deliberate and GPU-friendly. */
+:root {
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 160ms;
+  --motion-base: 240ms;
+  --motion-enter: 420ms;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.page-enter { animation: page-enter var(--motion-enter) var(--motion-ease) both; }
+.overlay-enter { animation: overlay-enter var(--motion-base) ease-out both; }
+.modal-enter { animation: modal-enter var(--motion-base) var(--motion-ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .overlay-enter, .modal-enter { animation: none; }
+}
+
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(14px);
@@ -124,14 +152,20 @@ button, a, input { touch-action: manipulation; }
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(26,26,26,0.04);
-    transition: box-shadow 200ms ease-out, border-color 200ms ease-out, background-color 200ms ease-out;
+    transition: box-shadow var(--motion-base) var(--motion-ease), border-color var(--motion-base) ease-out, background-color var(--motion-base) ease-out, transform var(--motion-base) var(--motion-ease);
   }
 
+  .travel-card-hover { will-change: transform; }
   .travel-card-hover:hover {
-    box-shadow: 0 4px 12px rgba(26,26,26,0.06);
+    box-shadow: 0 10px 24px rgba(26,26,26,0.08);
     border-color: var(--accent-secondary);
     background-color: var(--muted);
+    transform: translate3d(0, -3px, 0);
   }
+  .travel-card-hover:active { transform: translate3d(0, -1px, 0); }
+
+  .travel-card-hover svg { transition: transform var(--motion-base) var(--motion-ease); }
+  .travel-card-hover:hover svg { transform: translate3d(0, -1px, 0); }
 
   /* Clear High-Contrast Input */
   .travel-input {
@@ -156,8 +190,9 @@ button, a, input { touch-action: manipulation; }
     font-weight: 600;
     border-radius: 6px;
     box-shadow: 0 1px 2px rgba(184,134,11,0.18);
-    transition: all 200ms ease-out;
+    transition: background-color var(--motion-base) ease-out, box-shadow var(--motion-base) var(--motion-ease), transform var(--motion-fast) var(--motion-ease), color var(--motion-base) ease-out;
     min-height: 44px;
+    will-change: transform;
   }
 
   .travel-btn-primary:hover {
@@ -166,7 +201,9 @@ button, a, input { touch-action: manipulation; }
     transform: translateY(-2px);
   }
 
-  .travel-btn-primary:active { transform: translateY(0); }
+  .travel-btn-primary:active { transform: translate3d(0, 0, 0) scale(.97); }
+  .travel-btn-primary:disabled { cursor: wait; transform: none; }
+  .travel-btn-primary:focus-visible, .travel-btn-secondary:focus-visible, .travel-btn-danger:focus-visible { outline-offset: 3px; }
 
   .travel-btn-secondary {
     background-color: transparent;
@@ -178,7 +215,8 @@ button, a, input { touch-action: manipulation; }
     min-height: 44px;
   }
 
-  .travel-btn-secondary:hover { background-color: var(--muted); color: var(--accent); border-color: var(--accent); }
+  .travel-btn-secondary:hover { background-color: var(--muted); color: var(--accent); border-color: var(--accent); transform: translate3d(0, -1px, 0); }
+  .travel-btn-secondary:active, .travel-btn-danger:active { transform: scale(.97); }
 
   .travel-btn-danger {
     background-color: #FEE2E2;

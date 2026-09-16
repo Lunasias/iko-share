@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
@@ -14,6 +14,27 @@ import Profile from './pages/Profile';
 import Cars from './pages/Cars';
 import Admin from './pages/Admin';
 
+function RoutedMain() {
+  const location = useLocation();
+
+  return (
+    <main className="flex-grow page-enter" key={location.pathname}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/trips" element={<Trips />} />
+        <Route path="/trips/:id" element={<TripDetail />} />
+        <Route path="/create-trip" element={<CreateTrip />} />
+        <Route path="/my-trips" element={<MyTrips />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/cars" element={<Cars />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
+    </main>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -21,20 +42,7 @@ export default function App() {
         <Router>
         <div className="site-shell min-h-screen flex flex-col justify-between selection:bg-[var(--accent)] selection:text-white">
           <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/trips" element={<Trips />} />
-              <Route path="/trips/:id" element={<TripDetail />} />
-              <Route path="/create-trip" element={<CreateTrip />} />
-              <Route path="/my-trips" element={<MyTrips />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/cars" element={<Cars />} />
-              <Route path="/admin" element={<Admin />} />
-            </Routes>
-          </main>
+          <RoutedMain />
           <footer className="glass-panel border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted-foreground)]">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
               <div>© 2026 Iko Share. สงวนลิขสิทธิ์ทุกประการ</div>
