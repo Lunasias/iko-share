@@ -52,7 +52,7 @@ export default function ImmersiveFullscreenNav({ links = [], onLogout }) {
   useEffect(() => () => { document.body.style.overflow = ''; }, []);
 
   return (
-    <div ref={rootRef} className="md:hidden">
+    <div ref={rootRef}>
       <button ref={toggleRef} type="button" onClick={() => setIsOpen((value) => !value)} aria-label={isOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={isOpen} className="relative z-[80] flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-xl text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
         <span className={`h-0.5 w-6 bg-current transition duration-500 ${isOpen ? 'translate-y-2 rotate-45' : ''}`} />
         <span className={`h-0.5 w-6 bg-current transition duration-300 ${isOpen ? 'scale-x-0 opacity-0' : ''}`} />

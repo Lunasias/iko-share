@@ -41,7 +41,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-3 lg:gap-5">
+        <div className="hidden items-center gap-3 lg:gap-5">
           <Link
             to="/trips"
             className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors px-3 py-2 rounded-xl hover:bg-slate-50"
