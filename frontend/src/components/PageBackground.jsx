@@ -6,14 +6,14 @@ const image = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=
 // Bright, tree-covered mountain and nature scenes; each route family has its own image.
 const backgrounds = {
   home: image('photo-1464822759023-fed622ff2c3b'),
-  trips: image('photo-1500534623283-312aade485b7'),
+  trips: image('photo-1470770841072-f978cf4d019e'),
   detail: image('photo-1470770841072-f978cf4d019e'),
   auth: image('photo-1464278533981-50106e6176b1'),
   profile: image('photo-1501785888041-af3ef285b470'),
   create: image('photo-1441974231531-c6227db76b6e'),
   mine: image('photo-1469474968028-56623f02e42e'),
   cars: image('photo-1500530855697-b586d89ba3ee'),
-  admin: image('photo-1500534623283-312aade485b7'),
+  admin: image('photo-1501785888041-af3ef285b470'),
 };
 
 function getVariant(pathname) {
