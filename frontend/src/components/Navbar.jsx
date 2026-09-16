@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sparkles } from 'lucide-react';
@@ -7,6 +7,20 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 12);
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -30,7 +44,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 lg:px-8 py-3 shadow-xs">
+    <nav className={`sticky top-0 z-50 border-b px-4 lg:px-8 py-3 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md border-[var(--accent)]/30 shadow-md' : 'bg-white border-slate-200 shadow-xs'}`}>
+
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
@@ -135,8 +150,10 @@ export default function Navbar() {
         {/* Mobile Hamburger Toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100"
-          aria-label="Toggle Navigation Menu"
+          className="md:hidden min-h-[44px] min-w-[44px] p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+          aria-label={mobileMenuOpen ? 'ปิดเมนูนำทาง' : 'เปิดเมนูนำทาง'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -144,7 +161,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden mt-3 pt-4 pb-6 border-t border-slate-200 space-y-2 px-2">
+        <div id="mobile-navigation" className="md:hidden mt-3 pt-4 pb-6 border-t border-slate-200 space-y-2 px-2 animate-[editorial-reveal_200ms_ease-out]">
           <Link
             to="/trips"
             onClick={() => setMobileMenuOpen(false)}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar as CalendarIcon, ShieldCheck, Users, HeartHandshake, Sparkles, Compass } from 'lucide-react';
 
@@ -7,6 +7,20 @@ export default function Home() {
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const revealItems = document.querySelectorAll('.reveal-on-scroll');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -20,7 +34,7 @@ export default function Home() {
   return (
     <div className="space-y-16 pb-16">
       {/* Hero Section */}
-      <section className="relative pt-12 pb-16 text-center px-4">
+      <section className="relative pt-12 pb-16 text-center px-4 reveal-on-scroll">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-black shadow-2xs">
             <Compass className="w-4 h-4 text-emerald-600 animate-spin-slow" />
@@ -39,7 +53,7 @@ export default function Home() {
           {/* Search Box */}
           <form
             onSubmit={handleSearch}
-            className="max-w-3xl mx-auto travel-card p-4 sm:p-5 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 shadow-lg border border-slate-200"
+            className="max-w-3xl mx-auto travel-card p-4 sm:p-5 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 shadow-lg border border-slate-200 transition-shadow duration-300 focus-within:shadow-xl"
           >
             <div className="flex-1 flex items-center gap-2 px-4 py-3 travel-input">
               <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />

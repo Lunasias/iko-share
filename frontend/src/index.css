@@ -1,94 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Playfair+Display:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: #FAFAF8;
+  --foreground: #1A1A1A;
+  --muted: #F5F3F0;
+  --muted-foreground: #6B6B6B;
+  --accent: #B8860B;
+  --accent-secondary: #D4A84B;
+  --border: #E8E4DF;
+  --card: #FFFFFF;
+  --ring: #B8860B;
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--background);
+  color: var(--foreground);
+  line-height: 1.75;
+}
+
+button, a, input { touch-action: manipulation; }
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+@keyframes editorial-reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+.reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal-on-scroll { opacity: 1; transform: none; }
+}
+
 @layer utilities {
+  .editorial-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
   /* Travel Theme Card */
   .travel-card {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease-in-out;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(26,26,26,0.04);
+    transition: box-shadow 200ms ease-out, border-color 200ms ease-out, background-color 200ms ease-out;
   }
 
   .travel-card-hover:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-    border-color: #CBD5E1;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26,26,26,0.06);
+    border-color: var(--accent-secondary);
+    background-color: var(--muted);
   }
 
   /* Clear High-Contrast Input */
   .travel-input {
-    background-color: #FFFFFF;
-    border: 1.5px solid #CBD5E1;
-    border-radius: 16px;
-    color: #0F172A;
-    font-weight: 500;
-    transition: all 0.15s ease-in-out;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--foreground);
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
   }
 
-  .travel-input:focus {
-    outline: none;
-    border-color: #059669;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  .travel-input:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--background);
   }
 
-  .travel-input::placeholder {
-    color: #94A3B8;
-    font-weight: 400;
-  }
+  .travel-input::placeholder { color: var(--muted-foreground); }
 
   /* Travel Action Buttons */
   .travel-btn-primary {
-    background: linear-gradient(135deg, #059669, #047857);
+    background: var(--accent);
     color: #FFFFFF;
-    font-weight: 700;
-    border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
-    transition: all 0.15s ease-in-out;
+    font-weight: 600;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(184,134,11,0.18);
+    transition: all 200ms ease-out;
     min-height: 44px;
   }
 
   .travel-btn-primary:hover {
-    background: linear-gradient(135deg, #10B981, #059669);
-    box-shadow: 0 6px 14px rgba(5, 150, 105, 0.35);
-    transform: translateY(-1px);
+    background: var(--accent-secondary);
+    box-shadow: 0 4px 12px rgba(184,134,11,0.22);
+    transform: translateY(-2px);
   }
 
-  .travel-btn-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(5, 150, 105, 0.2);
-  }
+  .travel-btn-primary:active { transform: translateY(0); }
 
   .travel-btn-secondary {
-    background-color: #F1F5F9;
-    color: #334155;
-    font-weight: 700;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    transition: all 0.15s ease-in-out;
+    background-color: transparent;
+    color: var(--foreground);
+    font-weight: 600;
+    border: 1px solid var(--foreground);
+    border-radius: 6px;
+    transition: all 200ms ease-out;
     min-height: 44px;
   }
 
-  .travel-btn-secondary:hover {
-    background-color: #E2E8F0;
-    color: #0F172A;
-  }
+  .travel-btn-secondary:hover { background-color: var(--muted); color: var(--accent); border-color: var(--accent); }
 
   .travel-btn-danger {
     background-color: #FEE2E2;
     color: #DC2626;
     font-weight: 700;
     border: 1px solid #FECACA;
-    border-radius: 16px;
-    transition: all 0.15s ease-in-out;
+    border-radius: 6px;
+    transition: all 150ms ease-out;
   }
 
-  .travel-btn-danger:hover {
-    background-color: #FCA5A5;
-    color: #B91C1C;
-  }
+  .travel-btn-danger:hover { background-color: #FCA5A5; color: #B91C1C; }
 
   /* Travel Pills & Badges */
   .travel-pill {
@@ -102,61 +150,18 @@
   }
 
   /* Legacy utility fallbacks mapped to clean high-contrast styling */
-  .neu-card {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  }
-
-  .neu-card-sm {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  }
-
-  .neu-input {
-    background-color: #FFFFFF;
-    border: 1.5px solid #CBD5E1;
-    border-radius: 16px;
-    color: #0F172A;
-  }
-
-  .neu-input:focus {
-    border-color: #059669;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  }
-
-  .neu-button {
-    background-color: #F8FAFC;
-    color: #334155;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    font-weight: 600;
-  }
-
-  .neu-button:hover {
-    background-color: #F1F5F9;
-    color: #0F172A;
-  }
-
-  .neu-button-primary {
-    background: linear-gradient(135deg, #059669, #047857);
-    color: #FFFFFF;
-    font-weight: 700;
-    border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
-  }
-
-  .neu-inset {
-    background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-  }
-
-  .neu-pill {
-    border-radius: 9999px;
-  }
+  .neu-card, .neu-card-sm { background-color: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 2px rgba(26,26,26,0.04); }
+  .neu-input { background-color: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--foreground); }
+  .neu-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(184,134,11,0.2); }
+  .neu-button { background-color: var(--muted); color: var(--foreground); border: 1px solid var(--border); border-radius: 6px; font-weight: 600; }
+  .neu-button:hover { background-color: var(--card); color: var(--accent); }
+  .neu-button-primary { background: var(--accent); color: #FFFFFF; font-weight: 700; border-radius: 6px; box-shadow: 0 1px 2px rgba(184,134,11,0.18); }
+  .neu-inset { background-color: var(--muted); border: 1px solid var(--border); border-radius: 6px; }
+  .neu-pill { border-radius: 9999px; }
 }
+
+.glass-panel { background: rgba(255,255,255,0.78); backdrop-filter: blur(12px); }
+.font-editorial { font-family: "Playfair Display", Georgia, serif; }
+
+/* Existing utility definitions continue below. */
+
