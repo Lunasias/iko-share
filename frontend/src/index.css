@@ -73,14 +73,14 @@ button, a, input { touch-action: manipulation; }
   border-radius: 6px;
   font: 600 .72rem "Source Sans 3", sans-serif;
   letter-spacing: .04em;
-  transition: color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
+  transition: color 400ms ease-out, border-color 400ms ease-out, transform 400ms ease-out;
 }
 .theme-control:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-1px); }
 @keyframes ambient-drift { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.08) rotate(2deg); } }
 @keyframes orbit { to { transform: rotate(360deg); } }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .motion-orbit { animation: orbit 24s linear infinite; transform-origin: center; }
-.motion-shimmer { background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.24) 50%, transparent 70%); background-size: 200% 100%; animation: shimmer 4s ease-in-out infinite; }
+.motion-shimmer { background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.24) 50%, transparent 70%); background-size: 200% 100%; animation: shimmer 8s ease-in-out infinite; }
 
 :focus-visible {
   outline: 2px solid var(--ring);
@@ -95,9 +95,9 @@ button, a, input { touch-action: manipulation; }
 /* Shared motion language: fast, deliberate and GPU-friendly. */
 :root {
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-fast: 270ms;
-  --motion-base: 400ms;
-  --motion-enter: 700ms;
+  --motion-fast: 540ms;
+  --motion-base: 800ms;
+  --motion-enter: 1400ms;
 }
 
 @keyframes page-enter {
@@ -163,7 +163,7 @@ button, a, input { touch-action: manipulation; }
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(circle at 12% 0%, rgba(255,255,255,.26), transparent 35%);
+    background: radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent-secondary) 10%, transparent), transparent 35%);
     opacity: .7;
   }
 
@@ -173,7 +173,7 @@ button, a, input { touch-action: manipulation; }
     background-color: var(--muted);
     transform: perspective(900px) translate3d(0, -4px, 0) rotateX(.7deg) rotateY(-.7deg);
   }
-  .travel-card-hover:hover::before { opacity: 1; background: radial-gradient(circle at 25% 0%, rgba(255,255,255,.38), transparent 40%); }
+  .travel-card-hover:hover::before { opacity: 1; background: radial-gradient(circle at 25% 0%, color-mix(in srgb, var(--accent-secondary) 16%, transparent), transparent 40%); }
   .travel-card-hover:focus-within { box-shadow: 0 12px 28px rgba(26,26,26,0.10); }
 
   .trips-page .travel-card { border-color: var(--border) !important; }
@@ -191,7 +191,7 @@ button, a, input { touch-action: manipulation; }
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--foreground);
-    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+    transition: border-color 300ms ease-out, box-shadow 300ms ease-out;
   }
 
   .travel-input:focus-within {
@@ -233,7 +233,7 @@ button, a, input { touch-action: manipulation; }
     font-weight: 600;
     border: 1px solid var(--foreground);
     border-radius: 6px;
-    transition: all 200ms ease-out;
+    transition: all 400ms ease-out;
     min-height: 44px;
   }
 
@@ -246,7 +246,7 @@ button, a, input { touch-action: manipulation; }
     font-weight: 700;
     border: 1px solid #FECACA;
     border-radius: 6px;
-    transition: all 150ms ease-out;
+    transition: all 300ms ease-out;
   }
 
   .travel-btn-danger:hover { background-color: #FCA5A5; color: #B91C1C; }

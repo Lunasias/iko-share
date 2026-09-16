@@ -11,7 +11,7 @@ export default function CarLoader({ text = 'กำลังโหลดข้อ
           <div className="w-12 h-full bg-[var(--accent)] rounded-full motion-shimmer"></div>
         </div>
         {/* Bouncing & Driving Car */}
-        <div className="flex flex-col items-center animate-[editorial-reveal_420ms_ease-out_infinite_alternate]">
+        <div className="flex flex-col items-center animate-[editorial-reveal_840ms_ease-out_infinite_alternate]">
           <div className="p-3 bg-[var(--accent)] text-white rounded-lg shadow-lg shadow-[var(--accent)]/30 flex items-center justify-center">
             <Car className="w-8 h-8 text-white" />
           </div>

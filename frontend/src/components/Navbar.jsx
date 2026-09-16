@@ -46,7 +46,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 border-b px-4 lg:px-8 py-3 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md border-[var(--accent)]/30 shadow-md' : 'bg-white border-slate-200 shadow-xs'}`}>
+    <nav className={`sticky top-0 z-50 border-b px-4 lg:px-8 py-3 transition-all duration-[600ms] ${scrolled ? 'bg-[var(--card)]/90 backdrop-blur-md border-[var(--accent)]/30 shadow-md' : 'bg-[var(--card)] border-slate-200 shadow-xs'}`}>
 
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
