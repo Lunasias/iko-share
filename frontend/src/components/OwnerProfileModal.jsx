@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import API from '../services/api';
 import CarLoader from './CarLoader';
 import { X, Star, Car, Phone, ShieldCheck, User, Calendar, AlertCircle, FileText, HeartHandshake } from 'lucide-react';
@@ -34,8 +35,8 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overlay-enter">
+  return createPortal(
+    <div className="owner-profile-overlay fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 overlay-enter">
       <div className="travel-card modal-enter max-w-lg w-full p-6 sm:p-8 relative space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
         <button
           onClick={onClose}
@@ -56,9 +57,9 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
             {/* Header Avatar & Basic Info */}
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
               {data.owner.avatar_url ? (
-                <img src={data.owner.avatar_url} alt={data.owner.name} className="w-20 h-20 rounded-full object-cover border-2 border-emerald-500 shadow-md" />
+                <img src={data.owner.avatar_url} alt={data.owner.name} className="w-20 h-20 rounded-full object-cover border-2 border-[var(--accent)] shadow-md" />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl font-black border-2 border-emerald-500 shadow-md">
+                <div className="w-20 h-20 rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,var(--card))] text-[var(--accent)] flex items-center justify-center text-2xl font-black border-2 border-[var(--accent)] shadow-md">
                   {data.owner.name ? data.owner.name.charAt(0).toUpperCase() : 'U'}
                 </div>
               )}
@@ -159,6 +160,7 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

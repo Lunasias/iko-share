@@ -228,9 +228,9 @@ export default function Trips() {
                       title="คลิกดูโปรไฟล์คนขับ"
                     >
                       {trip.driver_avatar ? (
-                        <img src={trip.driver_avatar} alt={trip.driver_name} className="w-9 h-9 rounded-full object-cover border-2 border-emerald-500" />
+                        <img src={trip.driver_avatar} alt={trip.driver_name} className="w-9 h-9 rounded-full object-cover border-2 border-[var(--accent)]" />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 border-2 border-emerald-500 flex items-center justify-center text-xs font-black">
+                        <div className="w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,var(--card))] text-[var(--accent)] border-2 border-[var(--accent)] flex items-center justify-center text-xs font-black">
                           {trip.driver_name?.charAt(0)}
                         </div>
                       )}

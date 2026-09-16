@@ -95,9 +95,9 @@ button, a, input { touch-action: manipulation; }
 /* Shared motion language: fast, deliberate and GPU-friendly. */
 :root {
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-fast: 160ms;
-  --motion-base: 240ms;
-  --motion-enter: 420ms;
+  --motion-fast: 270ms;
+  --motion-base: 400ms;
+  --motion-enter: 700ms;
 }
 
 @keyframes page-enter {
@@ -303,6 +303,10 @@ html[data-theme="dark"] .bg-amber-50, html[data-theme="dark"] .bg-amber-100 { ba
 html[data-theme="dark"] .text-amber-800, html[data-theme="dark"] .text-amber-900 { color: var(--accent-secondary) !important; }
 html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select { color: var(--foreground); background-color: var(--card); }
 html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: var(--muted-foreground); }
+html[data-theme="dark"] .site-shell nav a:hover,
+html[data-theme="dark"] .site-shell nav button:hover { color: var(--accent-secondary) !important; }
+html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in srgb, var(--accent) 14%, var(--card)) !important; }
+.owner-profile-overlay { overscroll-behavior: contain; }
 
 /* Role controls: readable amber/gold palette in both themes. */
 .role-passenger { background: #FFF1C2; color: #704B00; border-color: #D4A84B; }
