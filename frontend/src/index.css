@@ -297,12 +297,17 @@ html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::pl
 html[data-theme="dark"] .site-shell nav a:hover,
 html[data-theme="dark"] .site-shell nav button:hover { color: var(--accent-secondary) !important; }
 html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in srgb, var(--accent) 14%, var(--card)) !important; }
-.site-shell nav a.brand-link:hover {
-  background-color: transparent !important;
-  transform: translateY(-1px);
+.site-shell nav a.brand-link,
+.site-shell nav a.brand-link:hover,
+.site-shell nav a.brand-link:focus,
+.site-shell nav a.brand-link:focus-visible,
+.site-shell nav a.brand-link:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
 }
-.site-shell nav a.brand-link:focus-visible {
-  background-color: transparent !important;
+.site-shell nav a.brand-link:hover {
+  transform: translateY(-1px);
 }
 .owner-profile-overlay { overscroll-behavior: contain; }
 
