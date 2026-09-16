@@ -229,3 +229,17 @@ button, a, input { touch-action: manipulation; }
 .site-shell nav { background-color: color-mix(in srgb, var(--card) 92%, transparent) !important; border-color: var(--border) !important; }
 .site-shell h1, .site-shell h2, .site-shell h3 { color: var(--foreground); }
 
+
+
+/* Final theme overrides for legacy utilities and dark-mode contrast. */
+.text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600 { color: var(--foreground) !important; }
+.text-slate-500, .text-slate-400 { color: var(--muted-foreground) !important; }
+.bg-white { background-color: var(--card) !important; }
+.border-slate-200, .border-slate-300 { border-color: var(--border) !important; }
+.hover\\:text-emerald-700:hover { color: var(--accent) !important; }
+.hover\\:bg-slate-50:hover, .hover\\:bg-slate-100:hover { background-color: var(--muted) !important; }
+.glass-panel { background: color-mix(in srgb, var(--card) 88%, transparent); }
+html[data-theme="dark"] .bg-amber-50, html[data-theme="dark"] .bg-amber-100 { background-color: color-mix(in srgb, var(--accent) 18%, var(--card)) !important; }
+html[data-theme="dark"] .text-amber-800, html[data-theme="dark"] .text-amber-900 { color: var(--accent-secondary) !important; }
+html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select { color: var(--foreground); background-color: var(--card); }
+html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: var(--muted-foreground); }

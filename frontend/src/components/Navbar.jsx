@@ -37,11 +37,11 @@ export default function Navbar() {
       case 'Admin':
         return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้ดูแลระบบ (Admin)</span>;
       case 'Driver':
-        return <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ (Driver)</span>;
+        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ (Driver)</span>;
       case 'Both':
-        return <span className="bg-indigo-100 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ & ผู้โดยสาร</span>;
+        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ & ผู้โดยสาร</span>;
       default:
-        return <span className="bg-sky-100 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้โดยสาร</span>;
+        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้โดยสาร</span>;
     }
   };
 
