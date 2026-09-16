@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sparkles } from 'lucide-react';
+import ImmersiveFullscreenNav from './ui/immersive-full-screen-nav';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -235,6 +236,7 @@ export default function Navbar() {
           )}
         </div>
       )}
+      <ImmersiveFullscreenNav />
     </nav>
   );
 }

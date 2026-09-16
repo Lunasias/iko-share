@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar as CalendarIcon, ShieldCheck, Users, HeartHandshake, Sparkles, Compass } from 'lucide-react';
+import { LiquidButton } from '../components/ui/liquid-glass-button';
 
 export default function Home() {
   const [origin, setOrigin] = useState('');
@@ -73,13 +74,10 @@ export default function Home() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 travel-btn-primary px-8 py-3 font-bold text-sm shadow-md"
-            >
-              <Search className="w-5 h-5" />
+            <LiquidButton type="submit" className="w-full sm:w-auto">
+              <Search className="h-5 w-5" />
               <span>ค้นหาทริป</span>
-            </button>
+            </LiquidButton>
           </form>
         </div>
       </section>
