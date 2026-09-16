@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -15,9 +16,10 @@ import Admin from './pages/Admin';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+        <div className="site-shell min-h-screen flex flex-col justify-between selection:bg-[var(--accent)] selection:text-white">
           <Navbar />
           <main className="flex-grow">
             <Routes>
@@ -33,7 +35,7 @@ export default function App() {
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>
-          <footer className="glass-panel border-t border-sky-500/10 py-6 text-center text-xs text-slate-400">
+          <footer className="glass-panel border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted-foreground)]">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
               <div>© 2026 Iko Share. สงวนลิขสิทธิ์ทุกประการ</div>
               <div className="flex gap-4">
@@ -44,7 +46,8 @@ export default function App() {
             </div>
           </footer>
         </div>
-      </Router>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

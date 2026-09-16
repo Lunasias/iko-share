@@ -14,12 +14,24 @@
   --border: #E8E4DF;
   --card: #FFFFFF;
   --ring: #B8860B;
+  --ink-soft: #3F3A34;
+  --ambient: rgba(184,134,11,0.08);
   font-family: "Source Sans 3", system-ui, sans-serif;
   color: var(--foreground);
   background: var(--background);
 }
 
 html { scroll-behavior: smooth; }
+html[data-theme="dark"] {
+  --background: #171614;
+  --foreground: #F7F1E8;
+  --muted: #24211D;
+  --muted-foreground: #B7AEA1;
+  --border: #40392F;
+  --card: #211F1B;
+  --ink-soft: #D7CBB9;
+  --ambient: rgba(212,168,75,0.12);
+}
 body {
   margin: 0;
   min-width: 320px;
@@ -29,6 +41,47 @@ body {
 }
 
 button, a, input { touch-action: manipulation; }
+
+.site-shell { position: relative; isolation: isolate; overflow: hidden; }
+.site-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(circle at 12% 8%, var(--ambient), transparent 28%), radial-gradient(circle at 90% 24%, var(--ambient), transparent 24%);
+  animation: ambient-drift 14s ease-in-out infinite alternate;
+}
+.site-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+.theme-control {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem .7rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: 600 .72rem "Source Sans 3", sans-serif;
+  letter-spacing: .04em;
+  transition: color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
+}
+.theme-control:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-1px); }
+@keyframes ambient-drift { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.08) rotate(2deg); } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.motion-orbit { animation: orbit 24s linear infinite; transform-origin: center; }
+.motion-shimmer { background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.24) 50%, transparent 70%); background-size: 200% 100%; animation: shimmer 4s ease-in-out infinite; }
+
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
@@ -164,4 +217,15 @@ button, a, input { touch-action: manipulation; }
 .font-editorial { font-family: "Playfair Display", Georgia, serif; }
 
 /* Existing utility definitions continue below. */
+
+/* Legacy palette bridge: keeps all existing screens on the Serif token system. */
+.text-emerald-600, .text-emerald-700, .text-emerald-800, .text-teal-600, .text-indigo-600, .text-sky-600 { color: var(--accent) !important; }
+.text-emerald-900, .text-teal-900, .text-indigo-900, .text-sky-900 { color: var(--foreground) !important; }
+.bg-emerald-50, .bg-teal-50, .bg-indigo-50, .bg-sky-50, .bg-slate-50, .bg-slate-100 { background-color: var(--muted) !important; }
+.bg-emerald-100, .bg-teal-100, .bg-indigo-100, .bg-sky-100 { background-color: color-mix(in srgb, var(--accent) 12%, var(--card)) !important; }
+.bg-emerald-500, .bg-emerald-600, .bg-teal-600, .bg-indigo-600, .bg-sky-500 { background-color: var(--accent) !important; }
+.border-emerald-100, .border-emerald-200, .border-teal-100, .border-indigo-100, .border-sky-200, .border-slate-200 { border-color: var(--border) !important; }
+.shadow-emerald-500\/30, .shadow-emerald-600\/25 { --tw-shadow-color: var(--accent); }
+.site-shell nav { background-color: color-mix(in srgb, var(--card) 92%, transparent) !important; border-color: var(--border) !important; }
+.site-shell h1, .site-shell h2, .site-shell h3 { color: var(--foreground); }
 

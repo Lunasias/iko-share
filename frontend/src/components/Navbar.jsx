@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sun, Moon, Languages } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { isDark, language, toggleTheme, toggleLanguage, t } = useTheme();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -49,11 +51,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="p-2.5 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/25 group-hover:scale-105 transition-all">
+          <div className="p-2.5 rounded-2xl bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25 group-hover:scale-105 transition-all">
             <Car className="w-5 h-5" />
           </div>
           <span className="text-xl font-black tracking-tight text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
-            Iko <span className="text-emerald-600">Share</span>
+            Iko <span className="text-[var(--accent)]">Share</span>
           </span>
         </Link>
 
@@ -73,7 +75,7 @@ export default function Navbar() {
                 <>
                   <Link
                     to="/create-trip"
-                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)] bg-[var(--muted)] hover:bg-[var(--card)] border border-[var(--border)] px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>เปิดทริปใหม่</span>
@@ -94,7 +96,7 @@ export default function Navbar() {
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 <Calendar className="w-4 h-4 text-indigo-600" />
-                <span>การเดินทาง</span>
+                <span>{t('myTrips')}</span>
               </Link>
 
               <Link
@@ -102,7 +104,7 @@ export default function Navbar() {
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 <User className="w-4 h-4 text-emerald-600" />
-                <span>โปรไฟล์</span>
+                <span>{t('profile')}</span>
               </Link>
 
               {isAdmin && (
@@ -147,6 +149,17 @@ export default function Navbar() {
           )}
         </div>
 
+        {/* Theme and language controls */}
+        <div className="hidden md:flex items-center gap-1 mr-2 border-l border-[var(--border)] pl-3">
+          <button type="button" onClick={toggleLanguage} className="theme-control" aria-label="เปลี่ยนภาษา / Change language" title="เปลี่ยนภาษา / Change language">
+            <Languages className="w-4 h-4" />
+            <span>{language === 'th' ? 'EN' : 'TH'}</span>
+          </button>
+          <button type="button" onClick={toggleTheme} className="theme-control" aria-label="สลับโหมดสี / Toggle color mode" title="สลับโหมดสี / Toggle color mode">
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
+
         {/* Mobile Hamburger Toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -161,7 +174,11 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div id="mobile-navigation" className="md:hidden mt-3 pt-4 pb-6 border-t border-slate-200 space-y-2 px-2 animate-[editorial-reveal_200ms_ease-out]">
+        <div id="mobile-navigation" className="md:hidden mt-3 pt-4 pb-6 border-t border-[var(--border)] space-y-2 px-2 animate-[editorial-reveal_200ms_ease-out]">
+          <div className="flex gap-2 pb-2">
+            <button type="button" onClick={toggleLanguage} className="theme-control flex-1 justify-center"><Languages className="w-4 h-4" /> {language === 'th' ? 'English' : 'ภาษาไทย'}</button>
+            <button type="button" onClick={toggleTheme} className="theme-control flex-1 justify-center">{isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />} {isDark ? 'กลางวัน' : 'กลางคืน'}</button>
+          </div>
           <Link
             to="/trips"
             onClick={() => setMobileMenuOpen(false)}
