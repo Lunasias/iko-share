@@ -168,7 +168,7 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Fun Travel Profile Hero Banner */}
-      <div className="travel-card p-6 sm:p-8 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white relative overflow-hidden shadow-lg">
+      <div className="travel-card p-6 sm:p-8 profile-hero text-white relative overflow-hidden shadow-lg">
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10 text-center sm:text-left">
@@ -261,7 +261,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => setRole('Passenger')}
                 className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
-                  role === 'Passenger' ? 'bg-sky-500 text-white border-sky-600 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                  role === 'Passenger' ? 'role-passenger shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                 }`}
               >
                 ผู้โดยสาร (Passenger)
@@ -270,7 +270,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => setRole('Driver')}
                 className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
-                  role === 'Driver' ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                  role === 'Driver' ? 'role-driver shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                 }`}
               >
                 คนขับรถ (Driver)
@@ -290,7 +290,7 @@ export default function Profile() {
                   type="button"
                   onClick={() => setRole('Both')}
                   className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
-                    role === 'Both' ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    role === 'Both' ? 'role-both shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                   }`}
                 >
                   ทั้งสองอย่าง (Both)

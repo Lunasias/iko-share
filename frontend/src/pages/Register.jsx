@@ -106,7 +106,7 @@ export default function Register() {
                 type="button"
                 onClick={() => setRole('Passenger')}
                 className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
-                  role === 'Passenger' ? 'bg-sky-500 text-white border-sky-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  role === 'Passenger' ? 'role-passenger shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 ผู้โดยสาร
@@ -124,7 +124,7 @@ export default function Register() {
                 type="button"
                 onClick={() => setRole('Both')}
                 className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
-                  role === 'Both' ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  role === 'Both' ? 'role-both shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 ทั้งสองอย่าง

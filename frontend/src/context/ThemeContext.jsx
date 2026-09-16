@@ -3,21 +3,27 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 const translations = {
   th: {
     findTrips: 'ค้นหาเที่ยวรถ', createTrip: 'เปิดทริปใหม่', myTrips: 'การเดินทาง', profile: 'โปรไฟล์',
+    myCars: 'รถของฉัน', admin: 'ระบบแอดมิน', logout: 'ออกจากระบบ',
     login: 'เข้าสู่ระบบ', register: 'ลงทะเบียน', search: 'ค้นหาทริป',
+    language: 'English', menu: 'เมนู', daylight: 'กลางวัน', night: 'กลางคืน',
+    userProfile: 'โปรไฟล์',
     badge: 'แพลตฟอร์มคาร์พูลท่องเที่ยวแชร์มิตรภาพอันดับ 1 ในไทย',
     headline: 'เดินทางประหยัด เป็นมิตร สนุกทุกเส้นทาง', headlineEnd: 'ไปทางเดียวกัน ติดรถไปกับ',
     description: 'หารค่าเดินทางอย่างยุติธรรม ชวนเพื่อนร่วมทางไปเที่ยวงานเทศกาล คอนเสิร์ต หรือท่องเที่ยวทั่วไทย',
     origin: 'ต้นทาง (เช่น กรุงเทพฯ)', destination: 'ปลายทาง (เช่น เขาใหญ่, เชียงใหม่)',
-    daylight: 'กลางวัน', night: 'กลางคืน', english: 'English', thai: 'ภาษาไทย',
+    english: 'English', thai: 'ภาษาไทย',
   },
   en: {
     findTrips: 'Find trips', createTrip: 'Create a trip', myTrips: 'My trips', profile: 'Profile',
+    myCars: 'My cars', admin: 'Admin', logout: 'Log out',
     login: 'Log in', register: 'Register', search: 'Search trips',
+    language: 'ภาษาไทย', menu: 'Menu', daylight: 'Daylight', night: 'Night',
+    userProfile: 'Profile',
     badge: 'Thailand’s thoughtful carpool community',
     headline: 'Travel further. Share the journey.', headlineEnd: 'Go together with',
     description: 'Share travel costs fairly and meet companions for festivals, concerts, and journeys across Thailand.',
     origin: 'From (e.g. Bangkok)', destination: 'To (e.g. Khao Yai, Chiang Mai)',
-    daylight: 'Daylight', night: 'Night', english: 'English', thai: 'ภาษาไทย',
+    english: 'English', thai: 'ภาษาไทย',
   },
 };
 

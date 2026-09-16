@@ -186,9 +186,9 @@ export default function Admin() {
                     <td className="py-3 px-4">{u.phone || '-'}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.role === 'Admin' ? 'bg-amber-100 text-amber-800' :
-                        u.role === 'Driver' ? 'bg-emerald-100 text-emerald-800' :
-                        u.role === 'Both' ? 'bg-indigo-100 text-indigo-800' : 'bg-sky-100 text-sky-800'
+                        u.role === 'Admin' ? 'role-driver' :
+                        u.role === 'Driver' ? 'role-driver' :
+                        u.role === 'Both' ? 'role-both' : 'role-passenger'
                       }`}>
                         {u.role}
                       </span>

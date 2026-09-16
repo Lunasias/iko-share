@@ -66,7 +66,7 @@ export default function Navbar() {
             className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors px-3 py-2 rounded-xl hover:bg-slate-50"
           >
             <Compass className="w-4 h-4 text-emerald-600" />
-            <span>ค้นหาเที่ยวรถ</span>
+            <span>{t('findTrips')}</span>
           </Link>
 
           {user ? (
@@ -78,7 +78,7 @@ export default function Navbar() {
                     className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)] bg-[var(--muted)] hover:bg-[var(--card)] border border-[var(--border)] px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
                   >
                     <PlusCircle className="w-4 h-4" />
-                    <span>เปิดทริปใหม่</span>
+                    <span>{t('createTrip')}</span>
                   </Link>
 
                   <Link
@@ -86,7 +86,7 @@ export default function Navbar() {
                     className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
                   >
                     <Car className="w-4 h-4 text-teal-600" />
-                    <span>รถของฉัน</span>
+                    <span>{t('myCars')}</span>
                   </Link>
                 </>
               )}
@@ -176,8 +176,8 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div id="mobile-navigation" className="md:hidden mt-3 pt-4 pb-6 border-t border-[var(--border)] space-y-2 px-2 animate-[editorial-reveal_200ms_ease-out]">
           <div className="flex gap-2 pb-2">
-            <button type="button" onClick={toggleLanguage} className="theme-control flex-1 justify-center"><Languages className="w-4 h-4" /> {language === 'th' ? 'English' : 'ภาษาไทย'}</button>
-            <button type="button" onClick={toggleTheme} className="theme-control flex-1 justify-center">{isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />} {isDark ? 'กลางวัน' : 'กลางคืน'}</button>
+            <button type="button" onClick={toggleLanguage} className="theme-control flex-1 justify-center"><Languages className="w-4 h-4" /> {t('language')}</button>
+            <button type="button" onClick={toggleTheme} className="theme-control flex-1 justify-center">{isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />} {isDark ? t('daylight') : t('night')}</button>
           </div>
           <Link
             to="/trips"
@@ -185,7 +185,7 @@ export default function Navbar() {
             className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
           >
             <Compass className="w-5 h-5 text-emerald-600" />
-            <span>ค้นหาเที่ยวรถ</span>
+            <span>{t('findTrips')}</span>
           </Link>
 
           {user ? (
@@ -198,7 +198,7 @@ export default function Navbar() {
                     className="flex items-center gap-2.5 text-sm font-bold text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200"
                   >
                     <PlusCircle className="w-5 h-5" />
-                    <span>เปิดทริปใหม่</span>
+                    <span>{t('createTrip')}</span>
                   </Link>
 
                   <Link
@@ -207,7 +207,7 @@ export default function Navbar() {
                     className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
                   >
                     <Car className="w-5 h-5 text-teal-600" />
-                    <span>รถของฉัน</span>
+                    <span>{t('myCars')}</span>
                   </Link>
                 </>
               )}
@@ -218,7 +218,7 @@ export default function Navbar() {
                 className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
               >
                 <Calendar className="w-5 h-5 text-indigo-600" />
-                <span>การเดินทางของฉัน</span>
+                <span>{t('myTrips')}</span>
               </Link>
 
               <Link
@@ -227,7 +227,7 @@ export default function Navbar() {
                 className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
               >
                 <User className="w-5 h-5 text-emerald-600" />
-                <span>โปรไฟล์ ({user.name})</span>
+                <span>{t('userProfile')} ({user.name})</span>
               </Link>
 
               {isAdmin && (
@@ -237,7 +237,7 @@ export default function Navbar() {
                   className="flex items-center gap-2.5 text-sm font-bold text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200"
                 >
                   <Shield className="w-5 h-5" />
-                  <span>ระบบแอดมิน</span>
+                  <span>{t('admin')}</span>
                 </Link>
               )}
 
@@ -246,7 +246,7 @@ export default function Navbar() {
                 className="w-full flex items-center justify-center gap-2 text-sm font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200"
               >
                 <LogOut className="w-5 h-5" />
-                <span>ออกจากระบบ</span>
+                <span>{t('logout')}</span>
               </button>
             </>
           ) : (

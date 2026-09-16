@@ -67,8 +67,8 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h3 className="text-xl font-black text-slate-900">{data.owner.name}</h3>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    data.owner.role === 'Driver' ? 'bg-emerald-100 text-emerald-800' :
-                    data.owner.role === 'Both' ? 'bg-indigo-100 text-indigo-800' : 'bg-sky-100 text-sky-800'
+                    data.owner.role === 'Driver' ? 'role-driver' :
+                    data.owner.role === 'Both' ? 'role-both' : 'role-passenger'
                   }`}>
                     {data.owner.role === 'Driver' ? 'คนขับ (Driver)' : data.owner.role === 'Both' ? 'คนขับ & ผู้โดยสาร' : 'ผู้โดยสาร (Passenger)'}
                   </span>
