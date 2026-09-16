@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sparkles } from 'lucide-react';
+import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar } from 'lucide-react';
 import ImmersiveFullscreenNav from './ui/immersive-full-screen-nav';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const handleLogout = () => {
     logout();
-    setMobileMenuOpen(false);
     navigate('/login');
   };
 
@@ -133,110 +130,27 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100"
-          aria-label="Toggle Navigation Menu"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <ImmersiveFullscreenNav
+          links={[
+            { label: 'ค้นหาเที่ยวรถ', to: '/trips' },
+            ...(user && (user.role === 'Driver' || user.role === 'Both') ? [
+              { label: 'เปิดทริปใหม่', to: '/create-trip' },
+              { label: 'รถของฉัน', to: '/cars' },
+            ] : []),
+            ...(user ? [
+              { label: 'การเดินทางของฉัน', to: '/my-trips' },
+              { label: `โปรไฟล์${user.name ? ` (${user.name})` : ''}`, to: '/profile' },
+              ...(isAdmin ? [{ label: 'ระบบแอดมิน', to: '/admin' }] : []),
+            ] : [
+              { label: 'เข้าสู่ระบบ', to: '/login' },
+              { label: 'ลงทะเบียน', to: '/register' },
+            ]),
+          ]}
+          onLogout={user ? handleLogout : undefined}
+        />
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden mt-3 pt-4 pb-6 border-t border-slate-200 space-y-2 px-2">
-          <Link
-            to="/trips"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
-          >
-            <Compass className="w-5 h-5 text-emerald-600" />
-            <span>ค้นหาเที่ยวรถ</span>
-          </Link>
 
-          {user ? (
-            <>
-              {(user.role === 'Driver' || user.role === 'Both') && (
-                <>
-                  <Link
-                    to="/create-trip"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-sm font-bold text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200"
-                  >
-                    <PlusCircle className="w-5 h-5" />
-                    <span>เปิดทริปใหม่</span>
-                  </Link>
-
-                  <Link
-                    to="/cars"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
-                  >
-                    <Car className="w-5 h-5 text-teal-600" />
-                    <span>รถของฉัน</span>
-                  </Link>
-                </>
-              )}
-
-              <Link
-                to="/my-trips"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
-              >
-                <Calendar className="w-5 h-5 text-indigo-600" />
-                <span>การเดินทางของฉัน</span>
-              </Link>
-
-              <Link
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
-              >
-                <User className="w-5 h-5 text-emerald-600" />
-                <span>โปรไฟล์ ({user.name})</span>
-              </Link>
-
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 text-sm font-bold text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200"
-                >
-                  <Shield className="w-5 h-5" />
-                  <span>ระบบแอดมิน</span>
-                </Link>
-              )}
-
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 text-sm font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200"
-              >
-                <LogOut className="w-5 h-5" />
-                <span>ออกจากระบบ</span>
-              </button>
-            </>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center text-sm font-bold p-3 bg-slate-100 text-slate-800 rounded-xl"
-              >
-                เข้าสู่ระบบ
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center text-sm font-bold travel-btn-primary p-3"
-              >
-                ลงทะเบียน
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-      <ImmersiveFullscreenNav />
     </nav>
   );
 }
