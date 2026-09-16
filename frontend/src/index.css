@@ -337,9 +337,9 @@ html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(11, 24, 28, .78) 0%, rgba(20, 30, 28, .42) 35%, rgba(12, 22, 24, .84) 100%),
-    radial-gradient(circle at 72% 28%, rgba(232, 176, 78, .22), transparent 38%),
-    radial-gradient(ellipse at center, transparent 30%, rgba(5, 13, 15, .32) 100%);
+    linear-gradient(180deg, rgba(255, 252, 245, .18) 0%, rgba(255, 250, 240, .16) 45%, rgba(247, 242, 232, .48) 100%),
+    radial-gradient(circle at 72% 28%, rgba(255, 220, 140, .24), transparent 38%),
+    radial-gradient(ellipse at center, transparent 35%, rgba(255, 248, 230, .18) 100%);
 }
 .home-hero { min-height: 600px; }
 .home-hero-content { transform: translate3d(var(--pointer-x, 0), var(--pointer-y, 0), 0); transition: transform 700ms var(--motion-ease); }
@@ -389,6 +389,7 @@ html[data-theme="dark"] .role-both { background: #54451F; color: #FFE7A3; border
 
 /* Shared bright cinematic travel system. The image is always behind content; surfaces stay light and translucent. */
 .page-background { position: fixed; inset: 0; z-index: -3; overflow: hidden; background: #f6f0e5; pointer-events: none; }
+.page-background__image { background-color: #dcebdc; }
 .page-background__image { position: absolute; inset: -2%; background-size: cover; background-position: center; filter: saturate(.88) contrast(.96); transform: scale(1.02); transition: transform 1.2s var(--motion-ease); }
 .page-background__wash { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,252,245,.46) 0%, rgba(255,250,240,.24) 42%, rgba(247,242,232,.74) 100%); }
 .page-background__glow { position: absolute; inset: 0; background: radial-gradient(circle at 18% 12%, rgba(255,221,148,.28), transparent 32%), radial-gradient(circle at 82% 30%, rgba(188,220,207,.2), transparent 34%); }
