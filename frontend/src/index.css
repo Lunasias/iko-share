@@ -386,3 +386,30 @@ html[data-theme="dark"] .role-passenger { background: #5A4313; color: #FFE7A3; b
 html[data-theme="dark"] .role-driver { background: #6B5014; color: #FFE9A8; border-color: #E0B94F; }
 html[data-theme="dark"] .role-both { background: #54451F; color: #FFE7A3; border-color: #D4A84B; }
 .profile-hero { background: linear-gradient(110deg, #8A6508 0%, #B8860B 48%, #D4A84B 100%); }
+
+/* Shared bright cinematic travel system. The image is always behind content; surfaces stay light and translucent. */
+.page-background { position: fixed; inset: 0; z-index: -3; overflow: hidden; background: #f6f0e5; pointer-events: none; }
+.page-background__image { position: absolute; inset: -2%; background-size: cover; background-position: center; filter: saturate(.88) contrast(.96); transform: scale(1.02); transition: transform 1.2s var(--motion-ease); }
+.page-background__wash { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,252,245,.46) 0%, rgba(255,250,240,.24) 42%, rgba(247,242,232,.74) 100%); }
+.page-background__glow { position: absolute; inset: 0; background: radial-gradient(circle at 18% 12%, rgba(255,221,148,.28), transparent 32%), radial-gradient(circle at 82% 30%, rgba(188,220,207,.2), transparent 34%); }
+.site-shell { background: transparent; }
+.site-shell::before { opacity: .35; }
+.site-shell nav { background: rgba(255,255,255,.55) !important; border-color: rgba(255,255,255,.72) !important; box-shadow: 0 10px 30px rgba(92,71,38,.1) !important; backdrop-filter: blur(18px) saturate(125%); -webkit-backdrop-filter: blur(18px) saturate(125%); }
+.site-footer { background: rgba(255,255,255,.44) !important; border-color: rgba(255,255,255,.7) !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.glass-panel, .travel-card, .home-badge, .home-search-glass { background: rgba(255,255,255,.62) !important; border-color: rgba(255,255,255,.78) !important; box-shadow: 0 16px 38px rgba(85,66,38,.12), inset 0 1px 0 rgba(255,255,255,.8); backdrop-filter: blur(18px) saturate(120%); -webkit-backdrop-filter: blur(18px) saturate(120%); }
+.travel-input { background: rgba(255,255,255,.68) !important; border-color: rgba(184,134,11,.2) !important; }
+.travel-btn-primary { background: linear-gradient(135deg, #c99519, #a87508) !important; color: white !important; box-shadow: 0 8px 18px rgba(184,134,11,.22); }
+.travel-card-hover:hover { box-shadow: 0 24px 46px rgba(85,66,38,.18), 0 0 0 1px rgba(212,168,75,.35); }
+.home-page { color: var(--foreground); }
+.home-page::before { background-image: url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=82"); filter: saturate(.88) contrast(.96); }
+.home-page::after { background: linear-gradient(180deg, rgba(255,250,238,.18), rgba(255,250,238,.42) 70%, rgba(247,242,232,.7)); }
+.home-page h1 { color: #29251f !important; text-shadow: 0 2px 16px rgba(255,255,255,.62); }
+.home-page h1 span { color: #b8860b !important; }
+.home-page p { color: #514a40 !important; }
+.home-badge, .home-search-glass, .home-features .travel-card { color: var(--foreground); }
+.home-search-glass input, .home-feature-card h3 { color: #29251f !important; }
+.home-search-glass input::placeholder, .home-feature-card p { color: #655d52 !important; }
+.home-search-glass .travel-input { background: rgba(255,255,255,.7) !important; border-color: rgba(184,134,11,.2) !important; }
+.site-shell:has(.home-page) nav, .site-shell:has(.home-page) footer { background: rgba(255,255,255,.5) !important; color: var(--foreground); border-color: rgba(255,255,255,.72) !important; }
+@media (max-width: 640px) { .page-background__image { background-position: 58% center; } .page-background__wash { background: linear-gradient(180deg, rgba(255,252,245,.62), rgba(255,250,240,.84)); } }
+@media (prefers-reduced-motion: reduce) { .page-background__image { transform: none; } }

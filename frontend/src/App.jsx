@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
+import PageBackground from './components/PageBackground';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -41,9 +42,10 @@ export default function App() {
       <AuthProvider>
         <Router>
         <div className="site-shell min-h-screen flex flex-col justify-between selection:bg-[var(--accent)] selection:text-white">
+          <PageBackground />
           <Navbar />
           <RoutedMain />
-          <footer className="glass-panel border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted-foreground)]">
+          <footer className="site-footer glass-panel border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted-foreground)]">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
               <div>© 2026 Iko Share. สงวนลิขสิทธิ์ทุกประการ</div>
               <div className="flex gap-4">
