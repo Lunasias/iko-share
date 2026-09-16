@@ -50,7 +50,7 @@ export default function Navbar() {
 
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to="/" className="brand-link flex items-center gap-2.5 group">
           <div className="p-2.5 rounded-2xl bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25 group-hover:scale-105 transition-all">
             <Car className="w-5 h-5" />
           </div>

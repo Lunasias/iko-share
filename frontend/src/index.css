@@ -52,15 +52,6 @@ button, a, input { touch-action: manipulation; }
   background: radial-gradient(circle at 12% 8%, var(--ambient), transparent 28%), radial-gradient(circle at 90% 24%, var(--ambient), transparent 24%);
   animation: ambient-drift 14s ease-in-out infinite alternate;
 }
-.site-shell::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  opacity: .035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
-}
 .theme-control {
   min-height: 40px;
   display: inline-flex;
@@ -306,6 +297,13 @@ html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::pl
 html[data-theme="dark"] .site-shell nav a:hover,
 html[data-theme="dark"] .site-shell nav button:hover { color: var(--accent-secondary) !important; }
 html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in srgb, var(--accent) 14%, var(--card)) !important; }
+.site-shell nav a.brand-link:hover {
+  background-color: transparent !important;
+  transform: translateY(-1px);
+}
+.site-shell nav a.brand-link:focus-visible {
+  background-color: transparent !important;
+}
 .owner-profile-overlay { overscroll-behavior: contain; }
 
 /* Role controls: readable amber/gold palette in both themes. */
