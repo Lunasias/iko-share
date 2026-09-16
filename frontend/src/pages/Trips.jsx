@@ -68,7 +68,7 @@ export default function Trips() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <div className="trips-page max-w-7xl mx-auto px-4 py-8 space-y-8">
       {/* Search Header Form */}
       <div className="travel-card p-6 sm:p-8 space-y-4 shadow-sm border border-slate-200">
         <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 font-['Plus_Jakarta_Sans',sans-serif]">
