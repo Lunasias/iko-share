@@ -431,7 +431,18 @@ input.travel-input,
 select.travel-input,
 textarea.travel-input,
 .home-search-glass .travel-input,
-select {
+select,
+.home-badge,
+.home-search-glass input,
+.home-search-glass input:focus {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+}
+
+/* Ensure any nested inputs inside search glass don't conflict */
+.home-search-glass .travel-input {
   background: rgba(0, 0, 0, 0.1) !important;
   border-color: rgba(0, 0, 0, 0.18) !important;
   backdrop-filter: blur(18px) saturate(120%) !important;
@@ -451,6 +462,15 @@ select {
 .home-features .travel-card > div:first-child {
   background: rgba(0, 0, 0, 0.12) !important;
   border-color: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+/* Any pill tags/badges inside cards */
+.travel-card span[class*="bg-"],
+.travel-card div[class*="bg-"] {
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 
 /* Ensure select dropdown options remain legible */
