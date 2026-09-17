@@ -39,6 +39,8 @@ button, a, input { touch-action: manipulation; }
   position: fixed !important;
   inset: 0 0 auto 0;
   z-index: 60 !important;
+  border-bottom-color: transparent !important;
+  box-shadow: 0 8px 22px rgba(70, 51, 25, 0.08) !important;
 }
 .site-shell > main { padding-top: 76px; }
 @media (max-width: 767px) {

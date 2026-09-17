@@ -122,30 +122,24 @@ export default function Home() {
           <div className="w-12 h-12 rounded-2xl bg-[var(--muted)] text-[var(--accent)] border border-[var(--border)] flex items-center justify-center">
             <Users className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-black text-slate-900">แชร์ค่าน้ำมัน เที่ยวได้บ่อยขึ้น</h3>
-          <p className="text-slate-600 text-xs leading-relaxed font-medium">
-            หารเฉลี่ยค่าน้ำมันและค่าเดินทางอย่างยุติธรรม ช่วยให้ผู้ขับขี่และผู้ร่วมทริปประหยัดเงินในกระเป๋า
-          </p>
+          <h3 className="text-lg font-black text-slate-900">{t('featureOneTitle')}</h3>
+          <p className="text-slate-600 text-xs leading-relaxed font-medium">{t('featureOneDescription')}</p>
         </div>
 
         <div className="travel-card p-8 space-y-4 travel-card-hover border border-slate-200">
           <div className="w-12 h-12 rounded-2xl bg-[var(--muted)] text-[var(--accent-secondary)] border border-[var(--border)] flex items-center justify-center">
             <ShieldCheck className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-black text-slate-900">ระบบคัดกรอง & อนุมัติเข้าตี้</h3>
-          <p className="text-slate-600 text-xs leading-relaxed font-medium">
-            คนขับสามารถตรวจสอบประวัติ รีวิว และกดอนุมัติเพื่อนร่วมทางที่ตรงกับสไตล์การเดินทางของคุณ
-          </p>
+          <h3 className="text-lg font-black text-slate-900">{t('featureTwoTitle')}</h3>
+          <p className="text-slate-600 text-xs leading-relaxed font-medium">{t('featureTwoDescription')}</p>
         </div>
 
         <div className="travel-card p-8 space-y-4 travel-card-hover border border-slate-200">
           <div className="w-12 h-12 rounded-2xl bg-[var(--muted)] text-[var(--accent)] border border-[var(--border)] flex items-center justify-center">
             <HeartHandshake className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-black text-slate-900">สร้างความทรงจำ & มิตรภาพ</h3>
-          <p className="text-slate-600 text-xs leading-relaxed font-medium">
-            แชร์ภาพถ่ายเรื่องราวความประทับใจหลังจบทริป และสร้างเครือข่ายเพื่อนร่วมทางสายลุยไปด้วยกัน
-          </p>
+          <h3 className="text-lg font-black text-slate-900">{t('featureThreeTitle')}</h3>
+          <p className="text-slate-600 text-xs leading-relaxed font-medium">{t('featureThreeDescription')}</p>
         </div>
       </section>
     </div>

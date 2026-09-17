@@ -33,16 +33,8 @@ export default function Navbar() {
   const isAdmin = !!user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com');
 
   const getRoleBadge = (role) => {
-    switch (role) {
-      case 'Admin':
-        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้ดูแลระบบ (Admin)</span>;
-      case 'Driver':
-        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ (Driver)</span>;
-      case 'Both':
-        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">คนขับ & ผู้โดยสาร</span>;
-      default:
-        return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">ผู้โดยสาร</span>;
-    }
+    const roleKey = role === 'Admin' ? 'adminLabel' : role === 'Driver' ? 'driverLabel' : role === 'Both' ? 'bothLabel' : 'passengerLabel';
+    return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">{t(roleKey)}</span>;
   };
 
   return (
@@ -113,7 +105,7 @@ export default function Navbar() {
                   className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100"
                 >
                   <Shield className="w-4 h-4" />
-                  <span>แอดมิน</span>
+                  <span>{t('admin')}</span>
                 </Link>
               )}
 
@@ -124,7 +116,7 @@ export default function Navbar() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  title="ออกจากระบบ"
+                  title={t('logout')}
                   className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
@@ -137,13 +129,13 @@ export default function Navbar() {
                 to="/login"
                 className="text-xs font-bold text-slate-700 hover:text-emerald-700 px-4 py-2 rounded-xl hover:bg-slate-50"
               >
-                เข้าสู่ระบบ
+                {t('login')}
               </Link>
               <Link
                 to="/register"
                 className="inline-flex items-center justify-center text-xs font-bold travel-btn-primary px-5 py-2 leading-none"
               >
-                ลงทะเบียน
+                {t('register')}
               </Link>
             </div>
           )}
@@ -151,7 +143,7 @@ export default function Navbar() {
 
         {/* Theme and language controls */}
         <div className="hidden md:flex items-center gap-1 mr-2 border-l border-[var(--border)] pl-3">
-          <button type="button" onClick={toggleLanguage} className="theme-control" aria-label="เปลี่ยนภาษา / Change language" title="เปลี่ยนภาษา / Change language">
+          <button type="button" onClick={toggleLanguage} className="theme-control" aria-label={t('changeLanguage')} title={t('changeLanguage')}>
             <Languages className="w-4 h-4" />
             <span>{language === 'th' ? 'EN' : 'TH'}</span>
           </button>
@@ -161,7 +153,7 @@ export default function Navbar() {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden min-h-[44px] min-w-[44px] p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
-          aria-label={mobileMenuOpen ? 'ปิดเมนูนำทาง' : 'เปิดเมนูนำทาง'}
+          aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-navigation"
         >
@@ -252,14 +244,14 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-center text-sm font-bold p-3 bg-slate-100 text-slate-800 rounded-xl"
               >
-                เข้าสู่ระบบ
+                {t('login')}
               </Link>
               <Link
                 to="/register"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-center text-sm font-bold travel-btn-primary p-3"
               >
-                ลงทะเบียน
+                {t('register')}
               </Link>
             </div>
           )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from './context/ThemeContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -15,6 +16,23 @@ import Profile from './pages/Profile';
 import Cars from './pages/Cars';
 import Admin from './pages/Admin';
 import GlassMockup from './pages/GlassMockup';
+
+function AppFooter() {
+  const { t } = useTheme();
+
+  return (
+    <footer className="morning-footer border-t py-6 text-center text-xs">
+      <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div>{t('footerCopyright')}</div>
+        <div className="flex gap-4">
+          <span>{t('footerTagline')}</span>
+          <span>•</span>
+          <span>{t('footerTechnology')}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 function RoutedMain() {
   const location = useLocation();
@@ -47,16 +65,7 @@ export default function App() {
           <PageBackground />
           <Navbar />
           <RoutedMain />
-          <footer className="morning-footer border-t py-6 text-center text-xs">
-            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div>© 2026 Iko Share. สงวนลิขสิทธิ์ทุกประการ</div>
-              <div className="flex gap-4">
-                <span>ระบบคาร์พูลแชร์รถเดินทาง</span>
-                <span>•</span>
-                <span>Vercel + Neon Postgres</span>
-              </div>
-            </div>
-          </footer>
+          <AppFooter />
         </div>
         </Router>
       </AuthProvider>
