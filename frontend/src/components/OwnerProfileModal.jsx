@@ -36,8 +36,8 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="owner-profile-overlay fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 overlay-enter">
-      <div className="travel-card modal-enter max-w-lg w-full p-6 sm:p-8 relative space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+    <div className="owner-profile-overlay fixed inset-0 z-[100] flex items-center justify-center p-4 overlay-enter">
+      <div className="owner-profile-modal modal-enter max-w-lg w-full p-6 sm:p-8 relative space-y-6 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"

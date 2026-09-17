@@ -692,3 +692,42 @@ select option {
   -webkit-backdrop-filter: blur(28px) saturate(112%) !important;
 }
 .site-shell > footer.morning-footer * { color: inherit !important; }
+
+
+/* Public profile is portalled to document.body, so it needs its own warm theme
+   instead of relying on .site-shell selectors. */
+.owner-profile-overlay {
+  overscroll-behavior: contain;
+  background: rgba(75, 58, 34, 0.24) !important;
+  backdrop-filter: blur(8px) saturate(105%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(105%) !important;
+}
+.owner-profile-modal {
+  background: rgba(255, 248, 232, 0.82) !important;
+  color: #30291f !important;
+  border: 1px solid rgba(255, 255, 255, 0.76) !important;
+  border-radius: 1rem;
+  box-shadow: 0 24px 60px rgba(70, 51, 25, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(30px) saturate(112%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(112%) !important;
+}
+.owner-profile-modal .bg-slate-50,
+.owner-profile-modal [class*="bg-slate-"] {
+  background: rgba(255, 252, 242, 0.6) !important;
+  border-color: rgba(110, 79, 38, 0.22) !important;
+}
+.owner-profile-modal :is(h1, h2, h3, h4, p, span, div, label) { color: #30291f; }
+.owner-profile-modal .text-slate-400,
+.owner-profile-modal .text-slate-500,
+.owner-profile-modal .text-slate-600,
+.owner-profile-modal .text-slate-700,
+.owner-profile-modal .text-slate-800,
+.owner-profile-modal .text-slate-900 { color: #5d4a32 !important; }
+.owner-profile-modal .text-emerald-600,
+.owner-profile-modal .text-amber-500,
+.owner-profile-modal .text-amber-600 { color: #aa7608 !important; }
+.owner-profile-modal button.text-slate-400 { color: #806c4b !important; }
+.owner-profile-modal button.text-slate-400:hover {
+  color: #30291f !important;
+  background: rgba(134, 100, 49, 0.12) !important;
+}
