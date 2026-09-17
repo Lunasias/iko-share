@@ -63,24 +63,22 @@ export default function Navbar() {
 
           {user ? (
             <>
-              {(user.role === 'Driver' || user.role === 'Both') && (
-                <>
-                  <Link
-                    to="/create-trip"
-                    className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)] bg-[var(--muted)] hover:bg-[var(--card)] border border-[var(--border)] px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>{t('createTrip')}</span>
-                  </Link>
+              <Link
+                to="/create-trip"
+                className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)] bg-[var(--muted)] hover:bg-[var(--card)] border border-[var(--border)] px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>{t('createTrip')}</span>
+              </Link>
 
-                  <Link
-                    to="/cars"
-                    className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <Car className="w-4 h-4 text-teal-600" />
-                    <span>{t('myCars')}</span>
-                  </Link>
-                </>
+              {(user.role === 'Driver' || user.role === 'Both') && (
+                <Link
+                  to="/cars"
+                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  <Car className="w-4 h-4 text-teal-600" />
+                  <span>{t('myCars')}</span>
+                </Link>
               )}
 
               <Link
@@ -178,26 +176,24 @@ export default function Navbar() {
 
           {user ? (
             <>
-              {(user.role === 'Driver' || user.role === 'Both') && (
-                <>
-                  <Link
-                    to="/create-trip"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-sm font-bold text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200"
-                  >
-                    <PlusCircle className="w-5 h-5" />
-                    <span>{t('createTrip')}</span>
-                  </Link>
+              <Link
+                to="/create-trip"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 text-sm font-bold text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200"
+              >
+                <PlusCircle className="w-5 h-5" />
+                <span>{t('createTrip')}</span>
+              </Link>
 
-                  <Link
-                    to="/cars"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
-                  >
-                    <Car className="w-5 h-5 text-teal-600" />
-                    <span>{t('myCars')}</span>
-                  </Link>
-                </>
+              {(user.role === 'Driver' || user.role === 'Both') && (
+                <Link
+                  to="/cars"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 text-sm font-bold text-slate-800 p-3 rounded-xl hover:bg-slate-100"
+                >
+                  <Car className="w-5 h-5 text-teal-600" />
+                  <span>{t('myCars')}</span>
+                </Link>
               )}
 
               <Link

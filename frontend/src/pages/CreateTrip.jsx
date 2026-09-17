@@ -12,7 +12,8 @@ export default function CreateTrip() {
   const [cars, setCars] = useState([]);
   const [events, setEvents] = useState([]);
   const [licensePlate, setLicensePlate] = useState('');
-  const [tripType, setTripType] = useState('carpool');
+  const [tripType, setTripType] = useState(user?.role === 'Passenger' ? 'find_driver' : 'carpool');
+  const canCreateCarpool = user?.role === 'Driver' || user?.role === 'Both';
   const [selectedEventId, setSelectedEventId] = useState('');
   const [customEventName, setCustomEventName] = useState('');
   const [origin, setOrigin] = useState('');
@@ -33,6 +34,12 @@ export default function CreateTrip() {
   useEffect(() => {
     fetchPrerequisites();
   }, []);
+
+  useEffect(() => {
+    if (user?.role === 'Passenger') {
+      setTripType('find_driver');
+    }
+  }, [user]);
 
   const fetchPrerequisites = async () => {
     setLoading(true);
@@ -154,7 +161,9 @@ export default function CreateTrip() {
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-800">รูปแบบทริป</label>
             <select value={tripType} onChange={(e) => setTripType(e.target.value)} className="w-full px-4 py-3 travel-input text-sm font-semibold">
-              <option value="carpool">ฉันมีรถและเปิดรับเพื่อนร่วมทาง</option>
+              {canCreateCarpool && (
+                <option value="carpool">ฉันมีรถและเปิดรับเพื่อนร่วมทาง</option>
+              )}
               <option value="find_driver">ฉันไม่มีรถ — สร้างทริปเพื่อหาคนขับมาจอย</option>
               <option value="public_transport">เดินทางด้วยรถไฟ/ขนส่งสาธารณะ</option>
             </select>
