@@ -14,6 +14,7 @@ import MyTrips from './pages/MyTrips';
 import Profile from './pages/Profile';
 import Cars from './pages/Cars';
 import Admin from './pages/Admin';
+import GlassMockup from './pages/GlassMockup';
 
 function RoutedMain() {
   const location = useLocation();
@@ -22,6 +23,7 @@ function RoutedMain() {
     <main className="flex-grow page-enter" key={location.pathname}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/glass-mockup" element={<GlassMockup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/trips" element={<Trips />} />
