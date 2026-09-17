@@ -15,12 +15,13 @@ export default function TripChat({ tripId }) {
   const chatContainerRef = useRef(null);
   const isInitialLoadRef = useRef(true);
   const userScrolledUpRef = useRef(false);
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     fetchMessages(true);
     const interval = setInterval(() => {
       fetchMessages(false);
-    }, 2500); // Polling every 2.5s
+    }, 5000); // Reduce database traffic while keeping chat responsive
     return () => clearInterval(interval);
   }, [tripId]);
 
@@ -41,6 +42,8 @@ export default function TripChat({ tripId }) {
   };
 
   const fetchMessages = async (isFirst = false) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       const res = await API.get(`/chat/trips/${tripId}`);
       if (res.data.success) {
@@ -60,6 +63,7 @@ export default function TripChat({ tripId }) {
     } catch (err) {
       // Silence background polling errors
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
   };

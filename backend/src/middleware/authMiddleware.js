@@ -1,6 +1,17 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'iko_share_super_secret_jwt_key_2026';
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (isProduction && (!JWT_SECRET || JWT_SECRET.length < 32)) {
+  throw new Error('JWT_SECRET must be set and contain at least 32 characters in production');
+}
+
+// Development fallback keeps local startup convenient; never use it in production.
+const signingSecret = JWT_SECRET || 'local-development-only-secret-change-me';
+
+const JWT_ALGORITHM = 'HS256';
+const JWT_OPTIONS = { algorithms: [JWT_ALGORITHM] };
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -11,7 +22,7 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, signingSecret, JWT_OPTIONS);
     req.user = decoded;
     next();
   } catch (err) {
@@ -29,5 +40,5 @@ const requireAdmin = (req, res, next) => {
 module.exports = {
   authenticateToken,
   requireAdmin,
-  JWT_SECRET,
+  JWT_SECRET: signingSecret,
 };
