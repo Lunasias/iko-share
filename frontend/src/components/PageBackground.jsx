@@ -12,7 +12,7 @@ const backgrounds = {
   profile: image('photo-1501785888041-af3ef285b470'),
   create: image('photo-1441974231531-c6227db76b6e'),
   mine: image('photo-1469474968028-56623f02e42e'),
-  cars: image('photo-1500530855697-b586d89ba3ee'),
+  cars: image('photo-1464822759023-fed622ff2c3b'),
   admin: image('photo-1501785888041-af3ef285b470'),
 };
 

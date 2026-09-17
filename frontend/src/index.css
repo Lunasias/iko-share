@@ -403,6 +403,21 @@ button, a, input { touch-action: manipulation; }
 /* Search and admin keep their mountain detail visible through the light glass layers. */
 .page-background--trips .page-background__image { background-position: center 46%; filter: saturate(.98) contrast(.98) brightness(1.08); }
 .page-background--admin .page-background__image { background-position: center 42%; filter: saturate(.96) contrast(.98) brightness(1.1); }
+/* Car registration: forested mountain scene with a soft light-brown morning glow. */
+.page-background--cars .page-background__image {
+  background-position: center 58%;
+  filter: saturate(.72) sepia(.16) contrast(.92) brightness(1.08);
+}
+.page-background--cars .page-background__wash {
+  background:
+    linear-gradient(180deg, rgba(247, 232, 205, .52) 0%, rgba(224, 190, 143, .22) 45%, rgba(100, 75, 46, .28) 100%),
+    linear-gradient(90deg, rgba(112, 78, 45, .16), transparent 52%, rgba(255, 238, 207, .2));
+}
+.page-background--cars .page-background__glow {
+  background:
+    radial-gradient(circle at 20% 13%, rgba(255, 222, 165, .46), transparent 31%),
+    radial-gradient(circle at 78% 24%, rgba(205, 166, 110, .2), transparent 36%);
+}
 .page-background--trips .page-background__wash,
 .page-background--admin .page-background__wash { background: linear-gradient(180deg, rgba(255,252,245,.28), rgba(255,250,240,.12) 48%, rgba(247,242,232,.42) 100%); }
 .page-background--trips .page-background__glow,
