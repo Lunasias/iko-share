@@ -478,3 +478,55 @@ select option {
   background-color: #242424;
   color: #ffffff;
 }
+
+/* Final glass override: nested panels, form groups and admin tables must also
+   separate their content from the photographic page background. */
+.site-shell .travel-card,
+.site-shell .glass-panel,
+.site-shell .home-search-glass,
+.site-shell .home-badge,
+.site-shell .travel-card .bg-white,
+.site-shell .travel-card .bg-slate-50,
+.site-shell .travel-card .bg-slate-100,
+.site-shell .travel-card [class*="bg-white/"],
+.site-shell .travel-card [class*="bg-slate-"] {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(28px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(125%) !important;
+}
+
+/* Make table headers, body rows and empty states readable over any image. */
+.site-shell .travel-card table thead,
+.site-shell .travel-card table tbody tr,
+.site-shell .travel-card table tbody,
+.site-shell .travel-card .divide-y > * {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.36) !important;
+  backdrop-filter: blur(22px) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
+}
+
+/* Inputs and selects keep a dark translucent surface and remain easy to read. */
+.site-shell input,
+.site-shell select,
+.site-shell textarea,
+.site-shell .travel-input {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: var(--foreground) !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  backdrop-filter: blur(28px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(125%) !important;
+}
+.site-shell input::placeholder,
+.site-shell textarea::placeholder { color: rgba(30, 30, 30, 0.62) !important; }
+
+/* Do not let hover utility backgrounds remove the glass treatment. */
+.site-shell .travel-card tr:hover,
+.site-shell .travel-card .hover\\:bg-slate-50:hover {
+  background: rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Native select menus cannot be backdrop-filtered consistently by browsers. */
+.site-shell select option { background: #242424 !important; color: #fff !important; }
