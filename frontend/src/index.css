@@ -410,28 +410,51 @@ button, a, input { touch-action: manipulation; }
 @media (max-width: 640px) { .page-background__image { background-position: 58% center; } .page-background__wash { background: linear-gradient(180deg, rgba(255,252,245,.62), rgba(255,250,240,.84)); } }
 @media (prefers-reduced-motion: reduce) { .page-background__image { transform: none; } }
 
-/* Shared dark glass windows across every page. */
+/* Universal glass window styling: 0.1 translucent black + backdrop blur across all pages and sections */
+.site-shell nav,
+.site-shell:has(.home-page) nav,
+nav,
+.site-footer,
+.site-shell footer,
+.site-shell:has(.home-page) footer,
+footer,
 .glass-panel,
 .travel-card,
 .home-badge,
-.home-search-glass {
+.home-search-glass,
+.home-features .travel-card,
+.home-feature-card,
+.bg-slate-50,
+.bg-slate-100,
+.travel-input,
+input.travel-input,
+select.travel-input,
+textarea.travel-input,
+.home-search-glass .travel-input,
+select {
   background: rgba(0, 0, 0, 0.1) !important;
   border-color: rgba(0, 0, 0, 0.18) !important;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
 }
 
-.travel-input {
+/* Feature highlight cards on Homepage and other pages */
+.home-features .travel-card,
+.home-feature-card {
   background: rgba(0, 0, 0, 0.1) !important;
-  border-color: rgba(0, 0, 0, 0.18) !important;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
 }
 
-.site-footer {
-  background: rgba(0, 0, 0, 0.1) !important;
-  border-color: rgba(0, 0, 0, 0.18) !important;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* Icon containers inside cards */
+.home-features .travel-card > div:first-child {
+  background: rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Ensure select dropdown options remain legible */
+select option {
+  background-color: #242424;
+  color: #ffffff;
 }
