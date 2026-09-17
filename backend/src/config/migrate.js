@@ -49,6 +49,11 @@ const STATEMENTS = [
 
   // The column that caused: column t.custom_event_name does not exist
   `ALTER TABLE trips ADD COLUMN IF NOT EXISTS custom_event_name VARCHAR(255)`,
+  `ALTER TABLE trips ADD COLUMN IF NOT EXISTS trip_type VARCHAR(30) NOT NULL DEFAULT 'carpool'`,
+  `ALTER TABLE trips ADD COLUMN IF NOT EXISTS organizer_id INT REFERENCES users(user_id) ON DELETE CASCADE`,
+  `ALTER TABLE trips ALTER COLUMN license_plate DROP NOT NULL`,
+  `UPDATE trips SET organizer_id = c.user_id FROM cars c WHERE trips.license_plate = c.license_plate AND trips.organizer_id IS NULL`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'trips_trip_type_check') THEN ALTER TABLE trips ADD CONSTRAINT trips_trip_type_check CHECK (trip_type IN ('carpool', 'public_transport', 'find_driver')); END IF; END $$`,
 
   `CREATE TABLE IF NOT EXISTS bookings (
      booking_id SERIAL PRIMARY KEY,

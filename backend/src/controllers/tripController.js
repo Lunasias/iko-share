@@ -52,8 +52,8 @@ const getTripById = async (req, res) => {
               u.name as driver_name, u.phone as driver_phone, u.email as driver_email, u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
               COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location
        FROM trips t
-       JOIN cars c ON t.license_plate = c.license_plate
-       JOIN users u ON c.user_id = u.user_id
+       LEFT JOIN cars c ON t.license_plate = c.license_plate
+       JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
        LEFT JOIN events e ON t.event_id = e.event_id
        WHERE t.trip_id = $1`,
       [id]
@@ -89,6 +89,7 @@ const createTrip = async (req, res) => {
     const userId = req.user.user_id || req.user.id;
     const {
       license_plate,
+      trip_type = 'carpool',
       event_id,
       custom_event_name,
       origin,
@@ -100,32 +101,42 @@ const createTrip = async (req, res) => {
       passenger_requirements,
     } = req.body;
 
-    if (!license_plate || !origin || !destination || !available_seats || price_seat === undefined) {
+    const allowedTripTypes = ['carpool', 'public_transport', 'find_driver'];
+    if (!allowedTripTypes.includes(trip_type)) {
+      return res.status(400).json({ success: false, message: 'รูปแบบทริปไม่ถูกต้อง' });
+    }
+    if (!origin || !destination || !available_seats || price_seat === undefined) {
       return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลการเดินทางให้ครบถ้วน' });
     }
 
-    const carRes = await db.query('SELECT capacity FROM cars WHERE license_plate = $1 AND user_id = $2', [license_plate, userId]);
-    if (!carRes.rows || carRes.rows.length === 0) {
-      return res.status(403).json({ success: false, message: 'ไม่พบข้อมูลรถของคุณ หรือเลือกรถไม่ถูกต้อง' });
+    let capacity = null;
+    if (trip_type === 'carpool') {
+      const carRes = await db.query('SELECT capacity FROM cars WHERE license_plate = $1 AND user_id = $2', [license_plate, userId]);
+      if (!carRes.rows || carRes.rows.length === 0) {
+        return res.status(403).json({ success: false, message: 'ไม่พบข้อมูลรถของคุณ หรือเลือกรถไม่ถูกต้อง' });
+      }
+      capacity = carRes.rows[0].capacity;
     }
-
-    const capacity = carRes.rows[0].capacity;
     const seatsToOffer = parseInt(available_seats);
-
-    if (seatsToOffer > capacity) {
+    if (!Number.isInteger(seatsToOffer) || seatsToOffer < 1) {
+      return res.status(400).json({ success: false, message: 'จำนวนที่นั่งต้องเป็นเลขตั้งแต่ 1 ขึ้นไป' });
+    }
+    if (capacity && seatsToOffer > capacity) {
       return res.status(400).json({ success: false, message: `จำนวนที่นั่งเปิดรับ (${seatsToOffer}) ต้องไม่เกินความจุที่นั่งของรถ (${capacity} ที่นั่ง)` });
     }
 
     const newTrip = await db.query(
       `INSERT INTO trips (
-        license_plate, event_id, custom_event_name, origin, destination,
+        license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
         departure_time, available_seats, price_seat, driver_personality,
         passenger_requirements, trip_status, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', NOW())
        RETURNING *`,
       [
-        license_plate,
+        license_plate || null,
+        trip_type,
+        userId,
         event_id ? parseInt(event_id) : null,
         custom_event_name ? custom_event_name.trim() : null,
         origin.trim(),
@@ -241,8 +252,8 @@ const getUserTrips = async (req, res) => {
               COALESCE(e.event_name, t.custom_event_name) as event_name
        FROM bookings b
        JOIN trips t ON b.trip_id = t.trip_id
-       JOIN cars c ON t.license_plate = c.license_plate
-       JOIN users u ON c.user_id = u.user_id
+       LEFT JOIN cars c ON t.license_plate = c.license_plate
+       JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
        LEFT JOIN events e ON t.event_id = e.event_id
        WHERE b.user_id = $1
        ORDER BY b.booking_time DESC`,

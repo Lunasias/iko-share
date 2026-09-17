@@ -12,6 +12,7 @@ export default function CreateTrip() {
   const [cars, setCars] = useState([]);
   const [events, setEvents] = useState([]);
   const [licensePlate, setLicensePlate] = useState('');
+  const [tripType, setTripType] = useState('carpool');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [customEventName, setCustomEventName] = useState('');
   const [origin, setOrigin] = useState('');
@@ -75,7 +76,8 @@ export default function CreateTrip() {
     try {
       const departureTime = `${date}T${time}:00`;
       const res = await API.post('/trips', {
-        license_plate: licensePlate,
+        trip_type: tripType,
+        license_plate: tripType === 'carpool' ? licensePlate : null,
         event_id: selectedEventId ? parseInt(selectedEventId) : null,
         custom_event_name: customEventName ? customEventName.trim() : null,
         origin,
@@ -104,7 +106,9 @@ export default function CreateTrip() {
     return <CarLoader text="กำลังตรวจสอบสิทธิ์ข้อมูลคนขับและรถยนต์..." />;
   }
 
-  if (cars.length === 0) {
+  const usesCar = tripType === 'carpool';
+
+  if (usesCar && cars.length === 0) {
     return (
       <div className="max-w-xl mx-auto my-12 px-4">
         <div className="travel-card p-8 text-center space-y-4 border-amber-200 bg-amber-50/50">
@@ -147,13 +151,23 @@ export default function CreateTrip() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-800">รูปแบบทริป</label>
+            <select value={tripType} onChange={(e) => setTripType(e.target.value)} className="w-full px-4 py-3 travel-input text-sm font-semibold">
+              <option value="carpool">ฉันมีรถและเปิดรับเพื่อนร่วมทาง</option>
+              <option value="find_driver">ฉันไม่มีรถ — สร้างทริปเพื่อหาคนขับมาจอย</option>
+              <option value="public_transport">เดินทางด้วยรถไฟ/ขนส่งสาธารณะ</option>
+            </select>
+            <p className="text-[11px] text-slate-500">ทริปหาคนขับจะเปิดให้คนมีรถเข้ามาพูดคุยและตกลงค่าใช้จ่ายกันเองก่อนเดินทาง</p>
+          </div>
+
           {/* Select Registered Car */}
-          <div className="space-y-1.5">
+          <div className={`space-y-1.5 ${usesCar ? '' : 'hidden'}`}>
             <label className="text-xs font-bold text-slate-800">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <Car className="w-5 h-5 text-emerald-600 shrink-0" />
               <select
-                required
+                required={usesCar}
                 value={licensePlate}
                 onChange={(e) => handleCarChange(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-semibold"
@@ -282,7 +296,7 @@ export default function CreateTrip() {
                 <input
                   type="number"
                   min="1"
-                  max={selectedCar?.capacity || 15}
+                  max={usesCar ? (selectedCar?.capacity || 15) : 50}
                   required
                   value={seats}
                   onChange={(e) => setSeats(e.target.value)}
