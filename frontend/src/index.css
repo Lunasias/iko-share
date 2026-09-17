@@ -479,6 +479,14 @@ select option {
   color: #ffffff;
 }
 
+/* Keep the background inside the isolated stacking context. A negative z-index
+   can place it behind the shell, leaving backdrop-filter with nothing to blur. */
+.site-shell .page-background { z-index: 0 !important; }
+.site-shell > nav,
+.site-shell > main,
+.site-shell > footer { position: relative; z-index: 1; }
+.page-background__wash { background: rgba(255, 255, 255, 0.12); }
+
 /* Final glass override: nested panels, form groups and admin tables must also
    separate their content from the photographic page background. */
 .site-shell .travel-card,
