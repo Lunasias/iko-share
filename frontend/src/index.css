@@ -43,8 +43,12 @@ button, a, input { touch-action: manipulation; }
   box-shadow: 0 8px 22px rgba(70, 51, 25, 0.08) !important;
 }
 .site-shell > main { padding-top: 76px; }
+/* The homepage background is a fixed layer. Let its hero start at the viewport
+   edge so it remains continuous behind the fixed navigation at scroll position 0. */
+.site-shell > main.home-main { padding-top: 0; }
 @media (max-width: 767px) {
   .site-shell > main { padding-top: 72px; }
+  .site-shell > main.home-main { padding-top: 0; }
 }
 
 .site-shell { position: relative; isolation: isolate; overflow-x: hidden; }

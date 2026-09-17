@@ -38,7 +38,7 @@ function RoutedMain() {
   const location = useLocation();
 
   return (
-    <main className="flex-grow page-enter" key={location.pathname}>
+    <main className={`flex-grow page-enter ${location.pathname === '/' ? 'home-main' : ''}`} key={location.pathname}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/glass-mockup" element={<GlassMockup />} />
