@@ -409,3 +409,29 @@ button, a, input { touch-action: manipulation; }
 .site-shell:has(.home-page) nav, .site-shell:has(.home-page) footer { background: rgba(255,255,255,.5) !important; color: var(--foreground); border-color: rgba(255,255,255,.72) !important; }
 @media (max-width: 640px) { .page-background__image { background-position: 58% center; } .page-background__wash { background: linear-gradient(180deg, rgba(255,252,245,.62), rgba(255,250,240,.84)); } }
 @media (prefers-reduced-motion: reduce) { .page-background__image { transform: none; } }
+
+/* Shared dark glass windows across every page. */
+.glass-panel,
+.travel-card,
+.home-badge,
+.home-search-glass {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.travel-input {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.site-footer {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
