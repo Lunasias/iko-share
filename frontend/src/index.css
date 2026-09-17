@@ -22,16 +22,6 @@
 }
 
 html { scroll-behavior: smooth; }
-html[data-theme="dark"] {
-  --background: #171614;
-  --foreground: #F7F1E8;
-  --muted: #24211D;
-  --muted-foreground: #B7AEA1;
-  --border: #40392F;
-  --card: #211F1B;
-  --ink-soft: #D7CBB9;
-  --ambient: rgba(212,168,75,0.12);
-}
 body {
   margin: 0;
   min-width: 320px;
@@ -290,13 +280,6 @@ button, a, input { touch-action: manipulation; }
 .hover\\:text-emerald-700:hover { color: var(--accent) !important; }
 .hover\\:bg-slate-50:hover, .hover\\:bg-slate-100:hover { background-color: var(--muted) !important; }
 .glass-panel { background: color-mix(in srgb, var(--card) 88%, transparent); }
-html[data-theme="dark"] .bg-amber-50, html[data-theme="dark"] .bg-amber-100 { background-color: color-mix(in srgb, var(--accent) 18%, var(--card)) !important; }
-html[data-theme="dark"] .text-amber-800, html[data-theme="dark"] .text-amber-900 { color: var(--accent-secondary) !important; }
-html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select { color: var(--foreground); background-color: var(--card); }
-html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: var(--muted-foreground); }
-html[data-theme="dark"] .site-shell nav a:hover,
-html[data-theme="dark"] .site-shell nav button:hover { color: var(--accent-secondary) !important; }
-html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in srgb, var(--accent) 14%, var(--card)) !important; }
 .site-shell nav a.brand-link,
 .site-shell nav a.brand-link:hover,
 .site-shell nav a.brand-link:focus,
@@ -382,9 +365,6 @@ html[data-theme="dark"] .site-shell nav a:hover { background-color: color-mix(in
 .role-passenger { background: #FFF1C2; color: #704B00; border-color: #D4A84B; }
 .role-driver { background: #F7E3A2; color: #5E4100; border-color: #B8860B; }
 .role-both { background: #E8D7A8; color: #493713; border-color: #9A7310; }
-html[data-theme="dark"] .role-passenger { background: #5A4313; color: #FFE7A3; border-color: #D4A84B; }
-html[data-theme="dark"] .role-driver { background: #6B5014; color: #FFE9A8; border-color: #E0B94F; }
-html[data-theme="dark"] .role-both { background: #54451F; color: #FFE7A3; border-color: #D4A84B; }
 .profile-hero { background: linear-gradient(110deg, #8A6508 0%, #B8860B 48%, #D4A84B 100%); }
 
 /* Shared bright cinematic travel system. The image is always behind content; surfaces stay light and translucent. */

@@ -5,7 +5,7 @@ const translations = {
     findTrips: 'ค้นหาเที่ยวรถ', createTrip: 'เปิดทริปใหม่', myTrips: 'การเดินทาง', profile: 'โปรไฟล์',
     myCars: 'รถของฉัน', admin: 'ระบบแอดมิน', logout: 'ออกจากระบบ',
     login: 'เข้าสู่ระบบ', register: 'ลงทะเบียน', search: 'ค้นหาทริป',
-    language: 'English', menu: 'เมนู', daylight: 'กลางวัน', night: 'กลางคืน',
+    language: 'English', menu: 'เมนู',
     userProfile: 'โปรไฟล์',
     badge: 'แพลตฟอร์มคาร์พูลท่องเที่ยวแชร์มิตรภาพอันดับ 1 ในไทย',
     headline: 'เดินทางประหยัด เป็นมิตร สนุกทุกเส้นทาง', headlineEnd: 'ไปทางเดียวกัน ติดรถไปกับ',
@@ -17,7 +17,7 @@ const translations = {
     findTrips: 'Find trips', createTrip: 'Create a trip', myTrips: 'My trips', profile: 'Profile',
     myCars: 'My cars', admin: 'Admin', logout: 'Log out',
     login: 'Log in', register: 'Register', search: 'Search trips',
-    language: 'ภาษาไทย', menu: 'Menu', daylight: 'Daylight', night: 'Night',
+    language: 'ภาษาไทย', menu: 'Menu',
     userProfile: 'Profile',
     badge: 'Thailand’s thoughtful carpool community',
     headline: 'Travel further. Share the journey.', headlineEnd: 'Go together with',
@@ -30,13 +30,11 @@ const translations = {
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem('iko_theme') || 'light');
   const [language, setLanguage] = useState(() => localStorage.getItem('iko_language') || 'th');
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem('iko_theme', theme);
-  }, [theme]);
+    document.documentElement.dataset.theme = 'light';
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -44,15 +42,11 @@ export function ThemeProvider({ children }) {
   }, [language]);
 
   const value = useMemo(() => ({
-    theme,
     language,
-    isDark: theme === 'dark',
-    toggleTheme: () => setTheme((current) => current === 'light' ? 'dark' : 'light'),
     toggleLanguage: () => setLanguage((current) => current === 'th' ? 'en' : 'th'),
     t: (key) => translations[language][key] || translations.th[key] || key,
-    setTheme,
     setLanguage,
-  }), [theme, language]);
+  }), [language]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

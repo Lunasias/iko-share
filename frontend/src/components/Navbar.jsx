@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Sun, Moon, Languages } from 'lucide-react';
+import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Languages } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { isDark, language, toggleTheme, toggleLanguage, t } = useTheme();
+  const { language, toggleLanguage, t } = useTheme();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -155,9 +155,6 @@ export default function Navbar() {
             <Languages className="w-4 h-4" />
             <span>{language === 'th' ? 'EN' : 'TH'}</span>
           </button>
-          <button type="button" onClick={toggleTheme} className="theme-control" aria-label="สลับโหมดสี / Toggle color mode" title="สลับโหมดสี / Toggle color mode">
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -177,7 +174,6 @@ export default function Navbar() {
         <div id="mobile-navigation" className="md:hidden mt-3 pt-4 pb-6 border-t border-[var(--border)] space-y-2 px-2 animate-[editorial-reveal_200ms_ease-out]">
           <div className="flex gap-2 pb-2">
             <button type="button" onClick={toggleLanguage} className="theme-control flex-1 justify-center"><Languages className="w-4 h-4" /> {t('language')}</button>
-            <button type="button" onClick={toggleTheme} className="theme-control flex-1 justify-center">{isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />} {isDark ? t('daylight') : t('night')}</button>
           </div>
           <Link
             to="/trips"
