@@ -329,12 +329,20 @@ button, a, input { touch-action: manipulation; }
 .home-page h1 { color: #fffaf0 !important; text-shadow: 0 3px 26px rgba(0, 0, 0, .34); }
 .home-page h1 .text-\[var\(--accent\)\] { color: #f1c56d !important; }
 .home-page p { color: rgba(255, 250, 240, .86) !important; }
-.home-badge, .home-search-glass, .home-feature-card, .home-features .travel-card {
-  background: rgba(20, 32, 31, .48) !important;
-  border: 1px solid rgba(255, 255, 255, .24) !important;
-  box-shadow: 0 18px 44px rgba(3, 12, 14, .28), inset 0 1px 0 rgba(255, 255, 255, .12);
-  backdrop-filter: blur(16px) saturate(125%);
-  -webkit-backdrop-filter: blur(16px) saturate(125%);
+.home-badge, .home-search-glass {
+  background: rgba(255, 255, 255, .62) !important;
+  border: 1px solid rgba(255, 255, 255, .78) !important;
+  box-shadow: 0 16px 38px rgba(85, 66, 38, .12), inset 0 1px 0 rgba(255, 255, 255, .8);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+.home-features .travel-card {
+  background: rgba(255, 255, 255, .78) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--foreground);
+  box-shadow: 0 16px 38px rgba(85, 66, 38, .12), inset 0 1px 0 rgba(255, 255, 255, .8);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
 }
 .home-badge { box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 8px 20px rgba(0,0,0,.18); }
 .home-search-glass { border-radius: 22px; }
