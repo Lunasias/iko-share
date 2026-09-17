@@ -550,21 +550,24 @@ select option {
   opacity: 0.32 !important;
 }
 
-/* One footer surface for every route. This intentionally overrides the older
-   home-only footer colors above so the bottom glass matches every other panel. */
-.site-shell > footer.site-footer {
+/* Footer uses the exact same glass recipe as every card and input. Keep this
+   as the final rule so legacy theme/home selectors cannot change its color. */
+.site-shell > footer.site-footer,
+.site-shell:has(.home-page) > footer.site-footer {
   position: relative !important;
   z-index: 1 !important;
+  isolation: isolate !important;
   background: rgba(0, 0, 0, 0.1) !important;
   background-color: rgba(0, 0, 0, 0.1) !important;
   background-image: none !important;
   color: var(--foreground) !important;
-  border-color: rgba(255, 255, 255, 0.42) !important;
+  border: 1px solid rgba(255, 255, 255, 0.42) !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
   backdrop-filter: blur(28px) saturate(125%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(125%) !important;
 }
-.site-shell > footer.site-footer > div {
+.site-shell > footer.site-footer > div,
+.site-shell > footer.site-footer > div * {
   background: transparent !important;
   color: inherit !important;
 }
