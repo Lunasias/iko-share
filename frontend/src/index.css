@@ -32,7 +32,20 @@ body {
 
 button, a, input { touch-action: manipulation; }
 
-.site-shell { position: relative; isolation: isolate; overflow: hidden; }
+
+/* Persistent top navigation: fixed positioning avoids sticky being trapped by
+   page layout containers and keeps the menu available throughout the scroll. */
+.site-shell > nav {
+  position: fixed !important;
+  inset: 0 0 auto 0;
+  z-index: 60 !important;
+}
+.site-shell > main { padding-top: 76px; }
+@media (max-width: 767px) {
+  .site-shell > main { padding-top: 72px; }
+}
+
+.site-shell { position: relative; isolation: isolate; overflow-x: hidden; }
 .site-shell::before {
   content: "";
   position: fixed;
