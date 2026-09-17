@@ -47,7 +47,7 @@ export default function App() {
           <PageBackground />
           <Navbar />
           <RoutedMain />
-          <footer className="site-footer glass-panel border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted-foreground)]">
+          <footer className="morning-footer border-t py-6 text-center text-xs">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
               <div>© 2026 Iko Share. สงวนลิขสิทธิ์ทุกประการ</div>
               <div className="flex gap-4">

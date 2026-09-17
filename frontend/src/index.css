@@ -620,3 +620,75 @@ select option {
   background: transparent !important;
   color: inherit !important;
 }
+
+/* Morning forest glass system — final source of truth for warm surfaces.
+   It deliberately supersedes the earlier experimental dark-blue overrides. */
+.site-shell .travel-card,
+.site-shell .glass-panel,
+.site-shell .home-search-glass,
+.site-shell .home-badge,
+.site-shell .travel-card .bg-white,
+.site-shell .travel-card .bg-slate-50,
+.site-shell .travel-card .bg-slate-100,
+.site-shell .travel-card [class*="bg-white/"],
+.site-shell .travel-card [class*="bg-slate-"] {
+  background: rgba(255, 248, 232, 0.58) !important;
+  background-color: rgba(255, 248, 232, 0.58) !important;
+  background-image: none !important;
+  color: #30291f !important;
+  border-color: rgba(255, 255, 255, 0.68) !important;
+  box-shadow: 0 14px 34px rgba(70, 51, 25, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(112%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(112%) !important;
+}
+.site-shell .travel-card::before { display: none !important; }
+
+/* Readable brown ink for all normal content on the warm translucent material. */
+.site-shell .travel-card :is(h1, h2, h3, h4, p, label, span, td, th, li),
+.site-shell .glass-panel :is(h1, h2, h3, h4, p, label, span, td, th, li),
+.site-shell .home-search-glass,
+.site-shell .home-badge {
+  color: #30291f !important;
+}
+.site-shell .travel-card .text-slate-400,
+.site-shell .travel-card .text-slate-500,
+.site-shell .travel-card .text-slate-600,
+.site-shell .travel-card .text-slate-700,
+.site-shell .travel-card .text-slate-800,
+.site-shell .travel-card .text-slate-900,
+.site-shell .glass-panel .text-slate-400,
+.site-shell .glass-panel .text-slate-500,
+.site-shell .glass-panel .text-slate-600,
+.site-shell .glass-panel .text-slate-700,
+.site-shell .glass-panel .text-slate-800,
+.site-shell .glass-panel .text-slate-900 {
+  color: #5d4a32 !important;
+}
+.site-shell input,
+.site-shell select,
+.site-shell textarea,
+.site-shell .travel-input {
+  background: rgba(255, 252, 242, 0.52) !important;
+  color: #30291f !important;
+  border-color: rgba(110, 79, 38, 0.3) !important;
+}
+.site-shell input::placeholder,
+.site-shell textarea::placeholder { color: rgba(80, 61, 37, 0.7) !important; }
+.site-shell select option { background: #fff8e8 !important; color: #30291f !important; }
+
+/* Rebuilt footer: independent class prevents legacy .glass-panel/footer rules
+   from giving the bottom bar a different tint. */
+.site-shell > footer.morning-footer,
+.site-shell:has(.home-page) > footer.morning-footer {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 248, 232, 0.58) !important;
+  background-color: rgba(255, 248, 232, 0.58) !important;
+  background-image: none !important;
+  color: #5d4a32 !important;
+  border-color: rgba(255, 255, 255, 0.68) !important;
+  box-shadow: 0 -8px 28px rgba(70, 51, 25, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(112%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(112%) !important;
+}
+.site-shell > footer.morning-footer * { color: inherit !important; }
