@@ -86,7 +86,7 @@ const approveBooking = async (req, res) => {
     const booking = bookingRes.rows[0];
 
     // Only trip driver can approve
-    if (booking.driver_id !== userId && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
+    if (booking.driver_id !== userId && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์ในการอนุมัติคำขอนี้' });
     }
 
@@ -132,7 +132,7 @@ const rejectBooking = async (req, res) => {
     const booking = bookingRes.rows[0];
 
     // Only trip driver can reject
-    if (booking.driver_id !== userId && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
+    if (booking.driver_id !== userId && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์ในการปฏิเสธคำขอนี้' });
     }
 

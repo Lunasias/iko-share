@@ -37,11 +37,26 @@ const getAdminStats = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await db.query('SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY user_id DESC');
+    const result = await db.query('SELECT user_id, name, email, phone, role, is_admin, created_at FROM users ORDER BY user_id DESC');
     res.json({ success: true, users: result.rows || [] });
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + (error.message || String(error)) });
+  }
+};
+
+const updateUserAdminAccess = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_admin: isAdmin } = req.body;
+    if (typeof isAdmin !== 'boolean') return res.status(400).json({ success: false, message: 'is_admin must be a boolean.' });
+    if (Number(id) === (req.user.user_id || req.user.id)) return res.status(400).json({ success: false, message: 'You cannot change your own administrator access.' });
+    const result = await db.query('UPDATE users SET is_admin = $1 WHERE user_id = $2 RETURNING user_id, name, email, phone, role, is_admin, created_at', [isAdmin, id]);
+    if (!result.rows.length) return res.status(404).json({ success: false, message: 'User not found.' });
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('Update admin access error:', error);
+    res.status(500).json({ success: false, message: 'Unable to update administrator access.' });
   }
 };
 
@@ -70,6 +85,7 @@ const deleteTrip = async (req, res) => {
 module.exports = {
   getAdminStats,
   getAllUsers,
+  updateUserAdminAccess,
   deleteUser,
   deleteTrip,
 };

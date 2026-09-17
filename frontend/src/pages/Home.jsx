@@ -46,7 +46,7 @@ export default function Home() {
     <div className="home-page space-y-16 pb-16">
       {/* Hero Section */}
       <section
-        className="home-hero relative pt-16 pb-20 text-center px-4 reveal-on-scroll"
+        className="home-hero relative pt-28 sm:pt-32 pb-20 text-center px-4 reveal-on-scroll"
         onPointerMove={handlePointerMove}
         onPointerLeave={() => setPointer({ x: 0, y: 0 })}
       >

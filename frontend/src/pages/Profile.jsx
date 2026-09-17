@@ -7,7 +7,7 @@ import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
 
-  const isAdminAccount = !!user && (user.email === 'admin@ikoshare.com' || user.role === 'Admin');
+  const isAdminAccount = !!user && (user.email === 'admin@ikoshare.com' || user.is_admin);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -256,7 +256,7 @@ export default function Profile() {
           {/* Role Toggle Switcher */}
           <div className="space-y-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
             <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">สลับบทบาทของคุณ (Role Switcher)</label>
-            <div className={`grid gap-3 pt-1 ${isAdminAccount ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            <div className="grid grid-cols-3 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setRole('Passenger')}
@@ -275,32 +275,20 @@ export default function Profile() {
               >
                 คนขับรถ (Driver)
               </button>
-              {isAdminAccount ? (
-                <button
-                  type="button"
-                  onClick={() => setRole('Admin')}
-                  className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
-                    role === 'Admin' ? 'bg-amber-500 text-white border-amber-600 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                  }`}
-                >
-                  🛡️ ผู้ดูแลระบบ (Admin)
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setRole('Both')}
-                  className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
-                    role === 'Both' ? 'role-both shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                  }`}
-                >
-                  ทั้งสองอย่าง (Both)
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setRole('Both')}
+                className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border ${
+                  role === 'Both' ? 'role-both shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                ทั้งสองอย่าง (Both)
+              </button>
             </div>
             {isAdminAccount && (
               <p className="text-[11px] text-amber-700 font-bold flex items-center gap-1.5 pt-1">
                 <ShieldAlert className="w-3.5 h-3.5" />
-                <span>บัญชีนี้เป็นบัญชีแอดมิน — เลือก "ผู้ดูแลระบบ (Admin)" เพื่อคงสิทธิ์การจัดการระบบไว้</span>
+                <span>สิทธิ์ผู้ดูแลระบบแยกจากบทบาทการเดินทาง และจัดการได้จากหน้า Admin</span>
               </p>
             )}
           </div>

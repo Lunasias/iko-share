@@ -23,7 +23,7 @@ const getTripMessages = async (req, res) => {
     const userId = req.user.user_id || req.user.id;
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
+    if (!hasAccess && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถแชทได้' });
     }
 
@@ -58,7 +58,7 @@ const sendMessage = async (req, res) => {
     }
 
     const hasAccess = await checkTripAccess(id, userId);
-    if (!hasAccess && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
+    if (!hasAccess && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถส่งข้อความได้' });
     }
 

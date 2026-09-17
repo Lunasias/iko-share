@@ -5,7 +5,7 @@ const getProfile = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
     const userRes = await db.query(
-      'SELECT user_id, name, email, phone, role, avatar_url, bio, created_at FROM users WHERE user_id = $1',
+      'SELECT user_id, name, email, phone, role, is_admin, avatar_url, bio, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 
@@ -46,7 +46,7 @@ const updateProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อ-นามสกุล' });
     }
 
-    const validRole = ['Driver', 'Passenger', 'Both', 'Admin'].includes(role) ? role : undefined;
+    const validRole = ['Driver', 'Passenger', 'Both'].includes(role) ? role : undefined;
 
     let updateQuery = `
       UPDATE users
@@ -60,7 +60,7 @@ const updateProfile = async (req, res) => {
     }
 
     queryParams.push(userId);
-    updateQuery += ` WHERE user_id = $${queryParams.length} RETURNING user_id, name, email, phone, role, avatar_url, bio, created_at`;
+    updateQuery += ` WHERE user_id = $${queryParams.length} RETURNING user_id, name, email, phone, role, is_admin, avatar_url, bio, created_at`;
 
     const updatedRes = await db.query(updateQuery, queryParams);
     const user = updatedRes.rows && updatedRes.rows[0] ? updatedRes.rows[0] : { user_id: userId, name, phone, avatar_url, role: validRole, bio };
@@ -82,7 +82,7 @@ const getPublicProfile = async (req, res) => {
     const { userId } = req.params;
 
     const userRes = await db.query(
-      'SELECT user_id, name, email, phone, role, avatar_url, bio, created_at FROM users WHERE user_id = $1',
+      'SELECT user_id, name, email, phone, role, is_admin, avatar_url, bio, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 

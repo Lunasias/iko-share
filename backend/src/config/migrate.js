@@ -9,7 +9,8 @@ const STATEMENTS = [
      name VARCHAR(100) NOT NULL,
      email VARCHAR(100) UNIQUE NOT NULL,
      phone VARCHAR(15),
-     role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin')),
+     role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both')),
+     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
      password VARCHAR(255) NOT NULL,
      avatar_url TEXT,
      bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน',
@@ -98,6 +99,7 @@ const STATEMENTS = [
 const COLUMN_PATCHES = [
   ['users', 'avatar_url', 'TEXT'],
   ['users', 'bio', "TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน'"],
+  ['users', 'is_admin', 'BOOLEAN NOT NULL DEFAULT FALSE'],
   ['cars', 'capacity', 'INT NOT NULL DEFAULT 4'],
   ['events', 'category', 'VARCHAR(50)'],
   ['trips', 'custom_event_name', 'VARCHAR(255)'],
@@ -107,24 +109,22 @@ const COLUMN_PATCHES = [
   ['trip_memories', 'caption', 'TEXT'],
 ];
 
-// Older databases were created with CHECK (role IN ('Driver','Passenger','Both')),
-// which silently blocks the 'Admin' role the application checks for. Drop it and
-// recreate it including 'Admin'.
+// Administration is a permission separate from the user's travel role.
 const CONSTRAINT_FIXES = [
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`,
+  `UPDATE users SET is_admin = TRUE, role = 'Both' WHERE role = 'Admin' OR email = 'admin@ikoshare.com'`,
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`,
   `ALTER TABLE users ADD CONSTRAINT users_role_check
-     CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin'))`,
+     CHECK (role IN ('Driver', 'Passenger', 'Both'))`,
 ];
 
 const SEEDS = [
   {
-    // The admin account is seeded with the real 'Admin' role so every
-    // `role === 'Admin'` check in the app works without the email fallback.
-    text: `INSERT INTO users (name, email, phone, role, password, bio)
-           VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Admin',
+    text: `INSERT INTO users (name, email, phone, role, is_admin, password, bio)
+           VALUES ('ผู้ดูแลระบบ Iko Share', 'admin@ikoshare.com', '0812345678', 'Both', TRUE,
                    '$2a$10$jXfex0Jbq9RNZ13L9WtVP.CPLPy2caVaEtPLBRKLD4xOqMgq39Nce',
                    'ผู้ดูแลระบบส่วนกลาง ยินดีให้บริการผู้ใช้งานทุกคนครับ')
-           ON CONFLICT (email) DO UPDATE SET role = 'Admin'`,
+           ON CONFLICT (email) DO UPDATE SET role = 'Both', is_admin = TRUE`,
     params: [],
   },
   {

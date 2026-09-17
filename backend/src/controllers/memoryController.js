@@ -50,7 +50,7 @@ const addTripMemory = async (req, res) => {
     );
     const isPassenger = bookingRes.rows && bookingRes.rows.length > 0;
 
-    if (!isDriver && !isPassenger && req.user.role !== 'Admin' && req.user.email !== 'admin@ikoshare.com') {
+    if (!isDriver && !isPassenger && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
       return res.status(403).json({ success: false, message: 'เฉพาะผู้ที่ร่วมทริปนี้เท่านั้นที่สามารถโพสต์ภาพความทรงจำได้' });
     }
 

@@ -20,7 +20,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 const requireAdmin = (req, res, next) => {
-  if (!req.user || (req.user.email !== 'admin@ikoshare.com' && req.user.role !== 'Admin')) {
+  if (!req.user || (!req.user.is_admin && req.user.email !== 'admin@ikoshare.com')) {
     return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ในการเข้าถึงส่วนผู้ดูแลระบบ' });
   }
   next();

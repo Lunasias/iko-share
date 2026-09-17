@@ -252,7 +252,7 @@ export default function TripDetail() {
   const departureDate = new Date(trip.departure_time);
   const currentUserId = user ? (user.user_id || user.id) : null;
   const isDriver = currentUserId && currentUserId === trip.driver_id;
-  const isAdmin = user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com');
+  const isAdmin = user && (user.is_admin || user.email === 'admin@ikoshare.com');
   const myBooking = passengers.find((p) => p.user_id === currentUserId && ['จองแล้ว', 'รอการอนุมัติ'].includes(p.booking_status));
   const isApprovedMember = Boolean(passengers.find((p) => p.user_id === currentUserId && p.booking_status === 'จองแล้ว'));
   const canAccessChat = isDriver || isApprovedMember || isAdmin;

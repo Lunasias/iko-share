@@ -30,10 +30,10 @@ export default function Navbar() {
     navigate('/login');
   };
 
-  const isAdmin = !!user && (user.role === 'Admin' || user.email === 'admin@ikoshare.com');
+  const isAdmin = !!user && (user.is_admin || user.email === 'admin@ikoshare.com');
 
   const getRoleBadge = (role) => {
-    const roleKey = role === 'Admin' ? 'adminLabel' : role === 'Driver' ? 'driverLabel' : role === 'Both' ? 'bothLabel' : 'passengerLabel';
+    const roleKey = role === 'Driver' ? 'driverLabel' : role === 'Both' ? 'bothLabel' : 'passengerLabel';
     return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">{t(roleKey)}</span>;
   };
 

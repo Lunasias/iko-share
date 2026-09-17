@@ -166,7 +166,7 @@ const completeTrip = async (req, res) => {
 
     const trip = tripRes.rows[0];
     const isOwner = trip.driver_id === userId;
-    const isAdmin = req.user.role === 'Admin' || req.user.email === 'admin@ikoshare.com';
+    const isAdmin = req.user.is_admin || req.user.email === 'admin@ikoshare.com';
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'เฉพาะคนขับหรือแอดมินเท่านั้นที่สามารถปิดทริปได้' });
@@ -201,7 +201,7 @@ const deleteTrip = async (req, res) => {
 
     const trip = tripRes.rows[0];
     const isOwner = trip.driver_id === userId;
-    const isAdmin = req.user.role === 'Admin' || req.user.email === 'admin@ikoshare.com';
+    const isAdmin = req.user.is_admin || req.user.email === 'admin@ikoshare.com';
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์ในการลบเที่ยวเดินทางนี้' });

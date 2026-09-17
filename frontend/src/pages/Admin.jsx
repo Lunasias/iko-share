@@ -49,6 +49,18 @@ export default function Admin() {
     }
   };
 
+  const handleToggleAdminAccess = async (user) => {
+    const userId = user.user_id || user.id;
+    try {
+      const res = await API.put(`/admin/users/${userId}/admin-access`, { is_admin: !user.is_admin });
+      if (res.data.success) {
+        setUsers((prev) => prev.map((item) => (item.user_id || item.id) === userId ? res.data.user : item));
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถอัปเดตสิทธิ์ผู้ดูแลระบบได้'));
+    }
+  };
+
   const handleDeleteTrip = async (tripId) => {
     if (!window.confirm('คุณต้องการลบเที่ยวเดินทางนี้ออกจากระบบใช่หรือไม่?')) return;
     try {
@@ -171,7 +183,8 @@ export default function Admin() {
                 <th className="py-3 px-4">ชื่อ</th>
                 <th className="py-3 px-4">อีเมล</th>
                 <th className="py-3 px-4">เบอร์โทร</th>
-                <th className="py-3 px-4">บทบาท</th>
+                <th className="py-3 px-4">บทบาทการเดินทาง</th>
+                <th className="py-3 px-4">สิทธิ์ผู้ดูแลระบบ</th>
                 <th className="py-3 px-4 text-right">จัดการ</th>
               </tr>
             </thead>
@@ -186,12 +199,20 @@ export default function Admin() {
                     <td className="py-3 px-4">{u.phone || '-'}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.role === 'Admin' ? 'role-driver' :
-                        u.role === 'Driver' ? 'role-driver' :
-                        u.role === 'Both' ? 'role-both' : 'role-passenger'
+                        u.role === 'Driver' ? 'role-driver' : u.role === 'Both' ? 'role-both' : 'role-passenger'
                       }`}>
-                        {u.role}
+                        {u.role === 'Both' ? 'คนขับและผู้โดยสาร' : u.role === 'Driver' ? 'คนขับ' : 'ผู้โดยสาร'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        disabled={u.email === 'admin@ikoshare.com'}
+                        onClick={() => handleToggleAdminAccess(u)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${u.is_admin ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'} disabled:opacity-60`}
+                      >
+                        {u.is_admin ? 'ผู้ดูแลระบบ' : 'ผู้ใช้ทั่วไป'}
+                      </button>
                     </td>
                     <td className="py-3 px-4 text-right">
                       {u.email !== 'admin@ikoshare.com' && (
