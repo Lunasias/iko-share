@@ -550,6 +550,55 @@ select option {
   opacity: 0.32 !important;
 }
 
+/* Final contrast pass: use one dark glass material everywhere. The previous
+   card ::before and home overlay added different warm tints, while old text
+   utility rules left some labels dark and unreadable. */
+.site-shell .travel-card,
+.site-shell .glass-panel,
+.site-shell .home-search-glass,
+.site-shell .home-badge,
+.site-shell > footer.site-footer,
+.site-shell .travel-card .bg-white,
+.site-shell .travel-card .bg-slate-50,
+.site-shell .travel-card .bg-slate-100,
+.site-shell .travel-card [class*="bg-white/"],
+.site-shell .travel-card [class*="bg-slate-"] {
+  background: rgba(15, 23, 42, 0.56) !important;
+  background-color: rgba(15, 23, 42, 0.56) !important;
+  background-image: none !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(28px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(125%) !important;
+}
+.site-shell .travel-card::before { display: none !important; }
+
+/* All ordinary copy inside glass gets a readable light tone; accent colors
+   remain available through their existing more-specific utility selectors. */
+.site-shell .travel-card p,
+.site-shell .travel-card label,
+.site-shell .travel-card td,
+.site-shell .travel-card th,
+.site-shell .travel-card span,
+.site-shell .travel-card h2,
+.site-shell .travel-card h3,
+.site-shell .glass-panel,
+.site-shell .glass-panel p,
+.site-shell .glass-panel span,
+.site-shell > footer.site-footer,
+.site-shell > footer.site-footer * {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+.site-shell .travel-card .text-slate-500,
+.site-shell .travel-card .text-slate-400,
+.site-shell .travel-card .text-slate-600,
+.site-shell .travel-card .text-slate-700,
+.site-shell .travel-card .text-slate-800,
+.site-shell .travel-card .text-slate-900 {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
 /* Footer uses the exact same glass recipe as every card and input. Keep this
    as the final rule so legacy theme/home selectors cannot change its color. */
 .site-shell > footer.site-footer,
