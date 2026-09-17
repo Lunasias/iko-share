@@ -539,6 +539,17 @@ select option {
 /* Native select menus cannot be backdrop-filtered consistently by browsers. */
 .site-shell select option { background: #242424 !important; color: #fff !important; }
 
+/* Final visual pass: blur the actual photographic layer as well as the glass
+   surfaces. This remains visible even on browsers with weak backdrop-filter support. */
+.site-shell .page-background__image {
+  filter: blur(10px) saturate(0.88) contrast(0.96) !important;
+  transform: scale(1.07) !important;
+}
+.site-shell .page-background__wash,
+.site-shell .page-background__glow {
+  opacity: 0.32 !important;
+}
+
 /* One footer surface for every route. This intentionally overrides the older
    home-only footer colors above so the bottom glass matches every other panel. */
 .site-shell > footer.site-footer {
