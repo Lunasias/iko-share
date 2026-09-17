@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { Search, MapPin, Calendar as CalendarIcon, ShieldCheck, Users, HeartHandshake, Sparkles, Compass } from 'lucide-react';
+import { Search, MapPin, Calendar as CalendarIcon, ShieldCheck, Users, HeartHandshake, Sparkles } from 'lucide-react';
 
 export default function Home() {
   const [origin, setOrigin] = useState('');
@@ -54,11 +54,6 @@ export default function Home() {
           className="max-w-4xl mx-auto space-y-6 home-hero-content"
           style={{ '--pointer-x': `${pointer.x * 3}px`, '--pointer-y': `${pointer.y * 3}px` }}
         >
-          <div className="home-badge inline-flex items-center gap-2 px-4 py-2 text-[var(--accent-secondary)] motion-shimmer rounded-full text-xs font-black">
-            <Compass className="w-4 h-4 text-[var(--accent)] motion-orbit" />
-            <span>{t('badge')}</span>
-          </div>
-
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight font-['Plus_Jakarta_Sans',sans-serif]">
             {t('headline')} <br className="hidden sm:block" />
             {t('headlineEnd')} <span className="text-[var(--accent)] underline decoration-[var(--accent-secondary)]">Iko Share</span>
