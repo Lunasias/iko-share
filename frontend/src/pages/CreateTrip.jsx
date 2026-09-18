@@ -75,13 +75,46 @@ export default function CreateTrip() {
     }
   };
 
+  // Today's date in the local (Thai) timezone — used as the min value of the date picker.
+  const todayStr = (() => {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  })();
+
+  // Current local time — used to stop picking a past hour when travelling today.
+  const nowTimeStr = (() => {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!date || !time) {
+      setError('กรุณาระบุวันและเวลาออกเดินทางให้ครบถ้วน');
+      return;
+    }
+
+    // Build the instant from the user's local date/time, then send ISO (UTC) so the
+    // stored TIMESTAMPTZ is exact and no +7 hours shift happens on display.
+    const localDeparture = new Date(`${date}T${time}:00`);
+    if (Number.isNaN(localDeparture.getTime())) {
+      setError('รูปแบบวันและเวลาออกเดินทางไม่ถูกต้อง');
+      return;
+    }
+
+    if (localDeparture.getTime() < Date.now()) {
+      setError('ไม่สามารถตั้งเวลาออกเดินทางย้อนหลังได้ กรุณาเลือกวันและเวลาในอนาคต');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const departureTime = `${date}T${time}:00`;
+      const departureTime = localDeparture.toISOString();
       const res = await API.post('/trips', {
         trip_type: tripType,
         license_plate: tripType === 'carpool' ? licensePlate : null,
@@ -273,6 +306,7 @@ export default function CreateTrip() {
                 <input
                   type="date"
                   required
+                  min={todayStr}
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
@@ -287,6 +321,7 @@ export default function CreateTrip() {
                 <input
                   type="time"
                   required
+                  min={date === todayStr ? nowTimeStr : undefined}
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"

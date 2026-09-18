@@ -66,7 +66,12 @@ export default function Login() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">รหัสผ่าน</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800">รหัสผ่าน</label>
+              <Link to="/forgot-password" className="text-[11px] text-emerald-700 hover:underline font-bold">
+                ลืมรหัสผ่าน? แจ้งแอดมิน
+              </Link>
+            </div>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <Lock className="w-5 h-5 text-slate-400 shrink-0" />
               <input

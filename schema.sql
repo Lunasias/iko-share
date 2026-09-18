@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
-  booking_status VARCHAR(20) NOT NULL DEFAULT 'รอการอนุมัติ' CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว')),
+  booking_status VARCHAR(20) NOT NULL DEFAULT 'รอการอนุมัติ' CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว', 'ถูกนำออกจากตี้')),
   location VARCHAR(255),
   booking_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -65,8 +65,13 @@ CREATE TABLE IF NOT EXISTS chat_reports (
   message_id INT REFERENCES chat_messages(message_id) ON DELETE CASCADE,
   reporter_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   reason TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ' CHECK (status IN ('รอดำเนินการ', 'ตรวจสอบแล้ว', 'ปิดรายงาน')),
+  resolved_by INT,
+  resolved_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS chat_reports_message_reporter_key ON chat_reports (message_id, reporter_id);
 
 CREATE TABLE IF NOT EXISTS reviews (
   review_id SERIAL PRIMARY KEY,
@@ -76,6 +81,22 @@ CREATE TABLE IF NOT EXISTS reviews (
   rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- One review per member per trip: a repeated submission edits the existing review.
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_trip_reviewer_target_key ON reviews (trip_id, reviewer_id, target_user_id);
+
+CREATE TABLE IF NOT EXISTS support_requests (
+  request_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+  name VARCHAR(100),
+  email VARCHAR(100),
+  request_type VARCHAR(50) NOT NULL DEFAULT 'forgot_password',
+  message TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ',
+  admin_reply TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE IF NOT EXISTS trip_memories (

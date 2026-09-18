@@ -2,12 +2,23 @@ import React, { useState } from 'react';
 import API from '../services/api';
 import { Star, X, CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, targetName }) {
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
+export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, targetName, existingReview }) {
+  const [rating, setRating] = useState(existingReview ? existingReview.rating : 5);
+  const [comment, setComment] = useState(existingReview ? (existingReview.comment || '') : '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const isEditing = Boolean(existingReview);
+
+  // Reset state when the modal opens again for a different target.
+  React.useEffect(() => {
+    if (isOpen) {
+      setRating(existingReview ? existingReview.rating : 5);
+      setComment(existingReview ? (existingReview.comment || '') : '');
+      setError('');
+      setSuccess(false);
+    }
+  }, [isOpen, targetUserId, existingReview]);
 
   if (!isOpen) return null;
 
@@ -52,7 +63,7 @@ export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, tar
         </button>
 
         <h3 className="text-lg font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
-          ให้คะแนนและรีวิวเพื่อนร่วมทาง
+          {isEditing ? 'แก้ไขรีวิว' : 'ให้คะแนนและรีวิวเพื่อนร่วมทาง'}
         </h3>
         <p className="text-xs text-slate-500 font-medium">
           แชร์ความประทับใจที่คุณมีต่อ <span className="font-bold text-emerald-700">{targetName}</span>
@@ -102,7 +113,7 @@ export default function ReviewModal({ isOpen, onClose, tripId, targetUserId, tar
               disabled={submitting}
               className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-sm"
             >
-              {submitting ? 'กำลังส่งรีวิว...' : 'บันทึกคะแนนรีวิว'}
+              {submitting ? 'กำลังบันทึกรีวิว...' : isEditing ? 'บันทึกการแก้ไขรีวิว' : 'บันทึกคะแนนรีวิว'}
             </button>
           </form>
         )}

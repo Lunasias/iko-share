@@ -98,6 +98,20 @@ const STATEMENTS = [
      caption TEXT,
      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
    )`,
+
+  // "ลืมรหัสผ่าน / ขอลบบัญชี" — a support conversation that reaches the admin dashboard.
+  `CREATE TABLE IF NOT EXISTS support_requests (
+     request_id SERIAL PRIMARY KEY,
+     user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+     name VARCHAR(100),
+     email VARCHAR(100),
+     request_type VARCHAR(50) NOT NULL DEFAULT 'forgot_password',
+     message TEXT NOT NULL,
+     status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ',
+     admin_reply TEXT,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+     resolved_at TIMESTAMP WITH TIME ZONE
+   )`,
 ];
 
 // Safety net: any extra column referenced by the app but missing in an old database.
@@ -112,6 +126,9 @@ const COLUMN_PATCHES = [
   ['trips', 'passenger_requirements', 'VARCHAR(255)'],
   ['trips', 'trip_status', "VARCHAR(20) NOT NULL DEFAULT 'active'"],
   ['trip_memories', 'caption', 'TEXT'],
+  ['chat_reports', 'status', "VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ'"],
+  ['chat_reports', 'resolved_at', 'TIMESTAMP WITH TIME ZONE'],
+  ['chat_reports', 'resolved_by', 'INT'],
 ];
 
 // Administration is a permission separate from the user's travel role.
@@ -121,6 +138,28 @@ const CONSTRAINT_FIXES = [
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`,
   `ALTER TABLE users ADD CONSTRAINT users_role_check
      CHECK (role IN ('Driver', 'Passenger', 'Both'))`,
+
+  // Room head (trip owner) can remove a member from the party → dedicated booking status.
+  `ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_booking_status_check`,
+  `ALTER TABLE bookings ADD CONSTRAINT bookings_booking_status_check
+     CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว', 'ถูกนำออกจากตี้'))`,
+
+  // One review per member per trip: repeated submissions become an edit of the same review.
+  `DELETE FROM reviews a USING reviews b
+     WHERE a.review_id < b.review_id
+       AND a.trip_id = b.trip_id
+       AND a.reviewer_id = b.reviewer_id
+       AND a.target_user_id = b.target_user_id`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS reviews_trip_reviewer_target_key
+     ON reviews (trip_id, reviewer_id, target_user_id)`,
+
+  // The same user should only be able to report the same message once.
+  `DELETE FROM chat_reports a USING chat_reports b
+     WHERE a.report_id < b.report_id
+       AND a.message_id = b.message_id
+       AND a.reporter_id = b.reporter_id`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS chat_reports_message_reporter_key
+     ON chat_reports (message_id, reporter_id)`,
 ];
 
 const SEEDS = [

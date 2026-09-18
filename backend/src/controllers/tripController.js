@@ -125,6 +125,16 @@ const createTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: `จำนวนที่นั่งเปิดรับ (${seatsToOffer}) ต้องไม่เกินความจุที่นั่งของรถ (${capacity} ที่นั่ง)` });
     }
 
+    // A departure time in the past makes no sense for a new trip.
+    const departureDate = departure_time ? new Date(departure_time) : null;
+    if (departure_time && Number.isNaN(departureDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'รูปแบบวันและเวลาออกเดินทางไม่ถูกต้อง' });
+    }
+    const departureInstant = departureDate || new Date();
+    if (departureInstant.getTime() < Date.now() - 60 * 1000) {
+      return res.status(400).json({ success: false, message: 'ไม่สามารถตั้งเวลาออกเดินทางย้อนหลังได้ กรุณาเลือกวันและเวลาในอนาคต' });
+    }
+
     const newTrip = await db.query(
       `INSERT INTO trips (
         license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
@@ -141,7 +151,7 @@ const createTrip = async (req, res) => {
         custom_event_name ? custom_event_name.trim() : null,
         origin.trim(),
         destination.trim(),
-        departure_time || new Date(),
+        departureInstant.toISOString(),
         seatsToOffer,
         parseFloat(price_seat),
         driver_personality ? driver_personality.trim() : null,
@@ -160,14 +170,14 @@ const createTrip = async (req, res) => {
   }
 };
 
-// Complete trip (Driver or Admin)
+// Complete trip (Trip owner or Admin)
 const completeTrip = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
     const { id } = req.params;
 
     const tripRes = await db.query(
-      'SELECT t.*, c.user_id as driver_id FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+      'SELECT t.*, COALESCE(c.user_id, t.organizer_id) as driver_id FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
       [id]
     );
 
@@ -180,7 +190,7 @@ const completeTrip = async (req, res) => {
     const isAdmin = req.user.is_admin || req.user.email === 'admin@ikoshare.com';
 
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ success: false, message: 'เฉพาะคนขับหรือแอดมินเท่านั้นที่สามารถปิดทริปได้' });
+      return res.status(403).json({ success: false, message: 'เฉพาะหัวห้อง (เจ้าของทริป) หรือแอดมินเท่านั้นที่สามารถปิดทริปได้' });
     }
 
     await db.query("UPDATE trips SET trip_status = 'completed' WHERE trip_id = $1", [id]);
@@ -195,14 +205,14 @@ const completeTrip = async (req, res) => {
   }
 };
 
-// Delete trip (Owner or Admin)
+// Delete trip (Trip owner or Admin)
 const deleteTrip = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
     const { id } = req.params;
 
     const tripRes = await db.query(
-      'SELECT t.*, c.user_id as driver_id FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+      'SELECT t.*, COALESCE(c.user_id, t.organizer_id) as driver_id FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
       [id]
     );
 
@@ -230,6 +240,61 @@ const deleteTrip = async (req, res) => {
   }
 };
 
+// Kick a passenger out of the party (Room head / Trip owner or Admin only)
+const kickPassenger = async (req, res) => {
+  try {
+    const requesterId = req.user.user_id || req.user.id;
+    const { id, userId: targetUserId } = req.params;
+
+    const tripRes = await db.query(
+      'SELECT t.*, COALESCE(c.user_id, t.organizer_id) as owner_id FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+      [id]
+    );
+
+    if (!tripRes.rows || tripRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรายการเดินทางนี้' });
+    }
+
+    const trip = tripRes.rows[0];
+    const isOwner = trip.owner_id === requesterId;
+    const isAdmin = req.user.is_admin || req.user.email === 'admin@ikoshare.com';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'เฉพาะหัวห้อง (เจ้าของทริป) หรือแอดมินเท่านั้นที่สามารถนำสมาชิกออกจากตี้ได้' });
+    }
+
+    if (Number(targetUserId) === Number(trip.owner_id)) {
+      return res.status(400).json({ success: false, message: 'ไม่สามารถนำหัวห้องออกจากตี้ได้' });
+    }
+
+    const bookingRes = await db.query(
+      "SELECT * FROM bookings WHERE trip_id = $1 AND user_id = $2 AND booking_status IN ('จองแล้ว', 'รอการอนุมัติ') ORDER BY booking_id DESC LIMIT 1",
+      [id, targetUserId]
+    );
+
+    if (!bookingRes.rows || bookingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบสมาชิกท่านนี้ในตี้ (อาจถูกนำออกไปแล้ว)' });
+    }
+
+    const booking = bookingRes.rows[0];
+
+    await db.query("UPDATE bookings SET booking_status = 'ถูกนำออกจากตี้' WHERE booking_id = $1", [booking.booking_id]);
+
+    // Give the seat back only when the passenger had already been approved.
+    if (booking.booking_status === 'จองแล้ว') {
+      await db.query('UPDATE trips SET available_seats = available_seats + 1 WHERE trip_id = $1', [id]);
+    }
+
+    res.json({
+      success: true,
+      message: 'นำสมาชิกออกจากตี้นี้เรียบร้อยแล้ว',
+    });
+  } catch (error) {
+    console.error('Kick passenger error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการนำสมาชิกออกจากตี้: ' + (error.message || String(error)) });
+  }
+};
+
 // Get user's trips
 const getUserTrips = async (req, res) => {
   try {
@@ -239,9 +304,9 @@ const getUserTrips = async (req, res) => {
       `SELECT t.*, c.model as car_model, c.capacity as car_capacity,
               COALESCE(e.event_name, t.custom_event_name) as event_name
        FROM trips t
-       JOIN cars c ON t.license_plate = c.license_plate
+       LEFT JOIN cars c ON t.license_plate = c.license_plate
        LEFT JOIN events e ON t.event_id = e.event_id
-       WHERE c.user_id = $1
+       WHERE COALESCE(c.user_id, t.organizer_id) = $1
        ORDER BY t.created_at DESC`,
       [userId]
     );
@@ -277,5 +342,6 @@ module.exports = {
   createTrip,
   completeTrip,
   deleteTrip,
+  kickPassenger,
   getUserTrips,
 };

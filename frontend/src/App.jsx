@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import Cars from './pages/Cars';
 import Admin from './pages/Admin';
 import GlassMockup from './pages/GlassMockup';
+import ForgotPasswordChat from './pages/ForgotPasswordChat';
 
 function AppFooter() {
   const { t } = useTheme();
@@ -43,6 +44,7 @@ function RoutedMain() {
         <Route path="/" element={<Home />} />
         <Route path="/glass-mockup" element={<GlassMockup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPasswordChat />} />
         <Route path="/register" element={<Register />} />
         <Route path="/trips" element={<Trips />} />
         <Route path="/trips/:id" element={<TripDetail />} />

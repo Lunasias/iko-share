@@ -9,7 +9,7 @@ import CarLoader from '../components/CarLoader';
 import {
   MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle,
   ArrowRight, Star, LogOut, Trash2, Check, XCircle, Camera, Image, Send,
-  Sparkles, HeartHandshake, Award, ShieldCheck
+  Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus
 } from 'lucide-react';
 
 export default function TripDetail() {
@@ -30,6 +30,8 @@ export default function TripDetail() {
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewTarget, setReviewTarget] = useState({ id: null, name: '' });
+  // Reviews written by the current user inside this trip (1 review per member)
+  const [myReviews, setMyReviews] = useState([]);
 
   // User/Owner profile modal state (Works for both driver and passengers)
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -45,6 +47,26 @@ export default function TripDetail() {
     fetchTripDetail();
     fetchMemories();
   }, [id]);
+
+  useEffect(() => {
+    fetchMyReviews();
+  }, [id, user]);
+
+  // Reviews the current user already submitted in this trip (title/button switch to "edit").
+  const fetchMyReviews = async () => {
+    if (!user) {
+      setMyReviews([]);
+      return;
+    }
+    try {
+      const res = await API.get(`/reviews/trip/${id}/mine`);
+      if (res.data.success) {
+        setMyReviews(res.data.reviews || []);
+      }
+    } catch (e) {
+      setMyReviews([]);
+    }
+  };
 
   const fetchTripDetail = async () => {
     setLoading(true);
@@ -128,6 +150,27 @@ export default function TripDetail() {
       }
     } catch (err) {
       setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการปฏิเสธ'));
+    }
+  };
+
+  // Room head (trip owner) / admin: remove a member from the party.
+  const handleKickPassenger = async (userId, passengerName) => {
+    if (!window.confirm(`คุณต้องการนำ ${passengerName} ออกจากตี้นี้ใช่หรือไม่? ที่นั่งจะถูกคืนเข้าระบบ`)) return;
+    setError('');
+    setSuccessMsg('');
+    setSubmitting(true);
+    try {
+      const res = await API.delete(`/trips/${id}/passengers/${userId}`);
+      if (res.data.success) {
+        setSuccessMsg(String(res.data.message || 'นำสมาชิกออกจากตี้เรียบร้อยแล้ว'));
+        fetchTripDetail();
+      } else {
+        setError(String(res.data.message || 'ไม่สามารถนำสมาชิกออกจากตี้ได้'));
+      }
+    } catch (err) {
+      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการนำสมาชิกออกจากตี้'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -256,6 +299,14 @@ export default function TripDetail() {
   const myBooking = passengers.find((p) => p.user_id === currentUserId && ['จองแล้ว', 'รอการอนุมัติ'].includes(p.booking_status));
   const isApprovedMember = Boolean(passengers.find((p) => p.user_id === currentUserId && p.booking_status === 'จองแล้ว'));
   const canAccessChat = isDriver || isApprovedMember || isAdmin;
+
+  // Room head = car owner (driver) or the organizer of a car-less trip (find driver / public transport).
+  const isTripOwner = Boolean(currentUserId && (currentUserId === trip.driver_id || currentUserId === trip.organizer_id));
+  const canModerateParty = isTripOwner || Boolean(isAdmin);
+  // Everyone inside the party may review each other (and admins may review anyone).
+  const canReviewMembers = isTripOwner || isApprovedMember || Boolean(isAdmin);
+  const reviewedTargetIds = new Set(myReviews.map((review) => Number(review.target_user_id)));
+  const myReviewFor = (targetId) => myReviews.find((review) => Number(review.target_user_id) === Number(targetId));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -410,13 +461,13 @@ export default function TripDetail() {
             </div>
           </button>
 
-          {user && !isDriver && isApprovedMember && (
+          {canReviewMembers && !isTripOwner && (
             <button
               onClick={() => openReviewModal(trip.driver_id, trip.driver_name)}
               className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold rounded-xl border border-amber-200 text-xs shadow-xs"
             >
               <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-              <span>ให้คะแนนคนขับ</span>
+              <span>{reviewedTargetIds.has(Number(trip.driver_id)) ? 'แก้ไขรีวิวหัวห้อง' : 'ให้คะแนนหัวห้อง / คนขับ'}</span>
             </button>
           )}
         </div>
@@ -485,8 +536,8 @@ export default function TripDetail() {
                       </div>
                     )}
 
-                    {/* Driver Party Approve / Reject Buttons (PDF Page 4 note) */}
-                    {isDriver && isPending && (
+                    {/* Room head / Admin Party Approve / Reject Buttons */}
+                    {canModerateParty && isPending && (
                       <div className="flex items-center gap-2 pt-1 border-t border-slate-200">
                         <button
                           onClick={() => handleApproveBooking(p.booking_id)}
@@ -505,15 +556,30 @@ export default function TripDetail() {
                       </div>
                     )}
 
-                    {/* Review passenger */}
-                    {isDriver && isConfirmed && (
+                    {/* Room head / Admin: kick a member out of the party */}
+                    {canModerateParty && (isPending || isConfirmed) && Number(p.user_id) !== Number(currentUserId) && (
+                      <div className="pt-1 border-t border-slate-200 flex justify-end">
+                        <button
+                          onClick={() => handleKickPassenger(p.user_id, p.passenger_name)}
+                          disabled={submitting}
+                          className="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1 disabled:opacity-50"
+                          title="นำสมาชิกท่านนี้ออกจากตี้ (เฉพาะหัวห้อง / แอดมิน)"
+                        >
+                          <UserMinus className="w-3.5 h-3.5" />
+                          <span>นำออกจากตี้</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Members review each other — one review per member per trip */}
+                    {canReviewMembers && isConfirmed && Number(p.user_id) !== Number(currentUserId) && (
                       <div className="flex justify-end pt-1">
                         <button
                           onClick={() => openReviewModal(p.user_id, p.passenger_name)}
                           className="text-[11px] text-amber-700 font-bold hover:underline flex items-center gap-1"
                         >
                           <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          <span>ให้คะแนนผู้โดยสาร</span>
+                          <span>{reviewedTargetIds.has(Number(p.user_id)) ? 'แก้ไขรีวิวเพื่อนร่วมทาง' : 'รีวิวเพื่อนร่วมทาง'}</span>
                         </button>
                       </div>
                     )}
@@ -659,10 +725,11 @@ export default function TripDetail() {
       {/* Rating & Review Modal */}
       <ReviewModal
         isOpen={reviewModalOpen}
-        onClose={() => setReviewModalOpen(false)}
+        onClose={() => { setReviewModalOpen(false); fetchMyReviews(); }}
         tripId={parseInt(id)}
         targetUserId={reviewTarget.id}
         targetName={reviewTarget.name}
+        existingReview={reviewTarget.id ? myReviewFor(reviewTarget.id) : null}
       />
 
       {/* Member/Driver Profile Modal */}

@@ -1,9 +1,12 @@
 const db = require('../config/db');
 
-// Access Check: Driver OR Passengers with status 'จองแล้ว'
+// Access Check: Room head (car owner / organizer) OR Passengers with status 'จองแล้ว'
 const checkTripAccess = async (tripId, userId) => {
   const tripRes = await db.query(
-    'SELECT c.user_id as driver_id FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+    `SELECT COALESCE(c.user_id, t.organizer_id) as driver_id
+     FROM trips t
+     LEFT JOIN cars c ON t.license_plate = c.license_plate
+     WHERE t.trip_id = $1`,
     [tripId]
   );
   if (!tripRes.rows || tripRes.rows.length === 0) return false;
@@ -80,22 +83,50 @@ const sendMessage = async (req, res) => {
   }
 };
 
-// Report inappropriate message / profanity
+// Report inappropriate message / profanity (surfaces in the admin dashboard)
 const reportMessage = async (req, res) => {
   try {
     const { id } = req.params; // message_id
     const reporterId = req.user.user_id || req.user.id;
     const { reason } = req.body;
 
-    await db.query(
-      `INSERT INTO chat_reports (message_id, reporter_id, reason, created_at)
-       VALUES ($1, $2, $3, NOW())`,
+    const messageRes = await db.query(
+      `SELECT cm.message_id, cm.user_id, cm.trip_id, cm.message
+       FROM chat_messages cm
+       WHERE cm.message_id = $1`,
+      [id]
+    );
+
+    if (!messageRes.rows || messageRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อความที่ต้องการรายงาน (อาจถูกลบไปแล้ว)' });
+    }
+
+    const chatMessage = messageRes.rows[0];
+
+    if (Number(chatMessage.user_id) === Number(reporterId)) {
+      return res.status(400).json({ success: false, message: 'ไม่สามารถรายงานข้อความของตัวเองได้' });
+    }
+
+    const duplicateRes = await db.query(
+      'SELECT report_id FROM chat_reports WHERE message_id = $1 AND reporter_id = $2',
+      [id, reporterId]
+    );
+
+    if (duplicateRes.rows && duplicateRes.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'คุณได้รายงานข้อความนี้ไปยังแอดมินแล้ว ระบบได้รับเรื่องเรียบร้อย' });
+    }
+
+    const newReport = await db.query(
+      `INSERT INTO chat_reports (message_id, reporter_id, reason, status, created_at)
+       VALUES ($1, $2, $3, 'รอดำเนินการ', NOW())
+       RETURNING *`,
       [id, reporterId, reason || 'ข้อความไม่เหมาะสม / คำหยาบคาย']
     );
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: 'ส่งรายงานข้อความไม่เหมาะสมไปยังแอดมินเรียบร้อยแล้ว ขอบคุณที่ช่วยดูแลความปลอดภัยของชุมชน',
+      report: newReport.rows && newReport.rows[0] ? newReport.rows[0] : null,
     });
   } catch (error) {
     console.error('Report message error:', error);

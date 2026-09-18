@@ -20,6 +20,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 const { ensureSchema, runMigrations } = require('./config/migrate');
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/memories', memoryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/support', supportRoutes);
 
 // Health check endpoint (also self-heals a missing schema, e.g. on Vercel cold start)
 app.get('/api/health', async (req, res) => {
