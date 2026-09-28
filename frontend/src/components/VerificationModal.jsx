@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, ShieldCheck, Upload, FileText, AlertCircle, CheckCircle2, Lock, Camera, Loader2 } from 'lucide-react';
-import API from '../services/api';
+import API, { uploadImage } from '../services/api';
 
 export default function VerificationModal({ isOpen, onClose, onSubmitted, currentUserName = '' }) {
   const [documentType, setDocumentType] = useState('id_card');
@@ -20,8 +20,8 @@ export default function VerificationModal({ isOpen, onClose, onSubmitted, curren
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      setError('ขนาดไฟล์ต้องไม่เกิน 8 MB');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('ขนาดไฟล์ต้องไม่เกิน 10 MB');
       return;
     }
 
@@ -29,25 +29,22 @@ export default function VerificationModal({ isOpen, onClose, onSubmitted, curren
       setUploading(true);
       setError('');
 
-      const formData = new FormData();
-      formData.append('image', file);
+      const res = await uploadImage(file);
 
-      const res = await API.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if (res.data.success && res.data.url) {
-        setDocumentUrl(res.data.url);
+      const uploadedUrl = res?.url || res?.data?.url;
+      if (uploadedUrl) {
+        setDocumentUrl(uploadedUrl);
       } else {
-        setError(res.data.message || 'ไม่สามารถอัปโหลดไฟล์ได้');
+        setError(res?.message || 'ไม่สามารถอัปโหลดไฟล์ได้');
       }
     } catch (err) {
       console.error('File upload error:', err);
-      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
+      setError(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
     } finally {
       setUploading(false);
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

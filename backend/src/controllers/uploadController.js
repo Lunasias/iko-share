@@ -96,12 +96,36 @@ const uploadImage = async (req, res) => {
     }
 
     // Save to Database `uploaded_images` table (works seamlessly on Vercel Serverless + Neon)
-    await db.query(
-      `INSERT INTO uploaded_images (image_id, filename, mime_type, data, size_bytes, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (image_id) DO UPDATE SET data = EXCLUDED.data, size_bytes = EXCLUDED.size_bytes`,
-      [imageId, originalName, mimeType, fileBuffer, fileBuffer.length, userId]
-    );
+    try {
+      await db.query(
+        `INSERT INTO uploaded_images (image_id, filename, mime_type, data, size_bytes, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (image_id) DO UPDATE SET data = EXCLUDED.data, size_bytes = EXCLUDED.size_bytes`,
+        [imageId, originalName, mimeType, fileBuffer, fileBuffer.length, userId]
+      );
+    } catch (dbErr) {
+      if (dbErr.message && (dbErr.message.includes('uploaded_images') || dbErr.code === '42P01')) {
+        await db.query(`
+          CREATE TABLE IF NOT EXISTS uploaded_images (
+            image_id VARCHAR(64) PRIMARY KEY,
+            filename VARCHAR(255),
+            mime_type VARCHAR(100) NOT NULL,
+            data BYTEA NOT NULL,
+            size_bytes INT NOT NULL,
+            created_by INT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        await db.query(
+          `INSERT INTO uploaded_images (image_id, filename, mime_type, data, size_bytes, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (image_id) DO UPDATE SET data = EXCLUDED.data, size_bytes = EXCLUDED.size_bytes`,
+          [imageId, originalName, mimeType, fileBuffer, fileBuffer.length, userId]
+        );
+      } else {
+        throw dbErr;
+      }
+    }
 
     // Also attempt saving to local disk if running locally
     try {

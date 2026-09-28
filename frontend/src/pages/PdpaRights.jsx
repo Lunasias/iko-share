@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import API from '../services/api';
+import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   ShieldCheck, Download, FileText, CheckCircle2, AlertCircle,
@@ -141,33 +141,31 @@ export default function PdpaRights() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      setError('ขนาดไฟล์ต้องไม่เกิน 8 MB');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('ขนาดไฟล์ต้องไม่เกิน 10 MB');
       return;
     }
 
     try {
       setUploadingProof(true);
       setError('');
-      const formData = new FormData();
-      formData.append('image', file);
 
-      const res = await API.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await uploadImage(file);
 
-      if (res.data.success && res.data.url) {
-        setProofUrl(res.data.url);
+      const uploadedUrl = res?.url || res?.data?.url;
+      if (uploadedUrl) {
+        setProofUrl(uploadedUrl);
       } else {
-        setError(res.data.message || 'ไม่สามารถอัปโหลดเอกสารได้');
+        setError(res?.message || 'ไม่สามารถอัปโหลดเอกสารได้');
       }
     } catch (err) {
       console.error('Proof upload error:', err);
-      setError('เกิดข้อผิดพลาดในการอัปโหลดเอกสารยืนยันตัวตน');
+      setError(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอัปโหลดเอกสารยืนยันตัวตน');
     } finally {
       setUploadingProof(false);
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

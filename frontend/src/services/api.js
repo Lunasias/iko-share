@@ -33,6 +33,7 @@ API.interceptors.response.use(
 export const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('image', file);
   const response = await API.post('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -41,5 +42,6 @@ export const uploadImage = async (file) => {
   });
   return response.data;
 };
+
 
 export default API;

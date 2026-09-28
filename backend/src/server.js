@@ -56,6 +56,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Auto-ensure database schema on cold starts (e.g. Vercel Serverless)
+let schemaEnsured = false;
+app.use((req, res, next) => {
+  if (!schemaEnsured) {
+    schemaEnsured = true;
+    ensureSchema().catch((err) => console.warn('Automatic ensureSchema notice:', err.message));
+  }
+  next();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
@@ -115,13 +125,13 @@ app.use('/api/*', (req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('Global Error Handler:', err);
-  res.status(500).json({
+  const statusCode = err.status || err.statusCode || 500;
+  res.status(statusCode).json({
     success: false,
-    message: process.env.NODE_ENV === 'production'
-      ? 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์'
-      : (err.message ? String(err.message) : 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์'),
+    message: err.message || 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์',
   });
 });
+
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
