@@ -22,12 +22,12 @@ const createBooking = async (req, res) => {
       await client.query('BEGIN');
     }
 
-    // Lock trip row with FOR UPDATE to prevent concurrent race conditions
+    // Lock trip row with FOR UPDATE OF t to prevent concurrent race conditions
     const tripRes = await query(
       `SELECT t.*, COALESCE(c.user_id, t.organizer_id) as driver_id
        FROM trips t
        LEFT JOIN cars c ON t.license_plate = c.license_plate
-       WHERE t.trip_id = $1 ${client ? 'FOR UPDATE' : ''}`,
+       WHERE t.trip_id = $1 ${client ? 'FOR UPDATE OF t' : ''}`,
       [trip_id]
     );
 
@@ -139,7 +139,7 @@ const approveBooking = async (req, res) => {
        FROM bookings b
        JOIN trips t ON b.trip_id = t.trip_id
        LEFT JOIN cars c ON t.license_plate = c.license_plate
-       WHERE b.booking_id = $1 ${client ? 'FOR UPDATE' : ''}`,
+       WHERE b.booking_id = $1 ${client ? 'FOR UPDATE OF b, t' : ''}`,
       [id]
     );
 

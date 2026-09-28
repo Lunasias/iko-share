@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, User, Mail, Lock, Phone, AlertCircle, Compass } from 'lucide-react';
+import TermsModal from '../components/TermsModal';
+import { UserPlus, User, Mail, Lock, Phone, AlertCircle, Compass, ShieldCheck } from 'lucide-react';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -9,6 +10,8 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState('Passenger');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +20,11 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      setError('กรุณาทำเครื่องหมายยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวก่อนลงทะเบียน');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -147,10 +155,40 @@ export default function Register() {
             </div>
           </div>
 
+          {/* PDPA & Terms of Service Acceptance Checkbox */}
+          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+            <input
+              type="checkbox"
+              id="termsCheckbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+            />
+            <label htmlFor="termsCheckbox" className="text-slate-700 font-medium leading-relaxed cursor-pointer select-none">
+              ฉันได้อ่านและยอมรับ{' '}
+              <button
+                type="button"
+                onClick={() => setTermsModalOpen(true)}
+                className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+              >
+                ข้อกำหนดการใช้งาน
+              </button>{' '}
+              และ{' '}
+              <button
+                type="button"
+                onClick={() => setTermsModalOpen(true)}
+                className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+              >
+                นโยบายความเป็นส่วนตัว (PDPA)
+              </button>{' '}
+              ของ Iko Share
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3.5 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2"
+            disabled={loading || !acceptedTerms}
+            className="w-full py-3.5 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-sm"
           >
             {loading ? 'กำลังลงทะเบียน...' : 'ยืนยันลงทะเบียนสมาชิก'}
           </button>
@@ -163,6 +201,11 @@ export default function Register() {
           </Link>
         </div>
       </div>
+
+      <TermsModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+      />
     </div>
   );
 }

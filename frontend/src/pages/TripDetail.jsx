@@ -22,6 +22,7 @@ export default function TripDetail() {
   const [memories, setMemories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   const [meetupLocation, setMeetupLocation] = useState('');
@@ -112,7 +113,7 @@ export default function TripDetail() {
     isActionInProgressRef.current = true;
     setIsBookingProcessing(true);
     setSubmitting(true);
-    setError('');
+    setActionError('');
     setSuccessMsg('');
 
     try {
@@ -125,11 +126,11 @@ export default function TripDetail() {
         setSuccessMsg(String(res.data.message || 'ส่งคำขอร่วมเดินทางเรียบร้อยแล้ว รอคนขับอนุมัติ'));
         fetchTripDetail();
       } else {
-        setError(String(res.data.message || 'ไม่สามารถร่วมเดินทางได้'));
+        setActionError(String(res.data.message || 'ไม่สามารถร่วมเดินทางได้'));
       }
     } catch (err) {
       console.error('Join trip error:', err);
-      setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งคำขอ'));
+      setActionError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งคำขอ'));
     } finally {
       setSubmitting(false);
       setIsBookingProcessing(false);
@@ -139,6 +140,8 @@ export default function TripDetail() {
 
   // Driver Party Approval Actions (PDF Page 4 note: อยากได้แบบมีให้กดอนุญาติหรือปติเสท เข้าตี้)
   const handleApproveBooking = async (bookingId) => {
+    setActionError('');
+    setSuccessMsg('');
     try {
       const res = await API.put(`/bookings/${bookingId}/approve`);
       if (res.data.success) {
@@ -146,12 +149,14 @@ export default function TripDetail() {
         fetchTripDetail();
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอนุมัติ'));
+      setActionError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอนุมัติ'));
     }
   };
 
   const handleRejectBooking = async (bookingId) => {
     if (!window.confirm('คุณต้องการปฏิเสธคำขอร่วมเดินทางของผู้โดยสารท่านนี้ใช่หรือไม่?')) return;
+    setActionError('');
+    setSuccessMsg('');
     try {
       const res = await API.put(`/bookings/${bookingId}/reject`);
       if (res.data.success) {
@@ -159,14 +164,14 @@ export default function TripDetail() {
         fetchTripDetail();
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการปฏิเสธ'));
+      setActionError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการปฏิเสธ'));
     }
   };
 
   // Room head (trip owner) / admin: remove a member from the party.
   const handleKickPassenger = async (userId, passengerName) => {
     if (!window.confirm(`คุณต้องการนำ ${passengerName} ออกจากตี้นี้ใช่หรือไม่? ที่นั่งจะถูกคืนเข้าระบบ`)) return;
-    setError('');
+    setActionError('');
     setSuccessMsg('');
     setSubmitting(true);
     try {
@@ -175,10 +180,10 @@ export default function TripDetail() {
         setSuccessMsg(String(res.data.message || 'นำสมาชิกออกจากตี้เรียบร้อยแล้ว'));
         fetchTripDetail();
       } else {
-        setError(String(res.data.message || 'ไม่สามารถนำสมาชิกออกจากตี้ได้'));
+        setActionError(String(res.data.message || 'ไม่สามารถนำสมาชิกออกจากตี้ได้'));
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการนำสมาชิกออกจากตี้'));
+      setActionError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการนำสมาชิกออกจากตี้'));
     } finally {
       setSubmitting(false);
     }
@@ -187,17 +192,18 @@ export default function TripDetail() {
   const handleLeaveTrip = async () => {
     if (!window.confirm('คุณต้องการยกเลิกคำขอ / ออกจากเที่ยวเดินทางนี้ใช่หรือไม่?')) return;
     setSubmitting(true);
-    setError('');
+    setActionError('');
+    setSuccessMsg('');
     try {
       const res = await API.delete(`/bookings/${id}`);
       if (res.data.success) {
         setSuccessMsg(String(res.data.message || 'ยกเลิกการจองเรียบร้อยแล้ว'));
         fetchTripDetail();
       } else {
-        setError(String(res.data.message || 'ไม่สามารถยกเลิกได้'));
+        setActionError(String(res.data.message || 'ไม่สามารถยกเลิกได้'));
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการยกเลิกการจอง'));
+      setActionError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการยกเลิกการจอง'));
     } finally {
       setSubmitting(false);
     }
@@ -205,6 +211,8 @@ export default function TripDetail() {
 
   const handleCompleteTrip = async () => {
     if (!window.confirm('ยืนยันว่าการเดินทางนี้เสร็จสิ้นแล้วใช่หรือไม่? ระบบจะเปิดให้แชร์ภาพความทรงจำและรีวิว')) return;
+    setActionError('');
+    setSuccessMsg('');
     try {
       const res = await API.put(`/trips/${id}/complete`);
       if (res.data.success) {
@@ -212,23 +220,25 @@ export default function TripDetail() {
         fetchTripDetail();
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'ไม่สามารถบันทึกสถานะได้'));
+      setActionError(String(err.response?.data?.message || err.message || 'ไม่สามารถบันทึกสถานะได้'));
     }
   };
 
   const handleDeleteTrip = async () => {
     if (!window.confirm('คุณต้องการลบเที่ยวเดินทางนี้ใช่หรือไม่? ข้อมูลการจองและแชทจะถูกลบทั้งหมด')) return;
     setSubmitting(true);
+    setActionError('');
+    setSuccessMsg('');
     try {
       const res = await API.delete(`/trips/${id}`);
       if (res.data.success) {
         alert(String(res.data.message || 'ลบเที่ยวเดินทางเรียบร้อยแล้ว'));
         navigate('/trips');
       } else {
-        setError(String(res.data.message || 'ไม่สามารถลบเที่ยวเดินทางได้'));
+        setActionError(String(res.data.message || 'ไม่สามารถลบเที่ยวเดินทางได้'));
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการลบเที่ยวเดินทาง'));
+      setActionError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการลบเที่ยวเดินทาง'));
     } finally {
       setSubmitting(false);
     }
@@ -512,10 +522,37 @@ export default function TripDetail() {
         </div>
 
         {/* Notifications */}
+        {actionError && (
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+              <span>{actionError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActionError('')}
+              className="p-1 hover:bg-rose-100 rounded-lg text-rose-600 transition"
+              title="ปิดการแจ้งเตือน"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {successMsg && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
-            <span>{successMsg}</span>
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
+              <span>{successMsg}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSuccessMsg('')}
+              className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-600 transition"
+              title="ปิดการแจ้งเตือน"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -653,6 +690,13 @@ export default function TripDetail() {
         ) : (
           <form onSubmit={handleJoin} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
             <h3 className="text-sm font-black text-slate-900">ขอเข้าร่วมเดินทางในตี้ (Request to Join Party)</h3>
+
+            {actionError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{actionError}</span>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800">ระบุจุดขึ้นรถ / จุดนัดพบที่สะดวก</label>
