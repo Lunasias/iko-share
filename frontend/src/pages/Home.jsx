@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 import { Search, MapPin, Calendar as CalendarIcon, ShieldCheck, Users, HeartHandshake, Sparkles } from 'lucide-react';
 
@@ -20,6 +21,28 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // Smart Background Warm-up & Prefetch:
+    // Wakes up Neon PostgreSQL & Serverless Function while user is looking at the Home page,
+    // and caches latest trips so /trips renders in 0 ms!
+    const warmUpTimer = setTimeout(() => {
+      API.get('/trips').then((res) => {
+        if (res.data?.success && res.data?.trips) {
+          try {
+            sessionStorage.setItem('iko_cached_trips', JSON.stringify(res.data.trips));
+            sessionStorage.setItem('iko_cache_trips_all', JSON.stringify(res.data.trips));
+          } catch {}
+        }
+      }).catch(() => {});
+
+      API.get('/events').then((res) => {
+        if (res.data?.success && res.data?.events) {
+          try {
+            sessionStorage.setItem('iko_cached_events', JSON.stringify(res.data.events));
+          } catch {}
+        }
+      }).catch(() => {});
+    }, 400);
+
     const revealItems = document.querySelectorAll('.reveal-on-scroll');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -30,7 +53,11 @@ export default function Home() {
       });
     }, { threshold: 0.12 });
     revealItems.forEach((item) => observer.observe(item));
-    return () => observer.disconnect();
+
+    return () => {
+      clearTimeout(warmUpTimer);
+      observer.disconnect();
+    };
   }, []);
 
   const handleSearch = (e) => {

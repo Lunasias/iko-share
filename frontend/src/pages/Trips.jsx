@@ -7,9 +7,44 @@ import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, F
 
 export default function Trips() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [trips, setTrips] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // Instant SWR Cache: read from sessionStorage immediately so UI displays in 0 ms!
+  const [trips, setTrips] = useState(() => {
+    try {
+      const q = searchParams.toString();
+      const cached = sessionStorage.getItem(`iko_cache_trips_${q || 'all'}`);
+      if (cached) return JSON.parse(cached);
+      if (!q) {
+        const defaultCached = sessionStorage.getItem('iko_cached_trips');
+        if (defaultCached) return JSON.parse(defaultCached);
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [events, setEvents] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('iko_cached_events');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // If cached trips already exist, don't block the screen with full-page loader
+  const [loading, setLoading] = useState(() => {
+    try {
+      const q = searchParams.toString();
+      const cached = sessionStorage.getItem(`iko_cache_trips_${q || 'all'}`) || (!q ? sessionStorage.getItem('iko_cached_trips') : null);
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const [origin, setOrigin] = useState(searchParams.get('origin') || '');
@@ -27,29 +62,53 @@ export default function Trips() {
 
   const fetchEvents = async () => {
     try {
+      if (events.length > 0) return; // Already loaded from cache
       const res = await API.get('/events');
-      if (res.data.success) {
-        setEvents(res.data.events || []);
+      if (res.data.success && res.data.events) {
+        setEvents(res.data.events);
+        try {
+          sessionStorage.setItem('iko_cached_events', JSON.stringify(res.data.events));
+        } catch {}
       }
     } catch (e) {}
   };
 
   const fetchTrips = async () => {
-    setLoading(true);
+    const q = new URLSearchParams(searchParams).toString();
+    const cacheKey = `iko_cache_trips_${q || 'all'}`;
+
+    // If trips already displayed, refresh silently without wiping out the screen
+    if (trips.length > 0) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError('');
+
     try {
-      const q = new URLSearchParams(searchParams).toString();
       const res = await API.get(`/trips?${q}`);
       if (res.data.success) {
-        setTrips(res.data.trips || []);
+        const freshTrips = res.data.trips || [];
+        setTrips(freshTrips);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(freshTrips));
+          if (!q) {
+            sessionStorage.setItem('iko_cached_trips', JSON.stringify(freshTrips));
+          }
+        } catch {}
       } else {
-        setError(String(res.data.message || 'ไม่สามารถดึงข้อมูลได้'));
+        if (trips.length === 0) {
+          setError(String(res.data.message || 'ไม่สามารถดึงข้อมูลได้'));
+        }
       }
     } catch (err) {
       console.error('Fetch trips error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+      if (trips.length === 0) {
+        setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -124,6 +183,20 @@ export default function Trips() {
         </form>
       </div>
 
+      {/* Background SWR Sync Indicator */}
+      {isRefreshing && (
+        <div className="flex items-center justify-between px-4 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold transition-all shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>แสดงข้อมูลด่วนจากหน่วยความจำแคช • กำลังอัปเดตข้อมูลทริปล่าสุดในพื้นหลัง...</span>
+          </div>
+          <span className="text-[10px] text-emerald-600 font-semibold hidden sm:inline">ซิงค์อัตโนมัติ</span>
+        </div>
+      )}
+
       {/* Error state */}
       {error && (
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-3 font-semibold">
@@ -132,9 +205,38 @@ export default function Trips() {
         </div>
       )}
 
-      {/* Loading state with CarLoader */}
+      {/* Loading state with CarLoader & Skeleton Cards */}
       {loading ? (
-        <CarLoader text="กำลังค้นหาเที่ยวเดินทางที่ตรงใจคุณ..." />
+        <div className="space-y-6">
+          <CarLoader text="กำลังเชื่อมต่อและค้นหาเที่ยวเดินทางที่ตรงใจคุณ..." />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="travel-card p-6 space-y-4 border border-slate-200 bg-white/70">
+                <div className="flex justify-between items-center">
+                  <div className="h-5 bg-slate-200 rounded-full w-24"></div>
+                  <div className="h-5 bg-slate-200 rounded-full w-20"></div>
+                </div>
+                <div className="flex justify-between items-center py-4 border-b border-slate-200">
+                  <div className="h-6 bg-slate-200 rounded-lg w-28"></div>
+                  <div className="h-4 bg-slate-200 rounded-full w-6"></div>
+                  <div className="h-6 bg-slate-200 rounded-lg w-28"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-4 bg-slate-200 rounded-md w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded-md w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded-md w-3/4 col-span-2"></div>
+                </div>
+                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-full bg-slate-200"></div>
+                    <div className="h-4 bg-slate-200 rounded-md w-24"></div>
+                  </div>
+                  <div className="h-6 bg-slate-200 rounded-md w-16"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : trips.length === 0 ? (
         <div className="travel-card text-center py-16 space-y-4 border border-slate-200">
           <Car className="w-14 h-14 text-slate-300 mx-auto" />

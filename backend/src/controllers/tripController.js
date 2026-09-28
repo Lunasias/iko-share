@@ -6,14 +6,19 @@ const getTrips = async (req, res) => {
     const { origin, destination, event_id } = req.query;
     let queryText = `
       SELECT t.*, c.model as car_model, c.capacity as car_capacity,
-             COALESCE(c.user_id, t.organizer_id) as driver_id,
-             u.name as driver_name, u.phone as driver_phone, u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
+             COALESCE(t.organizer_id, c.user_id) as driver_id,
+             u.name as driver_name, u.phone as driver_phone,
+             CASE
+               WHEN u.avatar_url LIKE 'data:image%' AND LENGTH(u.avatar_url) > 10000 THEN NULL
+               ELSE u.avatar_url
+             END as driver_avatar,
+             u.role as driver_role, u.bio as driver_bio,
              COALESCE(e.event_name, t.custom_event_name) as event_name, e.category as event_category
       FROM trips t
       LEFT JOIN cars c ON t.license_plate = c.license_plate
-      JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
+      JOIN users u ON u.user_id = COALESCE(t.organizer_id, c.user_id)
       LEFT JOIN events e ON t.event_id = e.event_id
-      WHERE 1=1
+      WHERE t.trip_status != 'cancelled'
     `;
     const params = [];
 
@@ -33,7 +38,7 @@ const getTrips = async (req, res) => {
     queryText += ` ORDER BY t.departure_time ASC LIMIT 50`;
 
     const result = await db.query(queryText, params);
-    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
     res.json({
       success: true,
       count: result.rows ? result.rows.length : 0,
@@ -45,34 +50,40 @@ const getTrips = async (req, res) => {
   }
 };
 
-// Get single trip details with passengers
+// Get single trip details with passengers (parallel queries)
 const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
-    const tripRes = await db.query(
-      `SELECT t.*, c.model as car_model, c.capacity as car_capacity, c.user_id as driver_id,
-              u.name as driver_name, u.phone as driver_phone, u.email as driver_email, u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
-              COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location
-       FROM trips t
-       LEFT JOIN cars c ON t.license_plate = c.license_plate
-       JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
-       LEFT JOIN events e ON t.event_id = e.event_id
-       WHERE t.trip_id = $1`,
-      [id]
-    );
+
+    // Run trip detail and bookings concurrently via Promise.all
+    const [tripRes, bookingsRes] = await Promise.all([
+      db.query(
+        `SELECT t.*, c.model as car_model, c.capacity as car_capacity,
+                COALESCE(t.organizer_id, c.user_id) as driver_id,
+                u.name as driver_name, u.phone as driver_phone, u.email as driver_email,
+                u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
+                COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location
+         FROM trips t
+         LEFT JOIN cars c ON t.license_plate = c.license_plate
+         JOIN users u ON u.user_id = COALESCE(t.organizer_id, c.user_id)
+         LEFT JOIN events e ON t.event_id = e.event_id
+         WHERE t.trip_id = $1`,
+        [id]
+      ),
+      db.query(
+        `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone,
+                u.avatar_url as passenger_avatar, u.bio as passenger_bio, u.role as passenger_role
+         FROM bookings b
+         JOIN users u ON b.user_id = u.user_id
+         WHERE b.trip_id = $1
+         ORDER BY b.booking_time DESC`,
+        [id]
+      )
+    ]);
 
     if (!tripRes.rows || tripRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการเดินทางนี้' });
     }
-
-    const bookingsRes = await db.query(
-      `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone, u.avatar_url as passenger_avatar, u.bio as passenger_bio, u.role as passenger_role
-       FROM bookings b
-       JOIN users u ON b.user_id = u.user_id
-       WHERE b.trip_id = $1
-       ORDER BY b.booking_time DESC`,
-      [id]
-    );
 
     res.json({
       success: true,
@@ -297,35 +308,40 @@ const kickPassenger = async (req, res) => {
   }
 };
 
-// Get user's trips
+// Get user's trips (concurrent queries)
 const getUserTrips = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
 
-    const createdTrips = await db.query(
-      `SELECT t.*, c.model as car_model, c.capacity as car_capacity,
-              COALESCE(e.event_name, t.custom_event_name) as event_name
-       FROM trips t
-       LEFT JOIN cars c ON t.license_plate = c.license_plate
-       LEFT JOIN events e ON t.event_id = e.event_id
-       WHERE COALESCE(c.user_id, t.organizer_id) = $1
-       ORDER BY t.created_at DESC`,
-      [userId]
-    );
-
-    const joinedTrips = await db.query(
-      `SELECT t.*, b.booking_id, b.booking_status, b.location as meetup_location, b.booking_time,
-              c.user_id as driver_id, u.name as driver_name, u.phone as driver_phone, u.avatar_url as driver_avatar,
-              COALESCE(e.event_name, t.custom_event_name) as event_name
-       FROM bookings b
-       JOIN trips t ON b.trip_id = t.trip_id
-       LEFT JOIN cars c ON t.license_plate = c.license_plate
-       JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
-       LEFT JOIN events e ON t.event_id = e.event_id
-       WHERE b.user_id = $1
-       ORDER BY b.booking_time DESC`,
-      [userId]
-    );
+    const [createdTrips, joinedTrips] = await Promise.all([
+      db.query(
+        `SELECT t.*, c.model as car_model, c.capacity as car_capacity,
+                COALESCE(e.event_name, t.custom_event_name) as event_name
+         FROM trips t
+         LEFT JOIN cars c ON t.license_plate = c.license_plate
+         LEFT JOIN events e ON t.event_id = e.event_id
+         WHERE COALESCE(t.organizer_id, c.user_id) = $1
+         ORDER BY t.created_at DESC`,
+        [userId]
+      ),
+      db.query(
+        `SELECT t.*, b.booking_id, b.booking_status, b.location as meetup_location, b.booking_time,
+                COALESCE(t.organizer_id, c.user_id) as driver_id, u.name as driver_name, u.phone as driver_phone,
+                CASE
+                  WHEN u.avatar_url LIKE 'data:image%' AND LENGTH(u.avatar_url) > 10000 THEN NULL
+                  ELSE u.avatar_url
+                END as driver_avatar,
+                COALESCE(e.event_name, t.custom_event_name) as event_name
+         FROM bookings b
+         JOIN trips t ON b.trip_id = t.trip_id
+         LEFT JOIN cars c ON t.license_plate = c.license_plate
+         JOIN users u ON u.user_id = COALESCE(t.organizer_id, c.user_id)
+         LEFT JOIN events e ON t.event_id = e.event_id
+         WHERE b.user_id = $1
+         ORDER BY b.booking_time DESC`,
+        [userId]
+      )
+    ]);
 
     res.json({
       success: true,

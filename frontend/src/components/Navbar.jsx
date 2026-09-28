@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Languages } from 'lucide-react';
@@ -37,6 +38,19 @@ export default function Navbar() {
     return <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">{t(roleKey)}</span>;
   };
 
+  const prefetchTrips = () => {
+    try {
+      if (!sessionStorage.getItem('iko_cached_trips')) {
+        API.get('/trips').then((res) => {
+          if (res.data?.success && res.data?.trips) {
+            sessionStorage.setItem('iko_cached_trips', JSON.stringify(res.data.trips));
+            sessionStorage.setItem('iko_cache_trips_all', JSON.stringify(res.data.trips));
+          }
+        }).catch(() => {});
+      }
+    } catch {}
+  };
+
   return (
     <nav className={`sticky top-0 z-50 border-b px-4 lg:px-8 py-3 transition-all duration-[600ms] ${scrolled ? 'bg-[var(--card)]/90 backdrop-blur-md border-[var(--accent)]/30 shadow-md' : 'bg-[var(--card)] border-slate-200 shadow-xs'}`}>
 
@@ -55,6 +69,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3 lg:gap-5">
           <Link
             to="/trips"
+            onMouseEnter={prefetchTrips}
             className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors px-3 py-2 rounded-xl hover:bg-slate-50"
           >
             <Compass className="w-4 h-4 text-emerald-600" />
