@@ -22,6 +22,8 @@ const memoryRoutes = require('./routes/memoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const verificationRoutes = require('./routes/verificationRoutes');
+const pdpaRoutes = require('./routes/pdpaRoutes');
 const { ensureSchema, runMigrations } = require('./config/migrate');
 
 const app = express();
@@ -67,6 +69,8 @@ app.use('/api/memories', memoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/verification', verificationRoutes);
+app.use('/api/pdpa', pdpaRoutes);
 
 // Health check endpoint (also self-heals a missing schema, e.g. on Vercel cold start)
 app.get('/api/health', async (req, res) => {

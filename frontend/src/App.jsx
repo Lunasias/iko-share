@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { useTheme } from './context/ThemeContext';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
@@ -22,6 +22,7 @@ const Cars = lazy(() => import('./pages/Cars'));
 const Admin = lazy(() => import('./pages/Admin'));
 const GlassMockup = lazy(() => import('./pages/GlassMockup'));
 const ForgotPasswordChat = lazy(() => import('./pages/ForgotPasswordChat'));
+const PdpaRights = lazy(() => import('./pages/PdpaRights'));
 
 function AppFooter({ onOpenTerms }) {
   const { t, language } = useTheme();
@@ -51,6 +52,13 @@ function AppFooter({ onOpenTerms }) {
           >
             {isTh ? 'นโยบายความเป็นส่วนตัว (PDPA)' : 'Privacy Policy'}
           </button>
+          <span>•</span>
+          <Link
+            to="/privacy-rights"
+            className="hover:text-emerald-700 hover:underline cursor-pointer"
+          >
+            {isTh ? 'ขอใช้สิทธิข้อมูลส่วนบุคคล (PDPA Rights)' : 'PDPA Rights'}
+          </Link>
           <span>•</span>
           <button
             type="button"
@@ -89,6 +97,8 @@ function RoutedMain() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/cars" element={<Cars />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/privacy-rights" element={<PdpaRights />} />
+          <Route path="/pdpa-request" element={<PdpaRights />} />
         </Routes>
       </Suspense>
     </main>

@@ -24,6 +24,22 @@ const getAdminStats = async (req, res) => {
       pendingSupportRequests = 0;
     }
 
+    let pendingVerifications = 0;
+    try {
+      const vCount = await db.query("SELECT COUNT(*) FROM verification_requests WHERE status = 'รอดำเนินการ'");
+      pendingVerifications = parseInt(vCount.rows[0]?.count || 0);
+    } catch (e) {
+      pendingVerifications = 0;
+    }
+
+    let pendingPdpa = 0;
+    try {
+      const pCount = await db.query("SELECT COUNT(*) FROM pdpa_requests WHERE status = 'รอดำเนินการ'");
+      pendingPdpa = parseInt(pCount.rows[0]?.count || 0);
+    } catch (e) {
+      pendingPdpa = 0;
+    }
+
     const recentUsers = await db.query('SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC LIMIT 5');
     const recentTrips = await db.query(
       `SELECT t.*, c.model as car_model, u.name as driver_name
@@ -43,6 +59,8 @@ const getAdminStats = async (req, res) => {
         totalBookings: parseInt(bookingsCount.rows[0]?.count || 0),
         totalReports: pendingReports,
         totalSupportRequests: pendingSupportRequests,
+        totalVerificationRequests: pendingVerifications,
+        totalPdpaRequests: pendingPdpa,
       },
       recentUsers: recentUsers.rows || [],
       recentTrips: recentTrips.rows || [],
@@ -296,6 +314,132 @@ const deleteUserByEmail = async (req, res) => {
   }
 };
 
+const getAdminVerificationRequests = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT vr.*, u.name as user_name, u.email as user_email, u.phone as user_phone, 
+             u.role as user_role, u.is_verified as current_is_verified, u.avatar_url as user_avatar
+      FROM verification_requests vr
+      JOIN users u ON vr.user_id = u.user_id
+      ORDER BY 
+        CASE WHEN vr.status = 'รอดำเนินการ' THEN 0 ELSE 1 END,
+        vr.created_at DESC
+    `);
+    res.json({ success: true, requests: result.rows || [] });
+  } catch (error) {
+    console.error('Get admin verification requests error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงคำขอยืนยันตัวตน: ' + (error.message || String(error)) });
+  }
+};
+
+const reviewVerificationRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, admin_reply } = req.body;
+    const reviewerId = req.user?.user_id || req.user?.id;
+
+    if (!['อนุมัติแล้ว', 'ปฏิเสธ'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'สถานะต้องเป็น อนุมัติแล้ว หรือ ปฏิเสธ' });
+    }
+
+    const checkReq = await db.query('SELECT * FROM verification_requests WHERE request_id = $1', [id]);
+    if (!checkReq.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรายการคำขอนี้' });
+    }
+    const targetUserId = checkReq.rows[0].user_id;
+
+    const updateReq = await db.query(
+      `UPDATE verification_requests 
+       SET status = $1, admin_reply = $2, reviewed_by = $3, reviewed_at = CURRENT_TIMESTAMP
+       WHERE request_id = $4 RETURNING *`,
+      [status, admin_reply || (status === 'อนุมัติแล้ว' ? 'เอกสารถูกต้อง ยืนยันตัวตนสำเร็จ' : 'เอกสารไม่ตรงตามเกณฑ์'), reviewerId, id]
+    );
+
+    // If approved, update user is_verified to true
+    if (status === 'อนุมัติแล้ว') {
+      await db.query('UPDATE users SET is_verified = TRUE WHERE user_id = $1', [targetUserId]);
+    } else {
+      // If rejected and no other approved verification exists, revert is_verified
+      const otherApproved = await db.query(
+        "SELECT 1 FROM verification_requests WHERE user_id = $1 AND status = 'อนุมัติแล้ว' AND request_id != $2",
+        [targetUserId, id]
+      );
+      if (!otherApproved.rows.length) {
+        await db.query('UPDATE users SET is_verified = FALSE WHERE user_id = $1', [targetUserId]);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: status === 'อนุมัติแล้ว' ? 'อนุมัติคำขอและเปิด Trust Badge ให้ผู้ใช้เรียบร้อยแล้ว' : 'ปฏิเสธคำขอและส่งเหตุผลเรียบร้อยแล้ว',
+      request: updateReq.rows[0],
+    });
+  } catch (error) {
+    console.error('Review verification request error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบคำขอ: ' + (error.message || String(error)) });
+  }
+};
+
+const getAdminPdpaRequests = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT pr.*, u.name as current_user_name, u.role as current_user_role
+      FROM pdpa_requests pr
+      LEFT JOIN users u ON pr.user_id = u.user_id
+      ORDER BY 
+        CASE WHEN pr.status = 'รอดำเนินการ' THEN 0 WHEN pr.status = 'กำลังดำเนินการ' THEN 1 ELSE 2 END,
+        pr.created_at DESC
+    `);
+    res.json({ success: true, requests: result.rows || [] });
+  } catch (error) {
+    console.error('Get admin PDPA requests error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงคำร้อง PDPA: ' + (error.message || String(error)) });
+  }
+};
+
+const updateAdminPdpaRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, admin_reply } = req.body;
+    const resolverId = req.user?.user_id || req.user?.id;
+
+    if (!['รอดำเนินการ', 'กำลังดำเนินการ', 'ดำเนินการแล้วเสร็จ', 'ปฏิเสธคำขอ'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
+    }
+
+    const updateRes = await db.query(
+      `UPDATE pdpa_requests
+       SET status = $1, admin_reply = COALESCE($2, admin_reply), resolved_by = $3, resolved_at = CURRENT_TIMESTAMP
+       WHERE request_id = $4 RETURNING *`,
+      [status, admin_reply, resolverId, id]
+    );
+
+    if (!updateRes.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรายการคำร้อง PDPA นี้' });
+    }
+
+    res.json({
+      success: true,
+      message: 'อัปเดตสถานะคำร้องขอใช้สิทธิ PDPA เรียบร้อยแล้ว',
+      request: updateRes.rows[0],
+    });
+  } catch (error) {
+    console.error('Update admin PDPA request error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตคำร้อง PDPA: ' + (error.message || String(error)) });
+  }
+};
+
+const deleteAdminPdpaRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM pdpa_requests WHERE request_id = $1', [id]);
+    res.json({ success: true, message: 'ลบรายการคำร้อง PDPA เรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Delete admin PDPA request error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบคำร้อง: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getAllUsers,
@@ -311,4 +455,9 @@ module.exports = {
   getSupportRequests,
   updateSupportRequest,
   deleteSupportRequest,
+  getAdminVerificationRequests,
+  reviewVerificationRequest,
+  getAdminPdpaRequests,
+  updateAdminPdpaRequest,
+  deleteAdminPdpaRequest,
 };

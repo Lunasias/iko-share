@@ -15,6 +15,11 @@ const {
   getSupportRequests,
   updateSupportRequest,
   deleteSupportRequest,
+  getAdminVerificationRequests,
+  reviewVerificationRequest,
+  getAdminPdpaRequests,
+  updateAdminPdpaRequest,
+  deleteAdminPdpaRequest,
 } = require('../controllers/adminController');
 const { authenticateToken, requireAdmin } = require('../middleware/authMiddleware');
 
@@ -38,5 +43,14 @@ router.delete('/messages/:id', deleteReportedMessage);
 router.get('/support-requests', getSupportRequests);
 router.put('/support-requests/:id', updateSupportRequest);
 router.delete('/support-requests/:id', deleteSupportRequest);
+
+// Verification requests for Trust Badge
+router.get('/verification-requests', getAdminVerificationRequests);
+router.put('/verification-requests/:id/review', reviewVerificationRequest);
+
+// PDPA Data Subject Rights requests
+router.get('/pdpa-requests', getAdminPdpaRequests);
+router.put('/pdpa-requests/:id', updateAdminPdpaRequest);
+router.delete('/pdpa-requests/:id', deleteAdminPdpaRequest);
 
 module.exports = router;

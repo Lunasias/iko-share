@@ -122,6 +122,37 @@ const STATEMENTS = [
      created_by INT REFERENCES users(user_id) ON DELETE SET NULL,
      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
    )`,
+
+  `CREATE TABLE IF NOT EXISTS verification_requests (
+     request_id SERIAL PRIMARY KEY,
+     user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+     id_card_number VARCHAR(50),
+     full_name VARCHAR(150),
+     document_type VARCHAR(50) NOT NULL DEFAULT 'id_card',
+     document_url TEXT NOT NULL,
+     additional_notes TEXT,
+     status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ',
+     admin_reply TEXT,
+     reviewed_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+     reviewed_at TIMESTAMP WITH TIME ZONE,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   )`,
+
+  `CREATE TABLE IF NOT EXISTS pdpa_requests (
+     request_id SERIAL PRIMARY KEY,
+     user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+     requester_name VARCHAR(150) NOT NULL,
+     requester_email VARCHAR(150) NOT NULL,
+     requester_phone VARCHAR(50),
+     right_type VARCHAR(50) NOT NULL,
+     details TEXT NOT NULL,
+     identification_proof TEXT,
+     status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ',
+     admin_reply TEXT,
+     resolved_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+     resolved_at TIMESTAMP WITH TIME ZONE,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   )`,
 ];
 
 // Safety net: any extra column referenced by the app but missing in an old database.
@@ -183,6 +214,10 @@ const CONSTRAINT_FIXES = [
   `CREATE INDEX IF NOT EXISTS idx_bookings_trip_id ON bookings (trip_id)`,
   `CREATE INDEX IF NOT EXISTS idx_bookings_user_trip ON bookings (trip_id, user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_chat_messages_trip_id ON chat_messages (trip_id, created_at ASC)`,
+  `CREATE INDEX IF NOT EXISTS idx_verification_requests_user ON verification_requests (user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_user ON pdpa_requests (user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_status ON pdpa_requests (status)`,
 ];
 
 const SEEDS = [

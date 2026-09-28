@@ -124,6 +124,42 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS verification_requests (
+  request_id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  id_card_number VARCHAR(50),
+  full_name VARCHAR(150),
+  document_type VARCHAR(50) NOT NULL DEFAULT 'id_card',
+  document_url TEXT NOT NULL,
+  additional_notes TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ' CHECK (status IN ('รอดำเนินการ', 'อนุมัติแล้ว', 'ปฏิเสธ')),
+  admin_reply TEXT,
+  reviewed_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pdpa_requests (
+  request_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+  requester_name VARCHAR(150) NOT NULL,
+  requester_email VARCHAR(150) NOT NULL,
+  requester_phone VARCHAR(50),
+  right_type VARCHAR(50) NOT NULL,
+  details TEXT NOT NULL,
+  identification_proof TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ' CHECK (status IN ('รอดำเนินการ', 'กำลังดำเนินการ', 'ดำเนินการแล้วเสร็จ', 'ปฏิเสธคำขอ')),
+  admin_reply TEXT,
+  resolved_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+  resolved_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_verification_requests_user ON verification_requests (user_id);
+CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests (status);
+CREATE INDEX IF NOT EXISTS idx_pdpa_requests_user ON pdpa_requests (user_id);
+CREATE INDEX IF NOT EXISTS idx_pdpa_requests_status ON pdpa_requests (status);
+
 -- Seed Initial Admin User (Password: admin123456)
 -- NOTE: this hash was regenerated because the previous one did not match 'admin123456'.
 INSERT INTO users (name, email, phone, role, password, bio)

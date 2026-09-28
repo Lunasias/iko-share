@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CarLoader from '../components/CarLoader';
-import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles } from 'lucide-react';
+import VerificationModal from '../components/VerificationModal';
+import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -22,6 +24,10 @@ export default function Profile() {
   const [reviewCount, setReviewCount] = useState(0);
   const [reviews, setReviews] = useState([]);
 
+  // Verification state for Trust Badge
+  const [verificationData, setVerificationData] = useState(null);
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+
   // Car management state inside profile
   const [cars, setCars] = useState([]);
   const [licensePlate, setLicensePlate] = useState('');
@@ -37,7 +43,24 @@ export default function Profile() {
 
   useEffect(() => {
     fetchProfileData();
+    fetchVerificationStatus();
   }, []);
+
+  const fetchVerificationStatus = async () => {
+    try {
+      const res = await API.get('/verification/my-status');
+      if (res.data.success) {
+        setVerificationData(res.data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch verification status', e);
+    }
+  };
+
+  const handleVerificationSubmitted = () => {
+    fetchVerificationStatus();
+    setSuccessMsg('ส่งหลักฐานยืนยันตัวตนเรียบร้อยแล้ว อยู่ระหว่างการตรวจสอบ');
+  };
 
   const fetchProfileData = async () => {
     setLoading(true);
@@ -224,6 +247,12 @@ export default function Profile() {
               <span className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3 py-0.5 rounded-full text-xs font-bold">
                 {role === 'Driver' ? '🚗 คนขับรถ' : role === 'Both' ? '🌟 คนขับ & ผู้โดยสาร' : '🎒 ผู้โดยสาร'}
               </span>
+              {verificationData?.is_verified && (
+                <span className="bg-emerald-500/90 text-white border border-emerald-300 px-3 py-0.5 rounded-full text-xs font-black shadow-xs flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>🛡️ ยืนยันแล้ว (Trust Badge)</span>
+                </span>
+              )}
             </div>
 
             <p className="text-sm text-emerald-100 font-medium">{user?.email}</p>
@@ -246,6 +275,83 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Trust Badge Status Banner & Action */}
+      {verificationData?.is_verified ? (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-emerald-950">บัญชีของคุณได้รับการยืนยันตัวตนแล้ว (Trust Badge)</div>
+              <div className="text-[11px] text-emerald-700">สัญลักษณ์ 🛡️ ยืนยันแล้ว จะแสดงคู่กับชื่อของคุณในทุกการเดินทางเพื่อเพิ่มความน่าเชื่อถือ</div>
+            </div>
+          </div>
+        </div>
+      ) : verificationData?.latest_request?.status === 'รอดำเนินการ' ? (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-amber-950">คำขอยืนยันตัวตนของคุณอยู่ระหว่างการตรวจสอบ</div>
+              <div className="text-[11px] text-amber-700">
+                ส่งเอกสารเมื่อ {new Date(verificationData.latest_request.created_at).toLocaleDateString('th-TH')} ผู้ดูแลระบบจะอนุมัติตราสัญลักษณ์โดยเร็ว
+              </div>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-amber-200/80 text-amber-900 rounded-full text-[11px] font-bold shrink-0">
+            ⏳ รอตรวจสอบ
+          </span>
+        </div>
+      ) : verificationData?.latest_request?.status === 'ปฏิเสธ' ? (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-rose-950">คำขอยืนยันตัวตนไม่ผ่านการอนุมัติ</div>
+              <div className="text-[11px] text-rose-700">
+                เหตุผล: {verificationData.latest_request.admin_reply || 'เอกสารไม่ชัดเจนหรือไม่ตรงตามเงื่อนไข'}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setVerificationModalOpen(true)}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0"
+          >
+            ยื่นส่งเอกสารใหม่อีกครั้ง
+          </button>
+        </div>
+      ) : (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                <span>ขอรับตราสัญลักษณ์ความน่าเชื่อถือ (Trust Badge)</span>
+                <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md">แนะนำสำหรับคนขับ</span>
+              </div>
+              <p className="text-[11px] text-slate-600">
+                ส่งรูปบัตรประชาชน หรือใบขับขี่ เพื่อรับสัญลักษณ์ 🛡️ ยืนยันแล้ว แสดงบนการ์ดทริปและโปรไฟล์ของคุณ
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setVerificationModalOpen(true)}
+            className="px-4 py-2.5 travel-btn-primary font-bold text-xs rounded-xl shadow-xs shrink-0"
+          >
+            🛡️ ส่งหลักฐานยืนยันตัวตน
+          </button>
+        </div>
+      )}
 
       {/* Notifications */}
       {successMsg && (
@@ -489,6 +595,39 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* PDPA & Data Subject Legal Rights Section */}
+      <div className="travel-card p-5 sm:p-6 bg-slate-50/80 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-black text-slate-800 flex items-center gap-2">
+              <span>การคุ้มครองข้อมูลส่วนบุคคลและสิทธิตามกฎหมาย (PDPA Rights)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 font-bold">พ.ร.บ. 2562</span>
+            </h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              คุณสามารถส่งออกข้อมูลทั้งหมด (JSON Export) หรือยื่นคำร้องขอเข้าถึง แก้ไข ลบ คัดค้าน ตามสิทธิ พ.ร.บ. ข้อมูลส่วนบุคคล
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/privacy-rights"
+          className="travel-btn-secondary text-xs font-bold px-4 py-2 flex items-center gap-1.5 shrink-0"
+        >
+          <span>ศูนย์จัดการสิทธิข้อมูล</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {/* Verification Modal for requesting Trust Badge */}
+      <VerificationModal
+        isOpen={verificationModalOpen}
+        onClose={() => setVerificationModalOpen(false)}
+        onSubmitted={handleVerificationSubmitted}
+        currentUserName={name}
+      />
     </div>
   );
 }

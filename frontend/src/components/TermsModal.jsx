@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { X, ShieldCheck, FileText, Cookie, CheckCircle2, ChevronRight, Lock, HeartHandshake } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -156,9 +157,19 @@ export default function TermsModal({ isOpen, onClose, initialTab = 'terms' }) {
                 </h4>
                 <p>
                   {isTh
-                    ? 'คุณมีสิทธิ์เข้าถึง แก้ไข หรือขอลบข้อมูลบัญชีผู้ใช้ของคุณได้ตลอดเวลา โดยสามารถส่งคำขอผ่านหน้าบริการช่วยเหลือ (Support / Forgot Password) ในระบบ ซึ่งทีมงานจะดำเนินการลบข้อมูลของคุณออกจากฐานข้อมูลอย่างปลอดภัย'
-                    : 'You have the right to access, rectify, or request deletion of your account at any time via our Help & Support portal.'}
+                    ? 'คุณมีสิทธิเข้าถึง รับสำเนา แก้ไข โอนย้าย หรือขอลบข้อมูลบัญชีผู้ใช้ของคุณได้ตลอดเวลาตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) โดยสามารถยื่นคำร้องหรือดาวน์โหลดสำเนาข้อมูลส่วนบุคคล (.JSON) ได้ที่ศูนย์สิทธิข้อมูลส่วนบุคคล'
+                    : 'You have the right to access, rectify, export, or request deletion of your account at any time under the PDPA law via our dedicated Privacy Rights Portal.'}
                 </p>
+                <div className="pt-2">
+                  <Link
+                    to="/privacy-rights"
+                    onClick={onClose}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{isTh ? 'ยื่นคำร้องขอใช้สิทธิ PDPA / ดาวน์โหลดข้อมูล' : 'Exercise PDPA Rights / Export Data'}</span>
+                  </Link>
+                </div>
               </div>
             </div>
           )}

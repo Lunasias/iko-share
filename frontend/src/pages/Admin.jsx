@@ -1,14 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import CarLoader from '../components/CarLoader';
-import { Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle, Flag, MessageSquare, Check, X, UserX, ShieldCheck } from 'lucide-react';
+import {
+  Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle,
+  Flag, MessageSquare, Check, X, UserX, ShieldCheck,
+  FileCheck, ExternalLink, Image as ImageIcon, Scale, Lock, Eye,
+  CheckCircle2, XCircle, Clock
+} from 'lucide-react';
 
 export default function Admin() {
-  const [stats, setStats] = useState({ totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0, totalBookings: 0, totalReports: 0, totalSupportRequests: 0 });
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCars: 0,
+    totalEvents: 0,
+    totalTrips: 0,
+    totalBookings: 0,
+    totalReports: 0,
+    totalSupportRequests: 0,
+    totalVerificationRequests: 0,
+    totalPdpaRequests: 0,
+  });
   const [users, setUsers] = useState([]);
   const [recentTrips, setRecentTrips] = useState([]);
   const [reports, setReports] = useState([]);
   const [supportRequests, setSupportRequests] = useState([]);
+  const [verificationRequests, setVerificationRequests] = useState([]);
+  const [pdpaRequests, setPdpaRequests] = useState([]);
+  const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -23,7 +41,11 @@ export default function Admin() {
     try {
       const statsRes = await API.get('/admin/stats');
       if (statsRes.data.success) {
-        setStats(statsRes.data.stats || { totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0, totalBookings: 0, totalReports: 0, totalSupportRequests: 0 });
+        setStats(statsRes.data.stats || {
+          totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0,
+          totalBookings: 0, totalReports: 0, totalSupportRequests: 0,
+          totalVerificationRequests: 0, totalPdpaRequests: 0,
+        });
         setRecentTrips(statsRes.data.recentTrips || []);
       }
 
@@ -43,6 +65,20 @@ export default function Admin() {
         const supportRes = await API.get('/admin/support-requests');
         if (supportRes.data.success) {
           setSupportRequests(supportRes.data.requests || []);
+        }
+      } catch (e) {}
+
+      try {
+        const verifRes = await API.get('/admin/verification-requests');
+        if (verifRes.data.success) {
+          setVerificationRequests(verifRes.data.requests || []);
+        }
+      } catch (e) {}
+
+      try {
+        const pdpaRes = await API.get('/admin/pdpa-requests');
+        if (pdpaRes.data.success) {
+          setPdpaRequests(pdpaRes.data.requests || []);
         }
       } catch (e) {}
     } catch (err) {
@@ -181,6 +217,65 @@ export default function Admin() {
     }
   };
 
+  const handleReviewVerification = async (requestId, status, currentReply = '') => {
+    let reply = '';
+    if (status === 'ปฏิเสธ') {
+      reply = window.prompt('ระบุเหตุผลที่ไม่อนุมัติ (เช่น รูปถ่ายไม่ชัดเจน, ข้อมูลไม่ตรงตามเกณฑ์):', currentReply || '');
+      if (reply === null) return;
+    } else {
+      const confirmed = window.confirm('ยืนยันอนุมัติตราสัญลักษณ์ความน่าเชื่อถือ (Trust Badge) ให้ผู้ใช้รายนี้ใช่หรือไม่?');
+      if (!confirmed) return;
+      reply = 'อนุมัติเรียบร้อย เอกสารถูกต้องตามเกณฑ์';
+    }
+
+    try {
+      const res = await API.put(`/admin/verification-requests/${requestId}/review`, {
+        status,
+        admin_reply: reply,
+      });
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 4000);
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถบันทึกผลการตรวจสอบได้'));
+    }
+  };
+
+  const handleUpdatePdpaStatus = async (requestId, newStatus, currentReply = '') => {
+    const reply = window.prompt(`ระบุข้อความตอบกลับหรือบันทึกการดำเนินการ (สถานะ: ${newStatus}):`, currentReply || '');
+    if (reply === null) return;
+
+    try {
+      const res = await API.put(`/admin/pdpa-requests/${requestId}`, {
+        status: newStatus,
+        admin_reply: reply,
+      });
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 4000);
+        setPdpaRequests((prev) => prev.map((p) => p.request_id === requestId ? res.data.request : p));
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถอัปเดตคำร้อง PDPA ได้'));
+    }
+  };
+
+  const handleDeletePdpaRequest = async (requestId) => {
+    if (!window.confirm('คุณต้องการลบคำร้องขอใช้สิทธิ PDPA นี้ใช่หรือไม่?')) return;
+    try {
+      const res = await API.delete(`/admin/pdpa-requests/${requestId}`);
+      if (res.data.success) {
+        setPdpaRequests((prev) => prev.filter((p) => p.request_id !== requestId));
+        setSuccessMsg('ลบรายการคำร้อง PDPA เรียบร้อย');
+        setTimeout(() => setSuccessMsg(''), 4000);
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถลบคำร้องได้'));
+    }
+  };
+
   if (loading) {
     return <CarLoader text="กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)..." />;
   }
@@ -215,7 +310,7 @@ export default function Admin() {
       )}
 
       {/* ER Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
           <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">สมาชิก (Users)</div>
           <div className="text-xl font-black text-emerald-700">{stats.totalUsers}</div>
@@ -227,11 +322,6 @@ export default function Admin() {
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
-          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">อีเวนต์ (Events)</div>
-          <div className="text-xl font-black text-purple-700">{stats.totalEvents}</div>
-        </div>
-
-        <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
           <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">เที่ยวรถ (Trips)</div>
           <div className="text-xl font-black text-amber-700">{stats.totalTrips}</div>
         </div>
@@ -239,6 +329,28 @@ export default function Admin() {
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
           <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">การจอง (Bookings)</div>
           <div className="text-xl font-black text-rose-700">{stats.totalBookings}</div>
+        </div>
+
+        <div className="travel-card p-4 space-y-1 border border-blue-200 bg-blue-50/40 shadow-xs">
+          <div className="text-blue-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-blue-600" />
+            <span>ขอ Trust Badge</span>
+          </div>
+          <div className="text-xl font-black text-blue-800 flex items-center justify-between">
+            <span>{stats.totalVerificationRequests || 0}</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">รอตรวจ</span>
+          </div>
+        </div>
+
+        <div className="travel-card p-4 space-y-1 border border-indigo-200 bg-indigo-50/40 shadow-xs">
+          <div className="text-indigo-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <Scale className="w-3 h-3 text-indigo-600" />
+            <span>คำร้อง PDPA</span>
+          </div>
+          <div className="text-xl font-black text-indigo-800 flex items-center justify-between">
+            <span>{stats.totalPdpaRequests || 0}</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">รอตรวจ</span>
+          </div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-red-200 bg-red-50/40 shadow-xs">
@@ -382,6 +494,258 @@ export default function Admin() {
           </table>
         </div>
       </div>
+
+      {/* Trust Badge Verification Requests */}
+      <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-black text-slate-900">
+              ตรวจสอบคำขอเครื่องหมายความน่าเชื่อถือ (Trust Badge Requests)
+            </h3>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+              {verificationRequests.filter((v) => v.status === 'รอดำเนินการ').length} รอตรวจสอบ
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            ตรวจดูรูปหลักฐาน (บัตร ปชช. / ใบขับขี่) และอนุมัติตราสัญลักษณ์ 🛡️ ให้สมาชิก
+          </span>
+        </div>
+
+        {verificationRequests.length === 0 ? (
+          <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
+            ยังไม่มีคำขอยืนยันตัวตนส่งเข้ามา
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
+                  <th className="py-3 px-3">วันที่ยื่น</th>
+                  <th className="py-3 px-3">ผู้ยื่นคำขอ</th>
+                  <th className="py-3 px-3">ประเภทเอกสาร</th>
+                  <th className="py-3 px-3">ชื่อ-เลขบัตร</th>
+                  <th className="py-3 px-3">รูปถ่ายเอกสาร</th>
+                  <th className="py-3 px-3">หมายเหตุ</th>
+                  <th className="py-3 px-3">สถานะ</th>
+                  <th className="py-3 px-3">การตอบกลับ</th>
+                  <th className="py-3 px-3 text-right">ดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
+                {verificationRequests.map((vr) => (
+                  <tr key={vr.request_id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">
+                      {new Date(vr.created_at).toLocaleDateString('th-TH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="py-3 px-3 font-bold text-slate-900">
+                      <div>{vr.user_name || `User #${vr.user_id}`}</div>
+                      <div className="text-[11px] font-normal text-slate-500">{vr.user_email}</div>
+                      {vr.user_phone && <div className="text-[10px] text-slate-400">โทร: {vr.user_phone}</div>}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        {vr.doc_type}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-slate-800">{vr.real_name}</div>
+                      <div className="text-[10px] font-mono text-slate-500">{vr.id_number}</div>
+                    </td>
+                    <td className="py-3 px-3">
+                      {vr.doc_image_url ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage(vr.doc_image_url)}
+                          className="group relative block w-14 h-10 rounded-lg overflow-hidden border border-slate-200 hover:border-blue-400 shadow-2xs"
+                          title="คลิกเพื่อดูรูปเอกสารขนาดใหญ่"
+                        >
+                          <img
+                            src={vr.doc_image_url}
+                            alt="หลักฐาน"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <Eye className="w-3.5 h-3.5" />
+                          </div>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-slate-400">ไม่มีรูป</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs break-words">
+                      {vr.notes || '-'}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        vr.status === 'อนุมัติแล้ว'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                          : vr.status === 'ปฏิเสธ'
+                          ? 'bg-rose-100 text-rose-800 border-rose-200'
+                          : 'bg-amber-100 text-amber-800 border-amber-200'
+                      }`}>
+                        {vr.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs break-words">
+                      {vr.admin_reply || '-'}
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      {vr.status === 'รอดำเนินการ' ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleReviewVerification(vr.request_id, 'อนุมัติแล้ว')}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1"
+                            title="อนุมัติตราสัญลักษณ์ความน่าเชื่อถือ"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>อนุมัติ</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReviewVerification(vr.request_id, 'ปฏิเสธ', vr.admin_reply)}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1"
+                            title="ปฏิเสธคำขอและระบุเหตุผล"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>ไม่อนุมัติ</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleReviewVerification(vr.request_id, vr.status === 'อนุมัติแล้ว' ? 'ปฏิเสธ' : 'อนุมัติแล้ว', vr.admin_reply)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold"
+                          title="สลับสถานะ"
+                        >
+                          เปลี่ยนสถานะ
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* PDPA Data Subject Rights Requests */}
+      <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Scale className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-lg font-black text-slate-900">
+              คำร้องขอใช้สิทธิข้อมูลส่วนบุคคล (PDPA Statutory Rights Requests)
+            </h3>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">
+              พ.ร.บ. 2562
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            ต้องดำเนินการหรือแจ้งผลตอบกลับแก่เจ้าของข้อมูลภายใน 30 วันตามกฎหมาย
+          </span>
+        </div>
+
+        {pdpaRequests.length === 0 ? (
+          <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
+            ยังไม่มีคำร้องขอใช้สิทธิข้อมูลส่วนบุคคล
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
+                  <th className="py-3 px-3">วันที่ยื่น</th>
+                  <th className="py-3 px-3">ผู้ยื่นคำร้อง</th>
+                  <th className="py-3 px-3">สิทธิที่ขอใช้</th>
+                  <th className="py-3 px-3">รายละเอียดคำร้อง</th>
+                  <th className="py-3 px-3">สถานะ</th>
+                  <th className="py-3 px-3">การตอบกลับ / บันทึกผล</th>
+                  <th className="py-3 px-3 text-right">ดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
+                {pdpaRequests.map((pr) => {
+                  const rightLabels = {
+                    access: 'ขอเข้าถึงและรับสำเนา (Access)',
+                    erasure: 'ขอลบหรือทำลายข้อมูล (Erasure)',
+                    rectification: 'ขอแก้ไขข้อมูลให้ถูกต้อง (Rectification)',
+                    restriction: 'ขอระงับการใช้ข้อมูล (Restriction)',
+                    objection: 'ขอคัดค้านการเก็บ/ใช้/เปิดเผย (Objection)',
+                    portability: 'ขอโอนย้ายข้อมูล (Portability)',
+                    withdraw_consent: 'ขอถอนความยินยอม (Withdraw Consent)',
+                  };
+
+                  return (
+                    <tr key={pr.request_id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">
+                        {new Date(pr.created_at).toLocaleDateString('th-TH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-slate-900">
+                        <div>{pr.requester_name}</div>
+                        <div className="text-[11px] font-normal text-slate-500">{pr.requester_email}</div>
+                        {pr.requester_phone && <div className="text-[10px] text-slate-400">โทร: {pr.requester_phone}</div>}
+                        {pr.current_user_name && (
+                          <div className="text-[10px] text-indigo-700 font-medium">บัญชีสมาชิก: {pr.current_user_name}</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-200">
+                          {rightLabels[pr.right_type] || pr.right_type}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 max-w-xs text-[11px] text-slate-700 break-words">
+                        {pr.details}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          pr.status === 'ดำเนินการแล้วเสร็จ'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            : pr.status === 'กำลังดำเนินการ'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : pr.status === 'ปฏิเสธคำขอ'
+                            ? 'bg-rose-100 text-rose-800 border-rose-200'
+                            : 'bg-amber-100 text-amber-800 border-amber-200'
+                        }`}>
+                          {pr.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 max-w-xs text-[11px] text-slate-600 break-words">
+                        {pr.admin_reply || '-'}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <select
+                            value={pr.status}
+                            onChange={(e) => handleUpdatePdpaStatus(pr.request_id, e.target.value, pr.admin_reply)}
+                            className="text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-300 bg-white cursor-pointer hover:border-indigo-400"
+                          >
+                            <option value="รอดำเนินการ">รอดำเนินการ</option>
+                            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                            <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
+                            <option value="ปฏิเสธคำขอ">ปฏิเสธคำขอ</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePdpaRequest(pr.request_id)}
+                            className="p-1 text-slate-400 hover:text-red-600"
+                            title="ลบคำร้อง"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* User Reports on Inappropriate Chat Messages */}
       <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
         <div className="flex items-center justify-between">
@@ -572,6 +936,39 @@ export default function Admin() {
         )}
       </div>
 
+      {/* Document Proof Image Viewer Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl p-2 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between p-2 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-blue-600" />
+                รูปเอกสารหลักฐานยืนยันตัวตน
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 overflow-auto max-h-[75vh] flex items-center justify-center">
+              <img
+                src={previewImage}
+                alt="เอกสารหลักฐานขยาย"
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
