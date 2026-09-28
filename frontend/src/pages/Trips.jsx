@@ -56,13 +56,15 @@ export default function Trips() {
   const [selectedDriverId, setSelectedDriverId] = useState(null);
 
   useEffect(() => {
+    setOrigin(searchParams.get('origin') || '');
+    setDestination(searchParams.get('destination') || '');
+    setSelectedEventId(searchParams.get('event_id') || '');
     fetchEvents();
     fetchTrips();
   }, [searchParams]);
 
   const fetchEvents = async () => {
     try {
-      if (events.length > 0) return; // Already loaded from cache
       const res = await API.get('/events');
       if (res.data.success && res.data.events) {
         setEvents(res.data.events);
@@ -262,9 +264,23 @@ export default function Trips() {
                   {/* Status Badge & Event Tag - User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
                   <div className="flex items-center justify-between gap-2">
                     {trip.event_name ? (
-                      <span className="text-[11px] bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold border border-purple-200 truncate max-w-[170px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (trip.event_id) {
+                            setSelectedEventId(String(trip.event_id));
+                            const params = {};
+                            if (origin) params.origin = origin;
+                            if (destination) params.destination = destination;
+                            params.event_id = String(trip.event_id);
+                            setSearchParams(params);
+                          }
+                        }}
+                        className="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1 rounded-full font-bold border border-purple-200 truncate max-w-[170px] transition-colors cursor-pointer text-left"
+                        title={`กรองเฉพาะอีเวนต์: ${trip.event_name}`}
+                      >
                         {trip.event_name}
-                      </span>
+                      </button>
                     ) : (
                       <span className="text-[11px] bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-bold border border-slate-200">
                         เที่ยวทั่วไป

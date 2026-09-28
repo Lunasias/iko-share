@@ -34,7 +34,7 @@ const getTrips = async (req, res) => {
     }
     if (event_id) {
       params.push(event_id);
-      queryText += ` AND t.event_id = $${params.length}`;
+      queryText += ` AND (t.event_id = $${params.length} OR t.custom_event_name ILIKE (SELECT event_name FROM events WHERE event_id = $${params.length}))`;
     }
 
     queryText += ` ORDER BY t.departure_time ASC LIMIT 50`;
@@ -170,6 +170,35 @@ const createTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ไม่สามารถตั้งเวลาออกเดินทางย้อนหลังได้ กรุณาเลือกวันและเวลาในอนาคต' });
     }
 
+    let finalEventId = event_id ? parseInt(event_id) : null;
+    const trimmedCustomEvent = custom_event_name ? custom_event_name.trim() : null;
+
+    if (trimmedCustomEvent) {
+      try {
+        // Check if an event with this name already exists (case-insensitive)
+        const existingEv = await db.query(
+          'SELECT event_id FROM events WHERE LOWER(TRIM(event_name)) = LOWER($1) LIMIT 1',
+          [trimmedCustomEvent]
+        );
+        if (existingEv.rows && existingEv.rows.length > 0) {
+          finalEventId = existingEv.rows[0].event_id;
+        } else {
+          // Auto-register in events table so it appears in the event dropdowns across the system
+          const newEv = await db.query(
+            `INSERT INTO events (event_name, location, event_date, category)
+             VALUES ($1, $2, $3, 'Custom')
+             RETURNING event_id`,
+            [trimmedCustomEvent, destination.trim(), departureInstant.toISOString()]
+          );
+          if (newEv.rows && newEv.rows.length > 0) {
+            finalEventId = newEv.rows[0].event_id;
+          }
+        }
+      } catch (evErr) {
+        console.warn('Auto-register event warning:', evErr.message);
+      }
+    }
+
     const newTrip = await db.query(
       `INSERT INTO trips (
         license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
@@ -182,8 +211,8 @@ const createTrip = async (req, res) => {
         license_plate || null,
         trip_type,
         userId,
-        event_id ? parseInt(event_id) : null,
-        custom_event_name ? custom_event_name.trim() : null,
+        finalEventId,
+        trimmedCustomEvent,
         origin.trim(),
         destination.trim(),
         departureInstant.toISOString(),

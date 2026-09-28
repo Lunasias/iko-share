@@ -3,8 +3,30 @@ const db = require('../config/db');
 // Get all events
 const getEvents = async (req, res) => {
   try {
+    // 1. Auto-sync any custom_event_name on trips into the events table so it is selectable everywhere
+    await db.query(`
+      INSERT INTO events (event_name, location, event_date, category)
+      SELECT DISTINCT TRIM(t.custom_event_name), t.destination, t.departure_time, 'Custom'
+      FROM trips t
+      WHERE t.custom_event_name IS NOT NULL
+        AND TRIM(t.custom_event_name) != ''
+        AND NOT EXISTS (
+          SELECT 1 FROM events e WHERE LOWER(TRIM(e.event_name)) = LOWER(TRIM(t.custom_event_name))
+        )
+    `).catch(() => {});
+
+    // 2. Backfill event_id for trips missing event_id
+    await db.query(`
+      UPDATE trips t
+      SET event_id = e.event_id
+      FROM events e
+      WHERE t.event_id IS NULL
+        AND t.custom_event_name IS NOT NULL
+        AND LOWER(TRIM(t.custom_event_name)) = LOWER(TRIM(e.event_name))
+    `).catch(() => {});
+
     const eventsRes = await db.query('SELECT * FROM events ORDER BY event_date ASC');
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json({ success: true, events: eventsRes.rows || [] });
   } catch (error) {
     console.error('Get events error:', error);

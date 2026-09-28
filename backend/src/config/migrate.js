@@ -237,6 +237,26 @@ const SEEDS = [
            )`,
     params: [],
   },
+  {
+    text: `INSERT INTO events (event_name, location, event_date, category)
+           SELECT DISTINCT TRIM(t.custom_event_name), t.destination, t.departure_time, 'Custom'
+           FROM trips t
+           WHERE t.custom_event_name IS NOT NULL
+             AND TRIM(t.custom_event_name) != ''
+             AND NOT EXISTS (
+               SELECT 1 FROM events e WHERE LOWER(TRIM(e.event_name)) = LOWER(TRIM(t.custom_event_name))
+             )`,
+    params: [],
+  },
+  {
+    text: `UPDATE trips t
+           SET event_id = e.event_id
+           FROM events e
+           WHERE t.event_id IS NULL
+             AND t.custom_event_name IS NOT NULL
+             AND LOWER(TRIM(t.custom_event_name)) = LOWER(TRIM(e.event_name))`,
+    params: [],
+  },
 ];
 
 let migrationPromise = null;
