@@ -8,6 +8,27 @@ import {
   ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock, ExternalLink, Map
 } from 'lucide-react';
 
+function ThaiBahtIcon({ className = "w-5 h-5", strokeWidth = 2, ...props }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <line x1="12" y1="2.5" x2="12" y2="21.5" />
+      <path d="M6.5 4.5v15" />
+      <path d="M6.5 5.5h5.5a3.25 3.25 0 0 1 0 6.5H6.5" />
+      <path d="M6.5 12h6a3.5 3.5 0 0 1 0 7H6.5" />
+    </svg>
+  );
+}
+
 export default function CreateTrip() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -301,9 +322,11 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
           {/* Select Registered Car */}
           <div className={`space-y-1.5 ${usesCar ? '' : 'hidden'}`}>
-            <label className="text-xs font-bold text-slate-800">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
-            <div className="flex items-center gap-2 px-4 py-3 travel-input">
-              <Car className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div className="flex items-center justify-between min-h-[20px]">
+              <label className="text-xs font-bold text-slate-800">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
+            </div>
+            <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+              <Car className="w-5 h-5 text-amber-500 shrink-0" />
               <select
                 required={usesCar}
                 value={licensePlate}
@@ -365,9 +388,11 @@ const computeCostBreakdown = (distKm, seatCount) => {
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-800">จุดเริ่มต้น (ต้นทาง)</label>
-                <div className="flex items-center gap-2 px-4 py-3 travel-input">
-                  <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="flex items-center justify-between min-h-[20px]">
+                  <label className="text-xs font-bold text-slate-800">จุดเริ่มต้น (ต้นทาง)</label>
+                </div>
+                <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                  <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
                   <input
                     type="text"
                     required
@@ -379,15 +404,17 @@ const computeCostBreakdown = (distKm, seatCount) => {
                         handleCalculateRoute();
                       }
                     }}
-                    className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
+                    className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-800">จุดหมายปลายทาง</label>
-                <div className="flex items-center gap-2 px-4 py-3 travel-input">
-                  <MapPin className="w-5 h-5 text-teal-600 shrink-0" />
+                <div className="flex items-center justify-between min-h-[20px]">
+                  <label className="text-xs font-bold text-slate-800">จุดหมายปลายทาง</label>
+                </div>
+                <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                  <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
                   <input
                     type="text"
                     required
@@ -399,7 +426,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                         handleCalculateRoute();
                       }
                     }}
-                    className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
+                    className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                   />
                 </div>
               </div>
@@ -490,23 +517,27 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800">วันที่เดินทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 travel-input">
-                <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div className="flex items-center justify-between min-h-[20px]">
+                <label className="text-xs font-bold text-slate-800">วันที่เดินทาง</label>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                <Calendar className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="date"
                   required
                   min={todayStr}
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800">เวลาออกเดินทาง</label>
-              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+              <div className="flex items-center justify-between min-h-[20px]">
+                <label className="text-xs font-bold text-slate-800">เวลาออกเดินทาง</label>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Clock className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="time"
@@ -514,7 +545,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                   min={date === todayStr ? nowTimeStr : undefined}
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                 />
               </div>
             </div>
@@ -522,11 +553,12 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800">
-                จำนวนที่นั่งเปิดรับ (สูงสุด {selectedCar?.capacity || 4} ที่นั่ง)
-              </label>
-              <div className="flex items-center gap-2 px-4 py-3 travel-input">
-                <Users className="w-5 h-5 text-teal-600 shrink-0" />
+              <div className="flex items-center justify-between min-h-[20px]">
+                <label className="text-xs font-bold text-slate-800">จำนวนที่นั่งเปิดรับ</label>
+                <span className="text-[11px] text-slate-500 font-medium">สูงสุด {selectedCar?.capacity || 4} ที่นั่ง</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                <Users className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="number"
                   min="1"
@@ -540,16 +572,18 @@ const computeCostBreakdown = (distKm, seatCount) => {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between min-h-[20px]">
                 <label className="text-xs font-bold text-slate-800">ค่าโดยสารหารเฉลี่ย / ที่นั่ง (บาท)</label>
-                {costBreakdown?.reasonableMinPrice && (
-                  <span className="text-[10px] text-slate-500">
-                    ขั้นต่ำแนะนำ: ฿{costBreakdown.reasonableMinPrice} (หรือ ฿0 ฟรี)
+                {costBreakdown?.reasonableMinPrice ? (
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    ขั้นต่ำ ฿{costBreakdown.reasonableMinPrice} (หรือ ฿0)
                   </span>
+                ) : (
+                  <span className="text-[11px] text-slate-400 font-medium">฿0 หากฟรี</span>
                 )}
               </div>
-              <div className="flex items-center gap-2 px-4 py-3 travel-input">
-                <span className="text-emerald-700 font-black text-lg w-5 text-center shrink-0">฿</span>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                <ThaiBahtIcon className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="number"
                   min="0"
@@ -563,33 +597,39 @@ const computeCostBreakdown = (distKm, seatCount) => {
           </div>
 
           {/* Personality of Driver & Passenger Criteria (User Request) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-emerald-900 flex items-center gap-1">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>นิสัยและสไตล์ของคนขับ</span>
-              </label>
-              <input
-                type="text"
-                placeholder="เช่น สายชิล, เปิดเพลงเพราะ, ขับนิ่ม, ไม่สูบบุหรี่"
-                value={driverPersonality}
-                onChange={(e) => setDriverPersonality(e.target.value)}
-                className="w-full px-4 py-2.5 travel-input text-xs"
-              />
+              <div className="flex items-center justify-between min-h-[20px]">
+                <label className="text-xs font-bold text-slate-800">นิสัยและสไตล์ของคนขับ</label>
+                <span className="text-[11px] text-slate-400 font-medium">ไม่บังคับ</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                <Sparkles className="w-5 h-5 text-amber-500 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="เช่น สายชิล, เปิดเพลงเพราะ, ขับนิ่ม, ไม่สูบบุหรี่"
+                  value={driverPersonality}
+                  onChange={(e) => setDriverPersonality(e.target.value)}
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400 font-medium"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-emerald-900 flex items-center gap-1">
-                <HeartHandshake className="w-4 h-4 text-emerald-600" />
-                <span>คุณสมบัติผู้ร่วมทริปที่ต้องการ</span>
-              </label>
-              <input
-                type="text"
-                placeholder="เช่น ตรงต่อเวลา, สัมภาระน้อย, เป็นกันเอง"
-                value={passengerRequirements}
-                onChange={(e) => setPassengerRequirements(e.target.value)}
-                className="w-full px-4 py-2.5 travel-input text-xs"
-              />
+              <div className="flex items-center justify-between min-h-[20px]">
+                <label className="text-xs font-bold text-slate-800">คุณสมบัติผู้ร่วมทริปที่ต้องการ</label>
+                <span className="text-[11px] text-slate-400 font-medium">ไม่บังคับ</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
+                <HeartHandshake className="w-5 h-5 text-amber-500 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="เช่น ตรงต่อเวลา, สัมภาระน้อย, เป็นกันเอง"
+                  value={passengerRequirements}
+                  onChange={(e) => setPassengerRequirements(e.target.value)}
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400 font-medium"
+                />
+              </div>
             </div>
           </div>
 
