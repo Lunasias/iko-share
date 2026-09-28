@@ -28,7 +28,9 @@ export default function TripDetail() {
   const [meetupLocation, setMeetupLocation] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isBookingProcessing, setIsBookingProcessing] = useState(false);
+  const [acceptedPassengerTerms, setAcceptedPassengerTerms] = useState(false);
   const isActionInProgressRef = useRef(false);
+
 
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -106,10 +108,16 @@ export default function TripDetail() {
       return;
     }
 
+    if (!acceptedPassengerTerms) {
+      setActionError('กรุณาทำเครื่องหมายยอมรับข้อตกลงและข้อจำกัดความรับผิดชอบก่อนส่งคำขอร่วมเดินทาง');
+      return;
+    }
+
     // Synchronous Ref Guard to immediately intercept double clicks (#BUG-102)
     if (isActionInProgressRef.current || submitting || isBookingProcessing) {
       return;
     }
+
     isActionInProgressRef.current = true;
     setIsBookingProcessing(true);
     setSubmitting(true);
@@ -755,13 +763,30 @@ export default function TripDetail() {
               />
             </div>
 
+            {/* Passenger Liability Disclaimer & Agreement */}
+            <div className="p-3.5 bg-slate-100/90 rounded-2xl border border-slate-200 text-xs">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  required
+                  checked={acceptedPassengerTerms}
+                  onChange={(e) => setAcceptedPassengerTerms(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
+                />
+                <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  ข้าพเจ้ารับทราบว่าการร่วมเดินทางเป็นการแบ่งปันค่าใช้จ่ายด้วยความสมัครใจ แพลตฟอร์ม Iko Share และผู้ดูแลระบบเป็นเพียงสื่อกลางเชื่อมต่อ <strong>ไม่สามารถเอาผิดหรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong>
+                </span>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={submitting || trip.available_seats <= 0}
+              disabled={submitting || trip.available_seats <= 0 || !acceptedPassengerTerms}
               className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-md"
             >
               {submitting ? 'กำลังส่งคำขอเข้าตี้...' : trip.available_seats <= 0 ? 'ที่นั่งเต็มแล้ว' : '🚀 ขอเข้าร่วมตี้เดินทาง'}
             </button>
+
           </form>
         )}
       </div>

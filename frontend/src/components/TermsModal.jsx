@@ -124,8 +124,20 @@ export default function TermsModal({ isOpen, onClose, initialTab = 'terms' }) {
                     : 'Harassment, hate speech, threats, and illegal activities in trip chat or during rides are strictly prohibited and subject to immediate suspension by admins.'}
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <h4 className="font-black text-slate-900 text-sm">
+                  {isTh ? '4. ข้อจำกัดความรับผิดและสละสิทธิ์เอาผิดเจ้าของเว็บไซต์ (Limitation of Liability & Waiver)' : '4. Limitation of Liability & Waiver'}
+                </h4>
+                <p>
+                  {isTh
+                    ? 'Iko Share และเจ้าของเว็บไซต์/ผู้ดูแลระบบ ทำหน้าที่เป็นเพียงแพลตฟอร์มสื่อกลางทางเทคโนโลยีเพื่อเชื่อมต่อสมาชิกและอำนวยความสะดวกในการแชร์การเดินทางเท่านั้น ไม่ใช่ผู้ให้บริการขนส่งสาธารณะ ผู้ใช้บริการตกลงและรับทราบว่าการเดินทาง การตกลงนัดพบ และการส่งมอบข้อมูลใดๆ เป็นการตัดสินใจด้วยความสมัครใจของผู้ใช้เอง ผู้ให้บริการจะไม่รับผิดชอบต่อความเสียหาย อุบัติเหตุ การบาดเจ็บ การสูญเสียทรัพย์สิน หรือข้อพิพาทใดๆ ที่เกิดขึ้นทั้งทางตรงและทางอ้อม โดยผู้ใช้บริการตกลงสละสิทธิ์ในการฟ้องร้อง ดำเนินคดี หรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบในทุกกรณี'
+                    : 'Iko Share and the site administrators act purely as an intermediary platform for peer-to-peer ride coordination. We are not a commercial transit provider and assume no liability for accidents, losses, damages, or disputes. Users agree to waive any and all claims against the platform owners and operators.'}
+                </p>
+              </div>
             </div>
           )}
+
 
           {activeTab === 'pdpa' && (
             <div className="space-y-4">

@@ -59,6 +59,7 @@ export default function CreateTrip() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [acceptedDriverTerms, setAcceptedDriverTerms] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -633,13 +634,30 @@ const computeCostBreakdown = (distKm, seatCount) => {
             </div>
           </div>
 
+          {/* Driver Liability Disclaimer & Confirmation */}
+          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                required
+                checked={acceptedDriverTerms}
+                onChange={(e) => setAcceptedDriverTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
+              />
+              <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                ข้าพเจ้ายืนยันว่ายานพาหนะมีสภาพปลอดภัยและมีใบอนุญาตขับขี่/พ.ร.บ. ถูกต้องตามกฎหมาย และรับทราบว่า Iko Share เป็นเพียงสื่อกลางเชื่อมต่อผู้ร่วมเดินทางเพื่อแบ่งปันค่าน้ำมันเท่านั้น <strong>ไม่สามารถเรียกร้องค่าเสียหายหรือดำเนินคดีเอาผิดต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong>
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !acceptedDriverTerms}
             className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg"
           >
             {submitting ? 'กำลังเปิดการเดินทาง...' : '🚀 ยืนยันเปิดทริปท่องเที่ยว'}
           </button>
+
         </form>
       </div>
     </div>
