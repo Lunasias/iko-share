@@ -76,11 +76,52 @@ export default function CreateTrip() {
     }
   };
 
+const computeCostBreakdown = (distKm, seatCount) => {
+  const FUEL_RATE = 2.20;
+  const DEPR_RATE = 1.30;
+  const dist = parseFloat(distKm) || 0;
+  const count = Math.max(1, parseInt(seatCount) || 1);
+  const fuelCost = Math.round(dist * FUEL_RATE);
+  const depreciationCost = Math.round(dist * DEPR_RATE);
+  const totalCost = fuelCost + depreciationCost;
+  const recommendedSeatPrice = Math.max(25, Math.round((totalCost / count) / 10) * 10);
+  const reasonableMinPrice = Math.max(20, Math.round(recommendedSeatPrice * 0.4));
+  return {
+    fuel_rate_per_km: FUEL_RATE,
+    depreciation_rate_per_km: DEPR_RATE,
+    estimated_fuel_cost: fuelCost,
+    estimated_depreciation_cost: depreciationCost,
+    total_operating_cost: totalCost,
+    recommended_price_per_seat: recommendedSeatPrice,
+    min_reasonable_price: reasonableMinPrice,
+    fuelCost,
+    depreciationCost,
+    totalCost,
+    recommendedSeatPrice,
+    reasonableMinPrice,
+  };
+};
+
   const handleCarChange = (plate) => {
     setLicensePlate(plate);
     const selected = cars.find((c) => c.license_plate === plate);
     if (selected) {
       setSeats(selected.capacity);
+      if (distanceKm) {
+        const recalculated = computeCostBreakdown(distanceKm, selected.capacity);
+        setCostBreakdown(recalculated);
+        setPrice(recalculated.recommendedSeatPrice);
+      }
+    }
+  };
+
+  const handleSeatsChange = (newSeatsVal) => {
+    setSeats(newSeatsVal);
+    const count = parseInt(newSeatsVal) || 1;
+    if (distanceKm) {
+      const recalculated = computeCostBreakdown(distanceKm, count);
+      setCostBreakdown(recalculated);
+      setPrice(recalculated.recommendedSeatPrice);
     }
   };
 
@@ -115,9 +156,7 @@ export default function CreateTrip() {
         setDistanceKm(res.data.distanceKm);
         setDurationText(res.data.durationText);
         setCostBreakdown(res.data.costBreakdown);
-        if (parseFloat(price) === 0 && res.data.costBreakdown?.recommendedSeatPrice) {
-          setPrice(res.data.costBreakdown.recommendedSeatPrice);
-        }
+        setPrice(res.data.costBreakdown.recommendedSeatPrice);
       }
     } catch (err) {
       console.warn('Calculate route estimate error:', err);
@@ -406,7 +445,7 @@ export default function CreateTrip() {
                   <div className="font-extrabold text-slate-900 text-sm mt-0.5">฿{costBreakdown.totalCost?.toLocaleString()}</div>
                 </div>
                 <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs flex flex-col justify-center">
-                  <div className="text-[10px] text-emerald-100 font-medium">ราคาแนะนำ / ที่นั่ง</div>
+                  <div className="text-[10px] text-emerald-100 font-medium">ราคาหารเฉลี่ย ({seats} ที่นั่ง)</div>
                   <div className="font-black text-base mt-0.5">฿{costBreakdown.recommendedSeatPrice}</div>
                 </div>
               </div>
@@ -426,7 +465,7 @@ export default function CreateTrip() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
                 <div className="space-y-0.5">
                   <p className="text-[11px] text-slate-600">
-                    💡 ระบบคิดรวมค่าน้ำมันและค่าเสื่อมสึกหรอของรถตามระยะทางจริง หารจำนวนคน {seats} ที่นั่ง
+                    💡 ต้นทุนรวม ฿{costBreakdown.totalCost?.toLocaleString()} ÷ {seats} ที่นั่ง = แนะนำ ฿{costBreakdown.recommendedSeatPrice} ต่อคน (รวมค่าน้ำมันและค่าเสื่อมสึกหรอตามระยะทางจริง)
                   </p>
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`}
@@ -494,7 +533,7 @@ export default function CreateTrip() {
                   max={usesCar ? (selectedCar?.capacity || 15) : 50}
                   required
                   value={seats}
-                  onChange={(e) => setSeats(e.target.value)}
+                  onChange={(e) => handleSeatsChange(e.target.value)}
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-bold"
                 />
               </div>

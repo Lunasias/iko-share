@@ -48,6 +48,21 @@ const THAI_COORDINATES = {
   'สมุย': { lat: 9.5357, lng: 100.0605 },
   'หาดใหญ่': { lat: 7.0087, lng: 100.4747 },
   'สงขลา': { lat: 7.1988, lng: 100.5954 },
+  'ชุมพร': { lat: 10.4930, lng: 99.1800 },
+  'chumphon': { lat: 10.4930, lng: 99.1800 },
+  'สจล': { lat: 10.7229, lng: 99.3789 },
+  'kmitl': { lat: 10.7229, lng: 99.3789 },
+  'ลาดกระบัง': { lat: 13.7299, lng: 100.7782 },
+  'ตราด': { lat: 12.2428, lng: 102.5175 },
+  'จันทบุรี': { lat: 12.6114, lng: 102.1039 },
+  'ปราจีนบุรี': { lat: 14.0509, lng: 101.3734 },
+  'สระแก้ว': { lat: 13.8140, lng: 102.0725 },
+  'นครศรีธรรมราช': { lat: 8.4304, lng: 99.9631 },
+  'ตรัง': { lat: 7.5563, lng: 99.6114 },
+  'พัทลุง': { lat: 7.6167, lng: 100.0833 },
+  'ยะลา': { lat: 6.5411, lng: 101.2804 },
+  'นราธิวาส': { lat: 6.4255, lng: 101.8253 },
+  'ปัตตานี': { lat: 6.8696, lng: 101.2501 },
 };
 
 // Calculate Great Circle Distance in kilometers (Haversine formula)
@@ -89,7 +104,60 @@ function formatDurationThai(totalMinutes) {
   return `${mins || 15} นาที`;
 }
 
-// Query Google Maps Distance Matrix API
+// Query Google Routes API (Modern computeRoutes endpoint)
+function fetchGoogleRoutesAPI(origin, destination, apiKey) {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify({
+      origin: { address: origin },
+      destination: { address: destination },
+      travelMode: 'DRIVE',
+    });
+
+    const options = {
+      hostname: 'routes.googleapis.com',
+      path: '/directions/v2:computeRoutes',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters',
+        'Content-Length': Buffer.byteLength(postData),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (json.routes && json.routes.length > 0 && json.routes[0].distanceMeters) {
+            const meters = json.routes[0].distanceMeters;
+            const distanceKm = Math.round((meters / 1000) * 10) / 10;
+            const durationSec = parseInt(json.routes[0].duration) || 0;
+            const durationMinutes = Math.round(durationSec / 60);
+            resolve({
+              distance_km: distanceKm,
+              duration_text: formatDurationThai(durationMinutes),
+              duration_minutes: durationMinutes,
+              source: 'google_routes_api',
+            });
+          } else {
+            reject(new Error(json.error?.message || 'Routes API returned no routes'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', (err) => reject(err));
+    req.write(postData);
+    req.end();
+  });
+}
+
+// Query Google Maps Distance Matrix API (Legacy fallback)
 function fetchGoogleMapsDistance(origin, destination, apiKey) {
   return new Promise((resolve, reject) => {
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
@@ -169,12 +237,17 @@ async function estimateRoute(origin, destination, seats = 4) {
   const googleApiKey = process.env.GOOGLE_MAPS_API_KEY;
   let routeResult = null;
 
-  // 1. Try Google Maps API if configured
+  // 1. Try modern Google Routes API if key configured
   if (googleApiKey) {
     try {
-      routeResult = await fetchGoogleMapsDistance(origin, destination, googleApiKey);
+      routeResult = await fetchGoogleRoutesAPI(origin, destination, googleApiKey);
     } catch (err) {
-      console.warn('Google Maps API error, falling back to smart router:', err.message);
+      console.warn('Google Routes API error, trying Distance Matrix fallback:', err.message);
+      try {
+        routeResult = await fetchGoogleMapsDistance(origin, destination, googleApiKey);
+      } catch (err2) {
+        console.warn('Google Maps API fallback error:', err2.message);
+      }
     }
   }
 
