@@ -170,6 +170,13 @@ const CONSTRAINT_FIXES = [
        AND a.reporter_id = b.reporter_id`,
   `CREATE UNIQUE INDEX IF NOT EXISTS chat_reports_message_reporter_key
      ON chat_reports (message_id, reporter_id)`,
+
+  // Performance query indexes for trips, bookings, and chat messages
+  `CREATE INDEX IF NOT EXISTS idx_trips_departure_time ON trips (departure_time ASC)`,
+  `CREATE INDEX IF NOT EXISTS idx_trips_event_id ON trips (event_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_bookings_trip_id ON bookings (trip_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_bookings_user_trip ON bookings (trip_id, user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_chat_messages_trip_id ON chat_messages (trip_id, created_at ASC)`,
 ];
 
 const SEEDS = [

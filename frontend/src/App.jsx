@@ -1,22 +1,25 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useTheme } from './context/ThemeContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import PageBackground from './components/PageBackground';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Trips from './pages/Trips';
-import TripDetail from './pages/TripDetail';
-import CreateTrip from './pages/CreateTrip';
-import MyTrips from './pages/MyTrips';
-import Profile from './pages/Profile';
-import Cars from './pages/Cars';
-import Admin from './pages/Admin';
-import GlassMockup from './pages/GlassMockup';
-import ForgotPasswordChat from './pages/ForgotPasswordChat';
+import CarLoader from './components/CarLoader';
+
+// Dynamic code-splitting: loads page bundles on-demand to speed up initial site rendering
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Trips = lazy(() => import('./pages/Trips'));
+const TripDetail = lazy(() => import('./pages/TripDetail'));
+const CreateTrip = lazy(() => import('./pages/CreateTrip'));
+const MyTrips = lazy(() => import('./pages/MyTrips'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Cars = lazy(() => import('./pages/Cars'));
+const Admin = lazy(() => import('./pages/Admin'));
+const GlassMockup = lazy(() => import('./pages/GlassMockup'));
+const ForgotPasswordChat = lazy(() => import('./pages/ForgotPasswordChat'));
 
 function AppFooter() {
   const { t } = useTheme();
@@ -40,21 +43,27 @@ function RoutedMain() {
 
   return (
     <main className={`flex-grow page-enter ${location.pathname === '/' ? 'home-main' : ''}`} key={location.pathname}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/glass-mockup" element={<GlassMockup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPasswordChat />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/trips" element={<Trips />} />
-        <Route path="/trips/:id" element={<TripDetail />} />
-        <Route path="/create-trip" element={<CreateTrip />} />
-        <Route path="/my-trips" element={<MyTrips />} />
-        <Route path="/my_trips" element={<MyTrips />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/cars" element={<Cars />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
+      <Suspense fallback={
+        <div className="min-h-[50vh] flex items-center justify-center">
+          <CarLoader text="กำลังโหลดหน้าเว็บ..." />
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/glass-mockup" element={<GlassMockup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPasswordChat />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/trips" element={<Trips />} />
+          <Route path="/trips/:id" element={<TripDetail />} />
+          <Route path="/create-trip" element={<CreateTrip />} />
+          <Route path="/my-trips" element={<MyTrips />} />
+          <Route path="/my_trips" element={<MyTrips />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/cars" element={<Cars />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </Suspense>
     </main>
   );
 }

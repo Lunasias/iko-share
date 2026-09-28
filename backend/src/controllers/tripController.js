@@ -30,9 +30,10 @@ const getTrips = async (req, res) => {
       queryText += ` AND t.event_id = $${params.length}`;
     }
 
-    queryText += ` ORDER BY t.departure_time ASC`;
+    queryText += ` ORDER BY t.departure_time ASC LIMIT 50`;
 
     const result = await db.query(queryText, params);
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
     res.json({
       success: true,
       count: result.rows ? result.rows.length : 0,
