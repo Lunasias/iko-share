@@ -108,6 +108,16 @@ CREATE TABLE IF NOT EXISTS trip_memories (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS uploaded_images (
+  image_id VARCHAR(64) PRIMARY KEY,
+  filename VARCHAR(255),
+  mime_type VARCHAR(100) NOT NULL,
+  data BYTEA NOT NULL,
+  size_bytes INT NOT NULL,
+  created_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seed Initial Admin User (Password: admin123456)
 -- NOTE: this hash was regenerated because the previous one did not match 'admin123456'.
 INSERT INTO users (name, email, phone, role, password, bio)

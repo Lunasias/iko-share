@@ -112,6 +112,16 @@ const STATEMENTS = [
      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
      resolved_at TIMESTAMP WITH TIME ZONE
    )`,
+
+  `CREATE TABLE IF NOT EXISTS uploaded_images (
+     image_id VARCHAR(64) PRIMARY KEY,
+     filename VARCHAR(255),
+     mime_type VARCHAR(100) NOT NULL,
+     data BYTEA NOT NULL,
+     size_bytes INT NOT NULL,
+     created_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   )`,
 ];
 
 // Safety net: any extra column referenced by the app but missing in an old database.

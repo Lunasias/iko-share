@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MessageSquare, Send, RefreshCw, AlertCircle, Flag, CheckCircle, ShieldAlert } from 'lucide-react';
+import { MessageSquare, Send, RefreshCw, AlertCircle, Flag, CheckCircle, ShieldAlert, Wifi } from 'lucide-react';
 
 export default function TripChat({ tripId }) {
   const { user } = useAuth();
@@ -11,18 +11,77 @@ export default function TripChat({ tripId }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [reportSuccess, setReportSuccess] = useState('');
+  const [realtimeStatus, setRealtimeStatus] = useState('connecting'); // 'connecting' | 'connected' | 'reconnecting' | 'fallback'
 
   const chatContainerRef = useRef(null);
   const isInitialLoadRef = useRef(true);
   const userScrolledUpRef = useRef(false);
   const fetchingRef = useRef(false);
+  const isSendingRef = useRef(false);
 
   useEffect(() => {
     fetchMessages(true);
-    const interval = setInterval(() => {
+
+    const token = localStorage.getItem('iko_token');
+    let eventSource = null;
+    let fallbackInterval = null;
+
+    // Real-time Messaging via Server-Sent Events (SSE)
+    const connectSSE = () => {
+      try {
+        const streamUrl = `/api/chat/trips/${tripId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        eventSource = new EventSource(streamUrl);
+
+        eventSource.onopen = () => {
+          setRealtimeStatus('connected');
+        };
+
+        eventSource.addEventListener('connected', () => {
+          setRealtimeStatus('connected');
+        });
+
+        eventSource.addEventListener('new_message', (e) => {
+          try {
+            const incoming = JSON.parse(e.data);
+            if (incoming && incoming.message_id) {
+              setMessages((prev) => {
+                if (prev.some((m) => m.message_id === incoming.message_id)) {
+                  return prev;
+                }
+                return [...prev, incoming];
+              });
+              setTimeout(() => scrollToBottom(false), 50);
+            }
+          } catch (parseErr) {
+            console.error('Parse incoming SSE message error:', parseErr);
+          }
+        });
+
+        eventSource.onerror = () => {
+          // Automatic reconnect is built into browser EventSource
+          setRealtimeStatus('reconnecting');
+        };
+      } catch (err) {
+        console.warn('SSE not supported or connection error, using adaptive fallback polling:', err);
+        setRealtimeStatus('fallback');
+      }
+    };
+
+    connectSSE();
+
+    // Adaptive background interval as secondary safeguard (15s instead of 5s)
+    fallbackInterval = setInterval(() => {
       fetchMessages(false);
-    }, 5000); // Reduce database traffic while keeping chat responsive
-    return () => clearInterval(interval);
+    }, 15000);
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
+    };
   }, [tripId]);
 
   const handleScroll = () => {
@@ -71,24 +130,37 @@ export default function TripChat({ tripId }) {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
+    if (isSendingRef.current || sending) return;
 
+    isSendingRef.current = true;
     setSending(true);
     setError('');
+    const textToSend = newMessage.trim();
+
     try {
-      const res = await API.post(`/chat/trips/${tripId}`, { message: newMessage });
+      const res = await API.post(`/chat/trips/${tripId}`, { message: textToSend });
       if (res.data.success) {
         setNewMessage('');
         userScrolledUpRef.current = false;
-        await fetchMessages(false);
-        setTimeout(() => scrollToBottom(true), 50);
+
+        // If returned message object, immediately add to state if not already received via SSE
+        if (res.data.chatMessage) {
+          const sentMsg = res.data.chatMessage;
+          setMessages((prev) => {
+            if (prev.some((m) => m.message_id === sentMsg.message_id)) return prev;
+            return [...prev, sentMsg];
+          });
+          setTimeout(() => scrollToBottom(true), 50);
+        }
       } else {
         setError(String(res.data.message || 'ไม่สามารถส่งข้อความได้'));
       }
     } catch (err) {
       console.error('Send chat error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งข้อความ'));
+      setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งข้อความ'));
     } finally {
       setSending(false);
+      isSendingRef.current = false;
     }
   };
 
@@ -100,29 +172,59 @@ export default function TripChat({ tripId }) {
         reason: 'รายงานคำหยาบคาย หรือข้อความไม่เหมาะสมในการเดินทาง',
       });
       if (res.data.success) {
-        setReportSuccess(String(res.data.message || 'รายงานเรียบร้อยแล้ว'));
+        setReportSuccess(String(res.data.message || 'ส่งรายงานไปยังผู้ดูแลระบบเรียบร้อยแล้ว'));
         setTimeout(() => setReportSuccess(''), 4000);
+      } else {
+        alert(String(res.data.message));
       }
     } catch (err) {
-      alert('เกิดข้อผิดพลาดในการส่งรายงาน');
+      alert(String(err.userFriendlyMessage || err.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งรายงาน'));
     }
   };
 
   return (
     <div className="travel-card p-6 space-y-4 shadow-md border border-slate-200">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
         <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-emerald-600" />
-          <span>แชทกลุ่มสำหรับการเดินทางนี้ (Real-time Group Chat)</span>
+          <span>แชทกลุ่มสำหรับการเดินทางนี้</span>
         </h3>
-        <button
-          onClick={() => fetchMessages(false)}
-          className="text-xs font-bold text-slate-600 hover:text-emerald-700 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-          title="อัปเดตข้อความ"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
-          <span>อัปเดต</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Real-time SSE Connection Status Badge */}
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+              realtimeStatus === 'connected'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : realtimeStatus === 'reconnecting'
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                realtimeStatus === 'connected'
+                  ? 'bg-emerald-500 animate-pulse'
+                  : realtimeStatus === 'reconnecting'
+                  ? 'bg-amber-500 animate-ping'
+                  : 'bg-slate-400'
+              }`}
+            />
+            {realtimeStatus === 'connected'
+              ? 'Real-time'
+              : realtimeStatus === 'reconnecting'
+              ? 'กำลังเชื่อมต่อใหม่...'
+              : 'โหมดซิงค์'}
+          </span>
+
+          <button
+            onClick={() => fetchMessages(false)}
+            className="text-xs font-bold text-slate-600 hover:text-emerald-700 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+            title="อัปเดตข้อความ"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+            <span>อัปเดต</span>
+          </button>
+        </div>
       </div>
 
       {reportSuccess && (
@@ -143,47 +245,73 @@ export default function TripChat({ tripId }) {
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="h-72 overflow-y-auto space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs scroll-smooth"
+        className="h-80 overflow-y-auto space-y-3 p-4 bg-slate-50/70 rounded-2xl border border-slate-200 scroll-smooth"
       >
         {loading ? (
-          <div className="text-center py-10 text-slate-500 font-bold">กำลังเชื่อมต่อห้องแชท...</div>
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs space-y-2">
+            <RefreshCw className="w-6 h-6 animate-spin text-emerald-500" />
+            <span>กำลังโหลดข้อความแชท...</span>
+          </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 font-medium">
-            ยังไม่มีข้อความในแชทกลุ่มนี้ ทักทายเพื่อนร่วมทางและนัดแนะจุดขึ้นรถได้เลย!
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs space-y-1">
+            <MessageSquare className="w-8 h-8 text-slate-300 mb-1" />
+            <span className="font-bold text-slate-600">ยังไม่มีข้อความสนทนาในทริปนี้</span>
+            <span>ส่งข้อความเพื่อทักทายหรือนัดแนะจุดนัดพบกับเพื่อนร่วมทางได้เลย!</span>
           </div>
         ) : (
-          messages.map((msg) => {
-            const isMe = user && (user.user_id === msg.user_id || user.id === msg.user_id);
-            const msgTime = new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+          messages.map((m) => {
+            const isMe = Number(m.user_id) === Number(user?.user_id || user?.id);
 
             return (
-              <div key={msg.message_id || msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 mb-0.5 px-1">
-                  <span>{msg.sender_name}</span>
-                  {msg.sender_role === 'Admin' && <span className="text-amber-600">(แอดมิน)</span>}
-                  <span className="text-[10px] text-slate-400 font-normal">{msgTime} น.</span>
+              <div
+                key={m.message_id}
+                className={`flex gap-3 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+              >
+                {/* Sender Avatar */}
+                {m.sender_avatar ? (
+                  <img
+                    src={m.sender_avatar}
+                    alt={m.sender_name}
+                    className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 shadow-xs mt-1"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 mt-1 border border-emerald-200 shadow-xs">
+                    {m.sender_name?.charAt(0) || 'U'}
+                  </div>
+                )}
 
-                  {!isMe && (
-                    <button
-                      type="button"
-                      onClick={() => handleReportMessage(msg.message_id)}
-                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity ml-1 flex items-center gap-0.5 text-[10px]"
-                      title="รายงานคำหยาบหรือข้อความไม่เหมาะสม"
+                {/* Message Bubble */}
+                <div className={`max-w-[75%] space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex items-center gap-1.5 text-[10px] text-slate-500 font-bold ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <span>{isMe ? 'คุณ' : m.sender_name}</span>
+                    <span>•</span>
+                    <span className="font-mono text-slate-400">
+                      {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <div className="relative group/msg flex items-center gap-1">
+                    <div
+                      className={`p-3 rounded-2xl text-xs font-medium leading-relaxed break-words shadow-xs ${
+                        isMe
+                          ? 'bg-emerald-600 text-white rounded-tr-xs'
+                          : 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs'
+                      }`}
                     >
-                      <Flag className="w-3 h-3 text-red-400" />
-                      <span>รายงาน</span>
-                    </button>
-                  )}
-                </div>
+                      {m.message}
+                    </div>
 
-                <div
-                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-1 ${
-                    isMe
-                      ? 'bg-emerald-600 text-white rounded-br-xs shadow-xs font-medium'
-                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs shadow-xs font-medium'
-                  }`}
-                >
-                  <p className="break-words leading-relaxed">{msg.message}</p>
+                    {/* Report Profanity / Abusive message button (PDF Page 5 Note) */}
+                    {!isMe && (
+                      <button
+                        onClick={() => handleReportMessage(m.message_id)}
+                        className="opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-red-50"
+                        title="รายงานข้อความไม่เหมาะสม / คำหยาบ"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -191,22 +319,29 @@ export default function TripChat({ tripId }) {
         )}
       </div>
 
-      {/* Send Input */}
+      {/* Input Message Form */}
       <form onSubmit={handleSend} className="flex gap-2">
         <input
           type="text"
-          placeholder="พิมพ์ข้อความคุยกับเพื่อนร่วมทริป..."
+          placeholder="พิมพ์ข้อความทักทายหรือนัดหมายกับเพื่อนในตี้..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-1 px-4 py-3 travel-input text-xs"
+          disabled={sending}
+          className="flex-1 px-4 py-3 travel-input text-xs font-medium focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={sending || !newMessage.trim()}
-          className="px-5 py-3 travel-btn-primary font-bold text-xs disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+          className="px-5 travel-btn-primary flex items-center justify-center gap-1.5 font-bold text-xs disabled:opacity-50 shadow-sm"
         >
-          <Send className="w-4 h-4" />
-          <span>{sending ? 'ส่ง...' : 'ส่ง'}</span>
+          {sending ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <Send className="w-4 h-4" />
+              <span>ส่ง</span>
+            </>
+          )}
         </button>
       </form>
     </div>

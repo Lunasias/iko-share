@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import API from '../services/api';
+import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CarLoader from '../components/CarLoader';
 import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles } from 'lucide-react';
@@ -14,6 +14,8 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [role, setRole] = useState('Passenger');
   const [bio, setBio] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const isSavingRef = useRef(false);
 
   const [stats, setStats] = useState({ tripsCreated: 0, tripsJoined: 0 });
   const [avgRating, setAvgRating] = useState('0.0');
@@ -74,26 +76,40 @@ export default function Profile() {
     }
   };
 
-  // Direct image file upload to Base64 (User request: "ภาพโปรไฟล์ อยากใส่ภาพได้เลยไม่ต้องแปลงเป็น URL")
-  const handleImageFileChange = (e) => {
+  // Direct image file upload to Image Storage Service
+  const handleImageFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('ขนาดไฟล์ภาพต้องไม่เกิน 5 MB');
+    if (file.size > 8 * 1024 * 1024) {
+      setError('ขนาดไฟล์ภาพต้องไม่เกิน 8 MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarUrl(reader.result);
-      setSuccessMsg('เลือกรูปโปรไฟล์เรียบร้อยแล้ว กดบันทึกเพื่ออัปเดต');
-    };
-    reader.readAsDataURL(file);
+    setUploadingAvatar(true);
+    setError('');
+    setSuccessMsg('');
+
+    try {
+      const uploadRes = await uploadImage(file);
+      if (uploadRes.success && uploadRes.url) {
+        setAvatarUrl(uploadRes.url);
+        setSuccessMsg('อัปโหลดรูปภาพโปรไฟล์เข้าสู่ระบบจัดเก็บรูปภาพเรียบร้อยแล้ว กดบันทึกเพื่ออัปเดต');
+      } else {
+        setError(String(uploadRes.message || 'ไม่สามารถอัปโหลดรูปภาพได้'));
+      }
+    } catch (err) {
+      console.error('Upload avatar error:', err);
+      setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ'));
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (isSavingRef.current || saving || uploadingAvatar) return;
+    isSavingRef.current = true;
     setSaving(true);
     setError('');
     setSuccessMsg('');
@@ -115,9 +131,10 @@ export default function Profile() {
       }
     } catch (err) {
       console.error('Save profile error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการบันทึก'));
+      setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการบันทึก'));
     } finally {
       setSaving(false);
+      isSavingRef.current = false;
     }
   };
 
@@ -348,15 +365,25 @@ export default function Profile() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
+                disabled={uploadingAvatar || saving}
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl border border-slate-300 text-xs shadow-sm flex items-center gap-2"
+                className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl border border-slate-300 text-xs shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
-                <Camera className="w-4 h-4 text-emerald-600" />
-                <span>เลือกรูปถ่ายจากเครื่อง</span>
+                {uploadingAvatar ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <span>กำลังอัปโหลดรูปภาพ...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 text-emerald-600" />
+                    <span>เลือกรูปถ่ายจากเครื่อง</span>
+                  </>
+                )}
               </button>
-              {avatarUrl && (
+              {avatarUrl && !uploadingAvatar && (
                 <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4" /> ได้เลือกรูปภาพแล้ว
+                  <CheckCircle className="w-4 h-4" /> อัปโหลดรูปภาพพร้อมแล้ว
                 </span>
               )}
             </div>
@@ -364,11 +391,20 @@ export default function Profile() {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingAvatar}
             className="w-full py-3.5 travel-btn-primary font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
           >
-            <Save className="w-5 h-5" />
-            <span>{saving ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการเปลี่ยนแปลง'}</span>
+            {saving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>กำลังบันทึกข้อมูล...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                <span>บันทึกการเปลี่ยนแปลงโปรไฟล์</span>
+              </>
+            )}
           </button>
         </form>
       </div>

@@ -1,5 +1,42 @@
 const db = require('../config/db');
 
+// In-memory registry for Server-Sent Events (SSE) connections per trip
+// Map<tripId, Set<Response>>
+const tripSSEClients = new Map();
+
+const registerSSEClient = (tripId, res) => {
+  const tid = String(tripId);
+  if (!tripSSEClients.has(tid)) {
+    tripSSEClients.set(tid, new Set());
+  }
+  tripSSEClients.get(tid).add(res);
+};
+
+const removeSSEClient = (tripId, res) => {
+  const tid = String(tripId);
+  if (tripSSEClients.has(tid)) {
+    tripSSEClients.get(tid).delete(res);
+    if (tripSSEClients.get(tid).size === 0) {
+      tripSSEClients.delete(tid);
+    }
+  }
+};
+
+const broadcastMessage = (tripId, messageData) => {
+  const tid = String(tripId);
+  const clients = tripSSEClients.get(tid);
+  if (!clients || clients.size === 0) return;
+
+  const payload = `event: new_message\ndata: ${JSON.stringify(messageData)}\n\n`;
+  for (const client of clients) {
+    try {
+      client.write(payload);
+    } catch (err) {
+      removeSSEClient(tid, client);
+    }
+  }
+};
+
 // Access Check: Room head (car owner / organizer) OR Passengers with status 'จองแล้ว'
 const checkTripAccess = async (tripId, userId) => {
   const tripRes = await db.query(
@@ -49,7 +86,57 @@ const getTripMessages = async (req, res) => {
   }
 };
 
-// Send message to trip group chat
+// Real-time SSE Stream endpoint for trip chat messages
+const streamTripMessages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.user_id || req.user.id;
+
+    const hasAccess = await checkTripAccess(id, userId);
+    if (!hasAccess && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
+      return res.status(403).json({ success: false, message: 'เฉพาะคนขับและผู้โดยสารที่มีสถานะจองแล้วเท่านั้นที่สามารถเชื่อมต่อแชทได้' });
+    }
+
+    // Set headers for Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    if (res.flushHeaders) {
+      res.flushHeaders();
+    }
+
+    // Register client for this trip
+    registerSSEClient(id, res);
+
+    // Initial connection event
+    res.write(`event: connected\ndata: ${JSON.stringify({ tripId: id, status: 'connected', timestamp: new Date() })}\n\n`);
+
+    // Keepalive heartbeat every 20 seconds to prevent proxy / lambda timeout
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(': keepalive\n\n');
+      } catch (err) {
+        clearInterval(heartbeat);
+      }
+    }, 20000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      removeSSEClient(id, res);
+    });
+  } catch (error) {
+    console.error('SSE Stream error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อสตรีมข้อความ' });
+    }
+  }
+};
+
+// Send message to trip group chat and broadcast in real-time
 const sendMessage = async (req, res) => {
   try {
     const { id } = req.params;
@@ -72,10 +159,26 @@ const sendMessage = async (req, res) => {
       [id, userId, message.trim()]
     );
 
+    const msgId = newMsg.rows[0].message_id;
+
+    // Fetch full sender details to match frontend requirements
+    const fullMsgRes = await db.query(
+      `SELECT cm.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role
+       FROM chat_messages cm
+       JOIN users u ON cm.user_id = u.user_id
+       WHERE cm.message_id = $1`,
+      [msgId]
+    );
+
+    const fullMessage = fullMsgRes.rows && fullMsgRes.rows[0] ? fullMsgRes.rows[0] : newMsg.rows[0];
+
+    // Real-time Broadcast to all connected clients in this trip!
+    broadcastMessage(id, fullMessage);
+
     res.status(201).json({
       success: true,
       message: 'ส่งข้อความสำเร็จ',
-      chatMessage: newMsg.rows && newMsg.rows[0] ? newMsg.rows[0] : null,
+      chatMessage: fullMessage,
     });
   } catch (error) {
     console.error('Send message error:', error);
@@ -136,6 +239,7 @@ const reportMessage = async (req, res) => {
 
 module.exports = {
   getTripMessages,
+  streamTripMessages,
   sendMessage,
   reportMessage,
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import API from '../services/api';
+import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TripChat from '../components/TripChat';
 import ReviewModal from '../components/ReviewModal';
@@ -9,7 +9,7 @@ import CarLoader from '../components/CarLoader';
 import {
   MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle,
   ArrowRight, Star, LogOut, Trash2, Check, XCircle, Camera, Image, Send,
-  Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus
+  Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus, RefreshCw
 } from 'lucide-react';
 
 export default function TripDetail() {
@@ -26,6 +26,8 @@ export default function TripDetail() {
 
   const [meetupLocation, setMeetupLocation] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isBookingProcessing, setIsBookingProcessing] = useState(false);
+  const isActionInProgressRef = useRef(false);
 
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -103,6 +105,12 @@ export default function TripDetail() {
       return;
     }
 
+    // Synchronous Ref Guard to immediately intercept double clicks (#BUG-102)
+    if (isActionInProgressRef.current || submitting || isBookingProcessing) {
+      return;
+    }
+    isActionInProgressRef.current = true;
+    setIsBookingProcessing(true);
     setSubmitting(true);
     setError('');
     setSuccessMsg('');
@@ -121,9 +129,11 @@ export default function TripDetail() {
       }
     } catch (err) {
       console.error('Join trip error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งคำขอ'));
+      setError(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการส่งคำขอ'));
     } finally {
       setSubmitting(false);
+      setIsBookingProcessing(false);
+      isActionInProgressRef.current = false;
     }
   };
 
@@ -224,15 +234,30 @@ export default function TripDetail() {
     }
   };
 
-  // Direct image memory file upload
-  const handleMemoryFileChange = (e) => {
+  // Direct image memory file upload to Image Storage Service
+  const handleMemoryFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setMemoryPhoto(reader.result);
-    };
-    reader.readAsDataURL(file);
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert('ขนาดไฟล์ภาพต้องไม่เกิน 8 MB');
+      return;
+    }
+
+    setUploadingMemory(true);
+    try {
+      const uploadRes = await uploadImage(file);
+      if (uploadRes.success && uploadRes.url) {
+        setMemoryPhoto(uploadRes.url);
+      } else {
+        alert(String(uploadRes.message || 'ไม่สามารถอัปโหลดรูปภาพได้'));
+      }
+    } catch (err) {
+      console.error('Upload memory image error:', err);
+      alert(String(err.userFriendlyMessage || err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ'));
+    } finally {
+      setUploadingMemory(false);
+    }
   };
 
   const handleUploadMemory = async (e) => {
@@ -255,7 +280,7 @@ export default function TripDetail() {
         alert(String(res.data.message));
       }
     } catch (err) {
-      alert(String(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ'));
+      alert(String(err.userFriendlyMessage || err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกภาพความทรงจำ'));
     } finally {
       setUploadingMemory(false);
     }
@@ -752,6 +777,28 @@ export default function TripDetail() {
         onClose={() => setProfileModalOpen(false)}
         userId={selectedUserId}
       />
+
+      {/* Double Submit & Network Latency Protection Overlay (#BUG-102) */}
+      {isBookingProcessing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 select-none animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full mx-auto text-center shadow-2xl space-y-4 border border-slate-100">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+              <RefreshCw className="w-8 h-8 animate-spin text-emerald-600" />
+            </div>
+            <div className="space-y-1.5">
+              <h4 className="text-base font-black text-slate-900">กำลังประมวลผลคำขอร่วมเดินทาง...</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                ระบบกำลังเชื่อมต่อและยืนยันข้อมูล กรุณารอสักครู่เพื่อป้องกันการส่งคำขอซ้ำซ้อน
+              </p>
+            </div>
+            <div className="pt-2">
+              <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 py-1 px-3 rounded-full font-bold">
+                ✓ ป้องกันการกดย้ำ (#BUG-102 Active)
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
