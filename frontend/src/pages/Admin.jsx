@@ -545,23 +545,29 @@ export default function Admin() {
                     </td>
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                        {vr.doc_type}
+                        {(vr.document_type === 'id_card' || vr.doc_type === 'id_card')
+                          ? 'บัตรประชาชน'
+                          : (vr.document_type === 'driver_license' || vr.doc_type === 'driver_license')
+                          ? 'ใบขับขี่'
+                          : (vr.document_type === 'student_id' || vr.doc_type === 'student_id')
+                          ? 'บัตรนักศึกษา/เจ้าหน้าที่'
+                          : (vr.document_type || vr.doc_type || 'เอกสารทางการ')}
                       </span>
                     </td>
                     <td className="py-3 px-3">
-                      <div className="font-bold text-slate-800">{vr.real_name}</div>
-                      <div className="text-[10px] font-mono text-slate-500">{vr.id_number}</div>
+                      <div className="font-bold text-slate-800">{vr.full_name || vr.real_name || '-'}</div>
+                      <div className="text-[10px] font-mono text-slate-500">{vr.id_card_number || vr.id_number || '-'}</div>
                     </td>
                     <td className="py-3 px-3">
-                      {vr.doc_image_url ? (
+                      {(vr.document_url || vr.doc_image_url) ? (
                         <button
                           type="button"
-                          onClick={() => setPreviewImage(vr.doc_image_url)}
+                          onClick={() => setPreviewImage(vr.document_url || vr.doc_image_url)}
                           className="group relative block w-14 h-10 rounded-lg overflow-hidden border border-slate-200 hover:border-blue-400 shadow-2xs"
                           title="คลิกเพื่อดูรูปเอกสารขนาดใหญ่"
                         >
                           <img
-                            src={vr.doc_image_url}
+                            src={vr.document_url || vr.doc_image_url}
                             alt="หลักฐาน"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
@@ -574,7 +580,7 @@ export default function Admin() {
                       )}
                     </td>
                     <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs break-words">
-                      {vr.notes || '-'}
+                      {vr.additional_notes || vr.notes || '-'}
                     </td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
