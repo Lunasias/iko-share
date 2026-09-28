@@ -55,11 +55,36 @@ const getAdminStats = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await db.query('SELECT user_id, name, email, phone, role, is_admin, created_at FROM users ORDER BY user_id DESC');
+    const result = await db.query('SELECT user_id, name, email, phone, role, is_admin, is_verified, created_at FROM users ORDER BY user_id DESC');
     res.json({ success: true, users: result.rows || [] });
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + (error.message || String(error)) });
+  }
+};
+
+const updateUserVerification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_verified: isVerified } = req.body;
+    if (typeof isVerified !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'is_verified must be a boolean.' });
+    }
+    const result = await db.query(
+      'UPDATE users SET is_verified = $1 WHERE user_id = $2 RETURNING user_id, name, email, phone, role, is_admin, is_verified, created_at',
+      [isVerified, id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้นี้ในระบบ' });
+    }
+    res.json({
+      success: true,
+      message: isVerified ? 'ยืนยันตัวตนสำเร็จ (เปิดสัญลักษณ์ความน่าเชื่อถือแล้ว)' : 'ยกเลิกการยืนยันตัวตนสำเร็จ',
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Update user verification error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตสถานะความน่าเชื่อถือ: ' + (error.message || String(error)) });
   }
 };
 
@@ -69,7 +94,7 @@ const updateUserAdminAccess = async (req, res) => {
     const { is_admin: isAdmin } = req.body;
     if (typeof isAdmin !== 'boolean') return res.status(400).json({ success: false, message: 'is_admin must be a boolean.' });
     if (Number(id) === (req.user.user_id || req.user.id)) return res.status(400).json({ success: false, message: 'You cannot change your own administrator access.' });
-    const result = await db.query('UPDATE users SET is_admin = $1 WHERE user_id = $2 RETURNING user_id, name, email, phone, role, is_admin, created_at', [isAdmin, id]);
+    const result = await db.query('UPDATE users SET is_admin = $1 WHERE user_id = $2 RETURNING user_id, name, email, phone, role, is_admin, is_verified, created_at', [isAdmin, id]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'User not found.' });
     res.json({ success: true, user: result.rows[0] });
   } catch (error) {
@@ -274,6 +299,7 @@ const deleteUserByEmail = async (req, res) => {
 module.exports = {
   getAdminStats,
   getAllUsers,
+  updateUserVerification,
   updateUserAdminAccess,
   deleteUser,
   deleteUserByEmail,

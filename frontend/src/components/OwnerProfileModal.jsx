@@ -65,7 +65,7 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
               )}
 
               <div className="space-y-1">
-                <div className="flex items-center justify-center sm:justify-start gap-2">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h3 className="text-xl font-black text-slate-900">{data.owner.name}</h3>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     data.owner.role === 'Driver' ? 'role-driver' :
@@ -73,6 +73,12 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
                   }`}>
                     {data.owner.role === 'Driver' ? 'คนขับ (Driver)' : data.owner.role === 'Both' ? 'คนขับ & ผู้โดยสาร' : 'ผู้โดยสาร (Passenger)'}
                   </span>
+                  {data.owner.is_verified && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                      <ShieldCheck className="w-3 h-3 text-blue-600" />
+                      <span>🛡️ ยืนยันตัวตนแล้ว (Trust Badge)</span>
+                    </span>
+                  )}
                 </div>
 
                 {data.owner.phone && (

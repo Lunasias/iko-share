@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import CarLoader from '../components/CarLoader';
-import { Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle, Flag, MessageSquare, Check, X, UserX } from 'lucide-react';
+import { Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle, Flag, MessageSquare, Check, X, UserX, ShieldCheck } from 'lucide-react';
 
 export default function Admin() {
   const [stats, setStats] = useState({ totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0, totalBookings: 0, totalReports: 0, totalSupportRequests: 0 });
@@ -154,6 +154,20 @@ export default function Admin() {
     }
   };
 
+  const handleToggleUserVerification = async (targetUser) => {
+    const userId = targetUser.user_id || targetUser.id;
+    try {
+      const res = await API.put(`/admin/users/${userId}/verification`, { is_verified: !targetUser.is_verified });
+      if (res.data.success) {
+        setUsers((prev) => prev.map((item) => (item.user_id || item.id) === userId ? { ...item, is_verified: res.data.user.is_verified } : item));
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 4000);
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถอัปเดตสถานะความน่าเชื่อถือได้'));
+    }
+  };
+
   const handleDeleteTrip = async (tripId) => {
     if (!window.confirm('คุณต้องการลบเที่ยวเดินทางนี้ออกจากระบบใช่หรือไม่?')) return;
     try {
@@ -295,6 +309,7 @@ export default function Admin() {
                 <th className="py-3 px-4">อีเมล</th>
                 <th className="py-3 px-4">เบอร์โทร</th>
                 <th className="py-3 px-4">บทบาทการเดินทาง</th>
+                <th className="py-3 px-4">ความน่าเชื่อถือ (Trust Badge)</th>
                 <th className="py-3 px-4">สิทธิ์ผู้ดูแลระบบ</th>
                 <th className="py-3 px-4 text-right">จัดการ</th>
               </tr>
@@ -314,6 +329,30 @@ export default function Admin() {
                       }`}>
                         {u.role === 'Both' ? 'คนขับและผู้โดยสาร' : u.role === 'Driver' ? 'คนขับ' : 'ผู้โดยสาร'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleUserVerification(u)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition shadow-2xs ${
+                          u.is_verified
+                            ? 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+                        }`}
+                        title="คลิกเพื่อสลับสถานะความน่าเชื่อถือ"
+                      >
+                        {u.is_verified ? (
+                          <>
+                            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>🛡️ ยืนยันแล้ว</span>
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>รอตรวจสอบ</span>
+                          </>
+                        )}
+                      </button>
                     </td>
                     <td className="py-3 px-4">
                       <button

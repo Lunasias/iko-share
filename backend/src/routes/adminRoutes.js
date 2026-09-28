@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getAdminStats,
   getAllUsers,
+  updateUserVerification,
   updateUserAdminAccess,
   deleteUser,
   deleteUserByEmail,
@@ -21,6 +22,7 @@ router.use(authenticateToken, requireAdmin);
 
 router.get('/stats', getAdminStats);
 router.get('/users', getAllUsers);
+router.put('/users/:id/verification', updateUserVerification);
 router.put('/users/:id/admin-access', updateUserAdminAccess);
 router.delete('/users-by-email/:email', deleteUserByEmail);
 router.delete('/users/:id', deleteUser);

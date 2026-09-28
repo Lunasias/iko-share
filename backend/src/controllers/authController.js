@@ -23,11 +23,11 @@ const register = async (req, res) => {
     const newUser = await db.query(
       `INSERT INTO users (name, email, password, phone, role, avatar_url, bio, created_at)
        VALUES ($1, $2, $3, $4, $5, NULL, $6, NOW())
-       RETURNING user_id, name, email, phone, role, is_admin, avatar_url, bio, created_at`,
+       RETURNING user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at`,
       [name, email, hashedPassword, phone || null, validRole, bio || 'ยังไม่มีคำอธิบายตัวตน']
     );
 
-    const user = newUser.rows && newUser.rows[0] ? newUser.rows[0] : { user_id: 1, name, email, phone, role: validRole, is_admin: false, bio: bio || 'ยังไม่มีคำอธิบายตัวตน' };
+    const user = newUser.rows && newUser.rows[0] ? newUser.rows[0] : { user_id: 1, name, email, phone, role: validRole, is_admin: false, is_verified: false, bio: bio || 'ยังไม่มีคำอธิบายตัวตน' };
     const token = jwt.sign({ id: user.user_id, user_id: user.user_id, email: user.email, role: user.role, is_admin: user.is_admin, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
@@ -75,6 +75,7 @@ const login = async (req, res) => {
         phone: user.phone,
         role: user.role,
         is_admin: user.is_admin,
+        is_verified: user.is_verified || false,
         avatar_url: user.avatar_url,
         bio: user.bio || 'ยังไม่มีคำอธิบายตัวตน',
       },
@@ -88,7 +89,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
-    const userRes = await db.query('SELECT user_id, name, email, phone, role, is_admin, avatar_url, bio, created_at FROM users WHERE user_id = $1', [userId]);
+    const userRes = await db.query('SELECT user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at FROM users WHERE user_id = $1', [userId]);
 
     if (!userRes.rows || userRes.rows.length === 0) {
       return res.json({ success: true, user: req.user });

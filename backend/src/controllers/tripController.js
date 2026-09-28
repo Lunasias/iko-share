@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { estimateRoute, calculateOperatingCost } = require('../services/routeService');
 
 // Get / Search trips
 const getTrips = async (req, res) => {
@@ -8,6 +9,7 @@ const getTrips = async (req, res) => {
       SELECT t.*, c.model as car_model, c.capacity as car_capacity,
              COALESCE(t.organizer_id, c.user_id) as driver_id,
              u.name as driver_name, u.phone as driver_phone,
+             u.is_verified as driver_is_verified,
              CASE
                WHEN u.avatar_url LIKE 'data:image%' AND LENGTH(u.avatar_url) > 10000 THEN NULL
                ELSE u.avatar_url
@@ -61,6 +63,7 @@ const getTripById = async (req, res) => {
         `SELECT t.*, c.model as car_model, c.capacity as car_capacity,
                 COALESCE(t.organizer_id, c.user_id) as driver_id,
                 u.name as driver_name, u.phone as driver_phone, u.email as driver_email,
+                u.is_verified as driver_is_verified,
                 u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
                 COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location
          FROM trips t
@@ -72,6 +75,7 @@ const getTripById = async (req, res) => {
       ),
       db.query(
         `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone,
+                u.is_verified as passenger_is_verified,
                 u.avatar_url as passenger_avatar, u.bio as passenger_bio, u.role as passenger_role
          FROM bookings b
          JOIN users u ON b.user_id = u.user_id
@@ -112,11 +116,13 @@ const createTrip = async (req, res) => {
       price_seat,
       driver_personality,
       passenger_requirements,
+      distance_km,
+      duration_text,
     } = req.body;
 
     const allowedTripTypes = ['carpool', 'public_transport', 'find_driver'];
     if (!allowedTripTypes.includes(trip_type)) {
-      return res.status(400).json({ success: false, message: 'รูปแบบทริปไม่ถูกต้อง' });
+      return res.status(400).json({ success: false, message: 'รูปแบบทริปไม่ถูกต้อง (อนุญาตเฉพาะ carpool, find_driver, public_transport)' });
     }
     if (!origin || !destination || !available_seats || price_seat === undefined) {
       return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลการเดินทางให้ครบถ้วน' });
@@ -138,6 +144,22 @@ const createTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: `จำนวนที่นั่งเปิดรับ (${seatsToOffer}) ต้องไม่เกินความจุที่นั่งของรถ (${capacity} ที่นั่ง)` });
     }
 
+    const parsedPrice = parseFloat(price_seat);
+    const parsedDistance = distance_km ? parseFloat(distance_km) : null;
+
+    // Validate reasonable minimum fare:
+    // If price == 0, it's a generous free ride (allowed).
+    // If price > 0 and distance is significant (>= 40 km), enforce reasonable floor to prevent unrealistic pricing.
+    if (parsedPrice > 0 && parsedDistance && parsedDistance >= 40) {
+      const costEst = calculateOperatingCost(parsedDistance, seatsToOffer);
+      if (parsedPrice < costEst.reasonableMinPrice) {
+        return res.status(400).json({
+          success: false,
+          message: `สำหรับระยะทางประมาณ ${Math.round(parsedDistance)} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costEst.reasonableMinPrice} ต่อที่นั่ง (หรือตั้งเป็น ฿0 หากตั้งใจให้เดินทางฟรี)`
+        });
+      }
+    }
+
     // A departure time in the past makes no sense for a new trip.
     const departureDate = departure_time ? new Date(departure_time) : null;
     if (departure_time && Number.isNaN(departureDate.getTime())) {
@@ -152,9 +174,9 @@ const createTrip = async (req, res) => {
       `INSERT INTO trips (
         license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
         departure_time, available_seats, price_seat, driver_personality,
-        passenger_requirements, trip_status, created_at
+        passenger_requirements, trip_status, distance_km, duration_text, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, NOW())
        RETURNING *`,
       [
         license_plate || null,
@@ -166,9 +188,11 @@ const createTrip = async (req, res) => {
         destination.trim(),
         departureInstant.toISOString(),
         seatsToOffer,
-        parseFloat(price_seat),
+        parsedPrice,
         driver_personality ? driver_personality.trim() : null,
         passenger_requirements ? passenger_requirements.trim() : null,
+        parsedDistance,
+        duration_text ? duration_text.trim() : null,
       ]
     );
 
@@ -327,6 +351,7 @@ const getUserTrips = async (req, res) => {
       db.query(
         `SELECT t.*, b.booking_id, b.booking_status, b.location as meetup_location, b.booking_time,
                 COALESCE(t.organizer_id, c.user_id) as driver_id, u.name as driver_name, u.phone as driver_phone,
+                u.is_verified as driver_is_verified,
                 CASE
                   WHEN u.avatar_url LIKE 'data:image%' AND LENGTH(u.avatar_url) > 10000 THEN NULL
                   ELSE u.avatar_url
@@ -354,6 +379,25 @@ const getUserTrips = async (req, res) => {
   }
 };
 
+// Route & Distance Matrix Estimation (Google Maps Distance Matrix or Fallback)
+const estimateTripRoute = async (req, res) => {
+  try {
+    const { origin, destination, available_seats = 3 } = req.body;
+    if (!origin || !destination) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุจุดเริ่มต้นและปลายทางเพื่อคำนวณเส้นทาง' });
+    }
+
+    const estimate = await estimateRoute(origin, destination, parseInt(available_seats) || 3);
+    res.json({
+      success: true,
+      ...estimate,
+    });
+  } catch (error) {
+    console.error('Estimate trip route error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการคำนวณเส้นทาง: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getTrips,
   getTripById,
@@ -362,4 +406,5 @@ module.exports = {
   deleteTrip,
   kickPassenger,
   getUserTrips,
+  estimateTripRoute,
 };

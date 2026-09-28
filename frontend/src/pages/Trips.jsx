@@ -320,6 +320,15 @@ export default function Trips() {
                           : 'ไม่ระบุพาหนะ'}
                       </span>
                     </div>
+
+                    {(trip.distance_km || trip.duration_text) && (
+                      <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-[11px] col-span-2 bg-emerald-50/60 px-2.5 py-1 rounded-lg border border-emerald-100">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>
+                          ระยะทาง {trip.distance_km ? `${trip.distance_km} กม.` : ''} {trip.duration_text ? `(${trip.duration_text})` : ''}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Personality / Requirements Preview */}
@@ -346,7 +355,14 @@ export default function Trips() {
                       )}
                       <div>
                         <div className="text-[9px] font-bold text-slate-400">คนขับ (ดูโปรไฟล์)</div>
-                        <div className="text-xs font-black text-slate-900 group-hover:text-emerald-700 underline">{trip.driver_name}</div>
+                        <div className="flex items-center gap-1">
+                          <div className="text-xs font-black text-slate-900 group-hover:text-emerald-700 underline">{trip.driver_name}</div>
+                          {trip.driver_is_verified && (
+                            <span className="inline-flex items-center text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1 py-0.2 rounded-md font-bold shadow-2xs" title="ผู้ใช้ผ่านการยืนยันความน่าเชื่อถือแล้ว">
+                              🛡️ ยืนยันแล้ว
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </button>
 

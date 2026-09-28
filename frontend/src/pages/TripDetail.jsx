@@ -459,6 +459,20 @@ export default function TripDetail() {
                 : 'ไม่ระบุทะเบียน'}
             </div>
           </div>
+
+          {(trip.distance_km || trip.duration_text) && (
+            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex flex-wrap items-center justify-between gap-3 col-span-1 sm:col-span-2 md:col-span-4">
+              <div className="flex items-center gap-2.5">
+                <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div>
+                  <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">ระยะทางและเวลาเดินทางโดยประมาณ (Google Maps)</div>
+                  <div className="text-sm font-extrabold text-slate-900 mt-0.5">
+                    {trip.distance_km ? `${trip.distance_km} กิโลเมตร` : ''} {trip.duration_text ? `• ใช้เวลาประมาณ ${trip.duration_text}` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Driver Personality & Passenger Criteria Badges */}
@@ -502,7 +516,15 @@ export default function TripDetail() {
               </div>
             )}
             <div className="space-y-0.5">
-              <div className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">คนขับรถ (คลิกดูโปรไฟล์)</div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">คนขับรถ (คลิกดูโปรไฟล์)</span>
+                {trip.driver_is_verified && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full font-bold shadow-2xs">
+                    <ShieldCheck className="w-3 h-3 text-blue-600" />
+                    <span>🛡️ ยืนยันตัวตนแล้ว</span>
+                  </span>
+                )}
+              </div>
               <div className="text-base font-black text-slate-900 group-hover:text-emerald-700 underline">
                 {trip.driver_name}
               </div>

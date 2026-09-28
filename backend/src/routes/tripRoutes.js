@@ -1,10 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { getTrips, getTripById, createTrip, completeTrip, deleteTrip, kickPassenger, getUserTrips } = require('../controllers/tripController');
+const {
+  getTrips,
+  getTripById,
+  createTrip,
+  completeTrip,
+  deleteTrip,
+  kickPassenger,
+  getUserTrips,
+  estimateTripRoute,
+} = require('../controllers/tripController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 router.get('/', getTrips);
 router.get('/my', authenticateToken, getUserTrips);
+router.post('/estimate-route', authenticateToken, estimateTripRoute);
 router.get('/:id', getTripById);
 router.post('/', authenticateToken, createTrip);
 router.put('/:id/complete', authenticateToken, completeTrip);
