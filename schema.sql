@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) UNIQUE NOT NULL,
   phone VARCHAR(15),
   role VARCHAR(20) NOT NULL DEFAULT 'Passenger' CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin')),
+  is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   password VARCHAR(255) NOT NULL,
   avatar_url TEXT,
   bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน',
@@ -30,6 +31,8 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS trips (
   trip_id SERIAL PRIMARY KEY,
   license_plate VARCHAR(50) REFERENCES cars(license_plate) ON DELETE CASCADE,
+  trip_type VARCHAR(30) NOT NULL DEFAULT 'carpool' CHECK (trip_type IN ('carpool', 'public_transport', 'find_driver')),
+  organizer_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   event_id INT REFERENCES events(event_id) ON DELETE SET NULL,
   custom_event_name VARCHAR(255),
   origin VARCHAR(255) NOT NULL,
