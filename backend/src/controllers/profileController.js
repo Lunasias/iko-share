@@ -14,7 +14,7 @@ const getProfile = async (req, res) => {
     }
 
     const tripsCreated = await db.query(
-      'SELECT COUNT(*) FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE c.user_id = $1',
+      'SELECT COUNT(*) FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE COALESCE(c.user_id, t.organizer_id) = $1',
       [userId]
     );
     const tripsJoined = await db.query(
@@ -97,7 +97,7 @@ const getPublicProfile = async (req, res) => {
 
     // Stats
     const tripsCreated = await db.query(
-      'SELECT COUNT(*) FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE c.user_id = $1',
+      'SELECT COUNT(*) FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE COALESCE(c.user_id, t.organizer_id) = $1',
       [userId]
     );
 

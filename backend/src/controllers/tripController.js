@@ -5,12 +5,13 @@ const getTrips = async (req, res) => {
   try {
     const { origin, destination, event_id } = req.query;
     let queryText = `
-      SELECT t.*, c.model as car_model, c.capacity as car_capacity, c.user_id as driver_id,
+      SELECT t.*, c.model as car_model, c.capacity as car_capacity,
+             COALESCE(c.user_id, t.organizer_id) as driver_id,
              u.name as driver_name, u.phone as driver_phone, u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
              COALESCE(e.event_name, t.custom_event_name) as event_name, e.category as event_category
       FROM trips t
-      JOIN cars c ON t.license_plate = c.license_plate
-      JOIN users u ON c.user_id = u.user_id
+      LEFT JOIN cars c ON t.license_plate = c.license_plate
+      JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
       LEFT JOIN events e ON t.event_id = e.event_id
       WHERE 1=1
     `;

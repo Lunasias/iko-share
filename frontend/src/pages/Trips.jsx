@@ -208,7 +208,15 @@ export default function Trips() {
 
                     <div className="flex items-center gap-2 text-slate-700 font-semibold col-span-2">
                       <Car className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>{trip.car_model} ({trip.license_plate})</span>
+                      <span>
+                        {trip.license_plate
+                          ? `${trip.car_model || 'รถยนต์'} (${trip.license_plate})`
+                          : trip.trip_type === 'find_driver'
+                          ? 'หาคนขับร่วมทาง (แชร์ค่าน้ำมัน)'
+                          : trip.trip_type === 'public_transport'
+                          ? 'ขนส่งสาธารณะ / รถไฟ'
+                          : 'ไม่ระบุพาหนะ'}
+                      </span>
                     </div>
                   </div>
 

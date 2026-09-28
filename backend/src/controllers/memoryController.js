@@ -36,7 +36,7 @@ const addTripMemory = async (req, res) => {
 
     // Verify user was in the trip (driver or confirmed passenger)
     const tripRes = await db.query(
-      'SELECT c.user_id as driver_id FROM trips t JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
+      'SELECT COALESCE(c.user_id, t.organizer_id) as driver_id FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE t.trip_id = $1',
       [tripId]
     );
     if (!tripRes.rows || tripRes.rows.length === 0) {

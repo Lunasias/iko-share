@@ -407,8 +407,22 @@ export default function TripDetail() {
               <Car className="w-4 h-4 text-indigo-600" />
               <span>ข้อมูลรถยนต์</span>
             </div>
-            <div className="text-sm font-extrabold text-slate-900">{trip.car_model || 'รถส่วนตัว'}</div>
-            <div className="text-xs text-slate-500 font-mono font-bold">ทะเบียน {trip.license_plate}</div>
+            <div className="text-sm font-extrabold text-slate-900">
+              {trip.license_plate
+                ? (trip.car_model || 'รถส่วนตัว')
+                : trip.trip_type === 'find_driver'
+                ? 'หาคนขับร่วมทาง'
+                : trip.trip_type === 'public_transport'
+                ? 'ขนส่งสาธารณะ'
+                : 'ไม่ระบุพาหนะ'}
+            </div>
+            <div className="text-xs text-slate-500 font-mono font-bold">
+              {trip.license_plate
+                ? `ทะเบียน ${trip.license_plate}`
+                : trip.trip_type === 'find_driver'
+                ? 'ไม่มีรถยนต์ประจำทริป'
+                : 'ไม่ระบุทะเบียน'}
+            </div>
           </div>
         </div>
 

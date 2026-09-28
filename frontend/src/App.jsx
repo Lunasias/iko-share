@@ -50,6 +50,7 @@ function RoutedMain() {
         <Route path="/trips/:id" element={<TripDetail />} />
         <Route path="/create-trip" element={<CreateTrip />} />
         <Route path="/my-trips" element={<MyTrips />} />
+        <Route path="/my_trips" element={<MyTrips />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/cars" element={<Cars />} />
         <Route path="/admin" element={<Admin />} />
