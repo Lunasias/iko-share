@@ -3,9 +3,11 @@ import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
 import OwnerProfileModal from '../components/OwnerProfileModal';
 import CarLoader from '../components/CarLoader';
+import { useTheme } from '../context/ThemeContext';
 import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, Filter, Sparkles, HeartHandshake } from 'lucide-react';
 
 export default function Trips() {
+  const { isTh } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Instant SWR Cache: read from sessionStorage immediately so UI displays in 0 ms!
@@ -134,7 +136,7 @@ export default function Trips() {
       <div className="travel-card p-6 sm:p-8 space-y-4 shadow-sm border border-slate-200">
         <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 font-['Plus_Jakarta_Sans',sans-serif]">
           <Search className="w-5 h-5 text-emerald-600" />
-          <span>ค้นหาเที่ยวคาร์พูลร่วมเดินทาง (ค้นหาทริป)</span>
+          <span>{isTh ? 'ค้นหาเที่ยวคาร์พูลร่วมเดินทาง (ค้นหาทริป)' : 'Search Carpool Rides (Find Trips)'}</span>
         </h2>
 
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -142,7 +144,7 @@ export default function Trips() {
             <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
             <input
               type="text"
-              placeholder="ต้นทาง (เช่น กรุงเทพฯ)..."
+              placeholder={isTh ? "ต้นทาง (เช่น กรุงเทพฯ)..." : "Origin (e.g. Bangkok)..."}
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
               className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
@@ -153,7 +155,7 @@ export default function Trips() {
             <MapPin className="w-5 h-5 text-teal-600 shrink-0" />
             <input
               type="text"
-              placeholder="ปลายทาง (เช่น พัทยา, เขาใหญ่)..."
+              placeholder={isTh ? "ปลายทาง (เช่น พัทยา, เขาใหญ่)..." : "Destination (e.g. Pattaya, Khao Yai)..."}
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
@@ -167,7 +169,7 @@ export default function Trips() {
               onChange={(e) => setSelectedEventId(e.target.value)}
               className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
             >
-              <option value="">-- ทุกกิจกรรม/อีเวนต์ --</option>
+              <option value="">{isTh ? '-- ทุกกิจกรรม/อีเวนต์ --' : '-- All Events --'}</option>
               {events.map((ev) => (
                 <option key={ev.event_id} value={ev.event_id}>
                   {ev.event_name}
@@ -180,7 +182,7 @@ export default function Trips() {
             type="submit"
             className="flex items-center justify-center gap-2 travel-btn-primary font-bold text-sm py-3 px-6 shadow-sm"
           >
-            <span>ค้นหาเที่ยวรถ</span>
+            <span>{isTh ? 'ค้นหาเที่ยวรถ' : 'Search Rides'}</span>
           </button>
         </form>
       </div>
@@ -193,9 +195,9 @@ export default function Trips() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span>แสดงข้อมูลด่วนจากหน่วยความจำแคช • กำลังอัปเดตข้อมูลทริปล่าสุดในพื้นหลัง...</span>
+            <span>{isTh ? 'แสดงข้อมูลด่วนจากหน่วยความจำแคช • กำลังอัปเดตข้อมูลทริปล่าสุดในพื้นหลัง...' : 'Showing fast cached data • Updating trips in background...'}</span>
           </div>
-          <span className="text-[10px] text-emerald-600 font-semibold hidden sm:inline">ซิงค์อัตโนมัติ</span>
+          <span className="text-[10px] text-emerald-600 font-semibold hidden sm:inline">{isTh ? 'ซิงค์อัตโนมัติ' : 'Auto sync'}</span>
         </div>
       )}
 
@@ -210,7 +212,7 @@ export default function Trips() {
       {/* Loading state with CarLoader & Skeleton Cards */}
       {loading ? (
         <div className="space-y-6">
-          <CarLoader text="กำลังเชื่อมต่อและค้นหาเที่ยวเดินทางที่ตรงใจคุณ..." />
+          <CarLoader text={isTh ? "กำลังเชื่อมต่อและค้นหาเที่ยวเดินทางที่ตรงใจคุณ..." : "Connecting and finding rides for you..."} />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div key={n} className="travel-card p-6 space-y-4 border border-slate-200 bg-white/70">
@@ -242,13 +244,13 @@ export default function Trips() {
       ) : trips.length === 0 ? (
         <div className="travel-card text-center py-16 space-y-4 border border-slate-200">
           <Car className="w-14 h-14 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-black text-slate-900">ยังไม่พบเที่ยวเดินทางที่ตรงกับการค้นหา</h3>
-          <p className="text-slate-500 text-xs font-medium">ลองเปลี่ยนจุดหมาย หรือเปิดเส้นทางใหม่ชวนเพื่อนร่วมทางไปด้วยกัน</p>
+          <h3 className="text-lg font-black text-slate-900">{isTh ? 'ยังไม่พบเที่ยวเดินทางที่ตรงกับการค้นหา' : 'No trips found matching your search'}</h3>
+          <p className="text-slate-500 text-xs font-medium">{isTh ? 'ลองเปลี่ยนจุดหมาย หรือเปิดเส้นทางใหม่ชวนเพื่อนร่วมทางไปด้วยกัน' : 'Try changing your destination or create a new trip to invite companions'}</p>
           <Link
             to="/create-trip"
             className="inline-flex items-center gap-2 travel-btn-primary px-6 py-2.5 font-bold text-xs shadow-md"
           >
-            + เปิดการเดินทางใหม่
+            {isTh ? '+ เปิดการเดินทางใหม่' : '+ Create New Trip'}
           </Link>
         </div>
       ) : (
@@ -277,24 +279,24 @@ export default function Trips() {
                           }
                         }}
                         className="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1 rounded-full font-bold border border-purple-200 truncate max-w-[170px] transition-colors cursor-pointer text-left"
-                        title={`กรองเฉพาะอีเวนต์: ${trip.event_name}`}
+                        title={isTh ? `กรองเฉพาะอีเวนต์: ${trip.event_name}` : `Filter by event: ${trip.event_name}`}
                       >
                         {trip.event_name}
                       </button>
                     ) : (
                       <span className="text-[11px] bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-bold border border-slate-200">
-                        เที่ยวทั่วไป
+                        {isTh ? 'เที่ยวทั่วไป' : 'General Trip'}
                       </span>
                     )}
 
                     {/* Clean badge without parentheses */}
                     {trip.available_seats > 0 ? (
                       <span className="text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-black">
-                        มีที่ว่าง {trip.available_seats} ที่
+                        {isTh ? `มีที่ว่าง ${trip.available_seats} ที่` : `${trip.available_seats} seats left`}
                       </span>
                     ) : (
                       <span className="text-[11px] bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-full font-black">
-                        เต็มแล้ว
+                        {isTh ? 'เต็มแล้ว' : 'Full'}
                       </span>
                     )}
                   </div>
@@ -302,12 +304,12 @@ export default function Trips() {
                   {/* Origin -> Destination */}
                   <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-4">
                     <div className="space-y-0.5">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ต้นทาง</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isTh ? 'ต้นทาง' : 'Origin'}</div>
                       <div className="text-lg font-black text-slate-900">{trip.origin}</div>
                     </div>
                     <ArrowRight className="w-5 h-5 text-emerald-600 shrink-0" />
                     <div className="space-y-0.5 text-right">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ปลายทาง</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isTh ? 'ปลายทาง' : 'Destination'}</div>
                       <div className="text-lg font-black text-slate-900">{trip.destination}</div>
                     </div>
                   </div>
@@ -316,24 +318,24 @@ export default function Trips() {
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex items-center gap-2 text-slate-700 font-semibold">
                       <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{departureDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
+                      <span>{departureDate.toLocaleDateString(isTh ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-700 font-semibold">
                       <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>{departureDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                      <span>{departureDate.toLocaleTimeString(isTh ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })} {isTh ? 'น.' : ''}</span>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-700 font-semibold col-span-2">
                       <Car className="w-4 h-4 text-indigo-600 shrink-0" />
                       <span>
                         {trip.license_plate
-                          ? `${trip.car_model || 'รถยนต์'} (${trip.license_plate})`
+                          ? `${trip.car_model || (isTh ? 'รถยนต์' : 'Car')} (${trip.license_plate})`
                           : trip.trip_type === 'find_driver'
-                          ? 'หาคนขับร่วมทาง (แชร์ค่าน้ำมัน)'
+                          ? (isTh ? 'หาคนขับร่วมทาง (แชร์ค่าน้ำมัน)' : 'Looking for driver (share gas)')
                           : trip.trip_type === 'public_transport'
-                          ? 'ขนส่งสาธารณะ / รถไฟ'
-                          : 'ไม่ระบุพาหนะ'}
+                          ? (isTh ? 'ขนส่งสาธารณะ / รถไฟ' : 'Public Transport / Train')
+                          : (isTh ? 'ไม่ระบุพาหนะ' : 'Vehicle not specified')}
                       </span>
                     </div>
 
@@ -341,7 +343,7 @@ export default function Trips() {
                       <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-[11px] col-span-2 bg-emerald-50/60 px-2.5 py-1 rounded-lg border border-emerald-100">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span>
-                          ระยะทาง {trip.distance_km ? `${trip.distance_km} กม.` : ''} {trip.duration_text ? `(${trip.duration_text})` : ''}
+                          {isTh ? `ระยะทาง ${trip.distance_km ? `${trip.distance_km} กม.` : ''} ${trip.duration_text ? `(${trip.duration_text})` : ''}` : `Distance ${trip.distance_km ? `${trip.distance_km} km` : ''} ${trip.duration_text ? `(${trip.duration_text})` : ''}`}
                         </span>
                       </div>
                     )}
@@ -350,7 +352,7 @@ export default function Trips() {
                   {/* Personality / Requirements Preview */}
                   {trip.driver_personality && (
                     <div className="text-[11px] text-emerald-800 bg-emerald-50/80 px-3 py-1.5 rounded-xl border border-emerald-200 font-medium truncate">
-                      🚗 สไตล์คนขับ: {trip.driver_personality}
+                      🚗 {isTh ? `สไตล์คนขับ: ${trip.driver_personality}` : `Driver style: ${trip.driver_personality}`}
                     </div>
                   )}
 
@@ -360,7 +362,7 @@ export default function Trips() {
                       type="button"
                       onClick={() => openOwnerModal(trip.driver_id)}
                       className="text-left group flex items-center gap-2"
-                      title="คลิกดูโปรไฟล์คนขับ"
+                      title={isTh ? "คลิกดูโปรไฟล์คนขับ" : "Click to view driver profile"}
                     >
                       {trip.driver_avatar ? (
                         <img src={trip.driver_avatar} alt={trip.driver_name} className="w-9 h-9 rounded-full object-cover border-2 border-[var(--accent)]" />
@@ -370,12 +372,12 @@ export default function Trips() {
                         </div>
                       )}
                       <div>
-                        <div className="text-[9px] font-bold text-slate-400">คนขับ (ดูโปรไฟล์)</div>
+                        <div className="text-[9px] font-bold text-slate-400">{isTh ? 'คนขับ (ดูโปรไฟล์)' : 'Driver (profile)'}</div>
                         <div className="flex items-center gap-1">
                           <div className="text-xs font-black text-slate-900 group-hover:text-emerald-700 underline">{trip.driver_name}</div>
                           {trip.driver_is_verified && (
-                            <span className="inline-flex items-center text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1 py-0.2 rounded-md font-bold shadow-2xs" title="ผู้ใช้ผ่านการยืนยันความน่าเชื่อถือแล้ว">
-                              🛡️ ยืนยันแล้ว
+                            <span className="inline-flex items-center text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1 py-0.2 rounded-md font-bold shadow-2xs" title={isTh ? "ผู้ใช้ผ่านการยืนยันความน่าเชื่อถือแล้ว" : "User verified"}>
+                              🛡️ {isTh ? 'ยืนยันแล้ว' : 'Verified'}
                             </span>
                           )}
                         </div>
@@ -383,9 +385,9 @@ export default function Trips() {
                     </button>
 
                     <div className="text-right">
-                      <div className="text-[9px] font-bold text-slate-400">ค่าโดยสาร / ที่นั่ง</div>
+                      <div className="text-[9px] font-bold text-slate-400">{isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat'}</div>
                       <div className="text-lg font-black text-emerald-700">
-                        {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
+                        {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
                       </div>
                     </div>
                   </div>
@@ -395,7 +397,7 @@ export default function Trips() {
                   to={`/trips/${trip.trip_id}`}
                   className="mt-3 w-full block text-center py-2.5 travel-btn-secondary font-bold text-xs"
                 >
-                  ดูรายละเอียด & เข้าร่วมทริป
+                  {isTh ? 'ดูรายละเอียด & เข้าร่วมทริป' : 'View Details & Join'}
                 </Link>
               </div>
             );

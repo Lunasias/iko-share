@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import {
   PlusCircle, MapPin, Calendar, Clock, Users, Car, AlertCircle,
@@ -31,6 +32,7 @@ function ThaiBahtIcon({ className = "w-5 h-5", strokeWidth = 2, ...props }) {
 
 export default function CreateTrip() {
   const { user } = useAuth();
+  const { isTh } = useTheme();
   const navigate = useNavigate();
 
   const [cars, setCars] = useState([]);
@@ -54,8 +56,8 @@ export default function CreateTrip() {
   const [calculatingRoute, setCalculatingRoute] = useState(false);
 
   // New fields requested by user: Driver personality & passenger requirements
-  const [driverPersonality, setDriverPersonality] = useState('สายชิล ชอบฟังเพลง ขับนิ่มปลอดภัย');
-  const [passengerRequirements, setPassengerRequirements] = useState('ตรงต่อเวลา สัมภาระปานกลาง พูดคุยเป็นกันเอง');
+  const [driverPersonality, setDriverPersonality] = useState(isTh ? 'สายชิล ชอบฟังเพลง ขับนิ่มปลอดภัย' : 'Chill driver, loves music, safe drive');
+  const [passengerRequirements, setPassengerRequirements] = useState(isTh ? 'ตรงต่อเวลา สัมภาระปานกลาง พูดคุยเป็นกันเอง' : 'Punctual, reasonable luggage, friendly');
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -258,7 +260,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
   };
 
   if (loading) {
-    return <CarLoader text="กำลังตรวจสอบสิทธิ์ข้อมูลคนขับและรถยนต์..." />;
+    return <CarLoader text={isTh ? "กำลังตรวจสอบสิทธิ์ข้อมูลคนขับและรถยนต์..." : "Verifying driver and car permissions..."} />;
   }
 
   const usesCar = tripType === 'carpool';
@@ -268,15 +270,15 @@ const computeCostBreakdown = (distKm, seatCount) => {
       <div className="max-w-xl mx-auto my-12 px-4">
         <div className="travel-card p-8 text-center space-y-4 border-amber-200 bg-amber-50/50">
           <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" />
-          <h3 className="text-xl font-black text-slate-900">ยังไม่สามารถสร้างเที่ยวรถได้</h3>
+          <h3 className="text-xl font-black text-slate-900">{isTh ? 'ยังไม่สามารถสร้างเที่ยวรถได้' : 'Cannot create a carpool trip yet'}</h3>
           <p className="text-slate-600 text-xs font-medium">
-            กรุณาลงทะเบียนข้อมูลรถของคุณก่อนสร้างทริป (Driver Verification System)
+            {isTh ? 'กรุณาลงทะเบียนข้อมูลรถของคุณก่อนสร้างทริป (Driver Verification System)' : 'Please register your vehicle before creating a trip (Driver Verification System)'}
           </p>
           <Link
             to="/cars"
             className="inline-block travel-btn-primary px-6 py-3 text-xs font-bold"
           >
-            + ลงทะเบียนรถยนต์ตอนนี้
+            {isTh ? '+ ลงทะเบียนรถยนต์ตอนนี้' : '+ Register Vehicle Now'}
           </Link>
         </div>
       </div>
@@ -293,9 +295,11 @@ const computeCostBreakdown = (distKm, seatCount) => {
             <PlusCircle className="w-8 h-8" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
-            เปิดการเดินทางใหม่ (สร้างทริปท่องเที่ยว)
+            {isTh ? 'เปิดการเดินทางใหม่ (สร้างทริปท่องเที่ยว)' : 'Create New Journey (Create Trip)'}
           </h2>
-          <p className="text-xs text-slate-500 font-medium">เลือกรถที่ลงทะเบียนไว้ กำหนดคุณสมบัติผู้ร่วมทริป และเปิดรับเพื่อนร่วมทาง</p>
+          <p className="text-xs text-slate-500 font-medium">
+            {isTh ? 'เลือกรถที่ลงทะเบียนไว้ กำหนดคุณสมบัติผู้ร่วมทริป และเปิดรับเพื่อนร่วมทาง' : 'Select registered vehicle, set passenger preferences, and invite companions'}
+          </p>
         </div>
 
         {error && (
@@ -310,26 +314,28 @@ const computeCostBreakdown = (distKm, seatCount) => {
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-slate-400" />
-                <span>รูปแบบทริป (ล็อกประเภทมาตรฐานของระบบ)</span>
+                <span>{isTh ? 'รูปแบบทริป (ล็อกประเภทมาตรฐานของระบบ)' : 'Trip Mode (Standard System Mode)'}</span>
               </label>
               <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">
-                3 รูปแบบมาตรฐาน
+                {isTh ? '3 รูปแบบมาตรฐาน' : '3 Standard Modes'}
               </span>
             </div>
             <select value={tripType} onChange={(e) => setTripType(e.target.value)} className="w-full px-4 py-3 travel-input text-sm font-semibold">
               {canCreateCarpool && (
-                <option value="carpool">ฉันมีรถและเปิดรับเพื่อนร่วมทาง (Carpool)</option>
+                <option value="carpool">{isTh ? 'ฉันมีรถและเปิดรับเพื่อนร่วมทาง (Carpool)' : 'I have a car and offer seats (Carpool)'}</option>
               )}
-              <option value="find_driver">ฉันไม่มีรถ — สร้างทริปเพื่อหาคนขับมาจอย (Find Driver)</option>
-              <option value="public_transport">เดินทางด้วยรถไฟ/ขนส่งสาธารณะ (Public Transport)</option>
+              <option value="find_driver">{isTh ? 'ฉันไม่มีรถ — สร้างทริปเพื่อหาคนขับมาจอย (Find Driver)' : 'I have no car — Looking for driver (Find Driver)'}</option>
+              <option value="public_transport">{isTh ? 'เดินทางด้วยรถไฟ/ขนส่งสาธารณะ (Public Transport)' : 'Travel by Train / Public Transport'}</option>
             </select>
-            <p className="text-[11px] text-slate-500">ระบบล็อกประเภทการเดินทาง 3 รูปแบบมาตรฐานเพื่อความปลอดภัยและโครงสร้างข้อมูลที่ถูกต้อง</p>
+            <p className="text-[11px] text-slate-500">
+              {isTh ? 'ระบบล็อกประเภทการเดินทาง 3 รูปแบบมาตรฐานเพื่อความปลอดภัยและโครงสร้างข้อมูลที่ถูกต้อง' : 'Standard 3-mode structure for road safety and data integrity'}
+            </p>
           </div>
 
           {/* Select Registered Car */}
           <div className={`space-y-1.5 ${usesCar ? '' : 'hidden'}`}>
             <div className="flex items-center justify-between min-h-[20px]">
-              <label className="text-xs font-bold text-slate-800">เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)</label>
+              <label className="text-xs font-bold text-slate-800">{isTh ? 'เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)' : 'Select Vehicle (License Plate)'}</label>
             </div>
             <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
               <Car className="w-5 h-5 text-amber-500 shrink-0" />
@@ -341,23 +347,23 @@ const computeCostBreakdown = (distKm, seatCount) => {
               >
                 {cars.map((c) => (
                   <option key={c.license_plate} value={c.license_plate}>
-                    {c.license_plate} - {c.model} (ความจุ {c.capacity} ที่นั่ง)
+                    {c.license_plate} - {c.model} ({isTh ? `ความจุ ${c.capacity} ที่นั่ง` : `Capacity ${c.capacity} seats`})
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Event Selection & Custom Event Name (PDF Page 3 note: ยังไม่มีใส่ชื่อ EVEN) */}
+          {/* Event Selection & Custom Event Name */}
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
             <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <Tag className="w-4 h-4 text-purple-600" />
-              <span>กิจกรรมหรืออีเวนต์ที่เกี่ยวข้อง (Event)</span>
+              <span>{isTh ? 'กิจกรรมหรืออีเวนต์ที่เกี่ยวข้อง (Event)' : 'Associated Event'}</span>
             </label>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <span className="text-[11px] text-slate-600 font-bold">เลือกอีเวนต์ที่มีในระบบ</span>
+                <span className="text-[11px] text-slate-600 font-bold">{isTh ? 'เลือกอีเวนต์ที่มีในระบบ' : 'Select existing event'}</span>
                 <select
                   value={selectedEventId}
                   onChange={(e) => {
@@ -366,7 +372,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                   }}
                   className="w-full px-4 py-2.5 travel-input text-xs"
                 >
-                  <option value="">-- ไม่ระบุ (เที่ยวทั่วไป) --</option>
+                  <option value="">{isTh ? '-- ไม่ระบุ (เที่ยวทั่วไป) --' : '-- Unspecified (General Trip) --'}</option>
                   {events.map((ev) => (
                     <option key={ev.event_id} value={ev.event_id}>
                       {ev.event_name} ({ev.location})
@@ -376,10 +382,10 @@ const computeCostBreakdown = (distKm, seatCount) => {
               </div>
 
               <div className="space-y-1">
-                <span className="text-[11px] text-slate-600 font-bold">หรือ พิมพ์ระบุชื่ออีเวนต์เอง</span>
+                <span className="text-[11px] text-slate-600 font-bold">{isTh ? 'หรือ พิมพ์ระบุชื่ออีเวนต์เอง' : 'Or type custom event name'}</span>
                 <input
                   type="text"
-                  placeholder="เช่น Wonderfruit, คอนเสิร์ตเขาใหญ่, บิ๊กเมาน์เท่น"
+                  placeholder={isTh ? "เช่น Wonderfruit, คอนเสิร์ตเขาใหญ่, บิ๊กเมาน์เท่น" : "e.g. Wonderfruit, Khao Yai Concert"}
                   value={customEventName}
                   onChange={(e) => {
                     setCustomEventName(e.target.value);
@@ -395,14 +401,14 @@ const computeCostBreakdown = (distKm, seatCount) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between min-h-[20px]">
-                  <label className="text-xs font-bold text-slate-800">จุดเริ่มต้น (ต้นทาง)</label>
+                  <label className="text-xs font-bold text-slate-800">{isTh ? 'จุดเริ่มต้น (ต้นทาง)' : 'Origin (Start Location)'}</label>
                 </div>
                 <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                   <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
                   <input
                     type="text"
                     required
-                    placeholder="เช่น อนุสาวรีย์ชัยฯ, เซ็นทรัลพระราม 9"
+                    placeholder={isTh ? "เช่น อนุสาวรีย์ชัยฯ, เซ็นทรัลพระราม 9" : "e.g. Victory Monument, Central Rama 9"}
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
                     onBlur={() => {
@@ -417,14 +423,14 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between min-h-[20px]">
-                  <label className="text-xs font-bold text-slate-800">จุดหมายปลายทาง</label>
+                  <label className="text-xs font-bold text-slate-800">{isTh ? 'จุดหมายปลายทาง' : 'Destination'}</label>
                 </div>
                 <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                   <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
                   <input
                     type="text"
                     required
-                    placeholder="เช่น พัทยา, เขาใหญ่, เชียงใหม่"
+                    placeholder={isTh ? "เช่น พัทยา, เขาใหญ่, เชียงใหม่" : "e.g. Pattaya, Khao Yai, Chiang Mai"}
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     onBlur={() => {
@@ -446,7 +452,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition disabled:opacity-50"
               >
                 <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{calculatingRoute ? 'กำลังดึงระยะทาง...' : '🗺️ ดึงระยะทาง Google Maps & คำนวณค่าเสื่อมรถ'}</span>
+                <span>{calculatingRoute ? (isTh ? 'กำลังดึงระยะทาง...' : 'Calculating...') : (isTh ? '🗺️ ดึงระยะทาง Google Maps & คำนวณค่าเสื่อมรถ' : '🗺️ Estimate Google Maps Distance & Depreciation')}</span>
               </button>
             </div>
           </div>
@@ -457,28 +463,28 @@ const computeCostBreakdown = (distKm, seatCount) => {
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className="font-bold text-emerald-950 flex items-center gap-1.5">
                   <Gauge className="w-4 h-4 text-emerald-600" />
-                  <span>ข้อมูลเส้นทาง & การคำนวณค่าเสื่อมรถสำหรับเจ้าของรถ</span>
+                  <span>{isTh ? 'ข้อมูลเส้นทาง & การคำนวณค่าเสื่อมรถสำหรับเจ้าของรถ' : 'Route & Depreciation Calculation for Vehicle Owners'}</span>
                 </span>
                 <span className="font-extrabold text-emerald-800 bg-white px-3 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
-                  ระยะทาง {distanceKm} กม. ({durationText})
+                  {isTh ? `ระยะทาง ${distanceKm} กม. (${durationText})` : `Distance ${distanceKm} km (${durationText})`}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">ค่าน้ำมันโดยประมาณ (~2.20 บ./กม.)</div>
+                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ค่าน้ำมันโดยประมาณ (~2.20 บ./กม.)' : 'Est. Fuel (~฿2.20/km)'}</div>
                   <div className="font-extrabold text-slate-800 text-sm mt-0.5">฿{costBreakdown.fuelCost?.toLocaleString()}</div>
                 </div>
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">ค่าเสื่อม/ซ่อมบำรุง (~1.30 บ./กม.)</div>
+                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ค่าเสื่อม/ซ่อมบำรุง (~1.30 บ./กม.)' : 'Depreciation (~฿1.30/km)'}</div>
                   <div className="font-extrabold text-emerald-700 text-sm mt-0.5">+฿{costBreakdown.depreciationCost?.toLocaleString()}</div>
                 </div>
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">ต้นทุนรถรวม</div>
+                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ต้นทุนรถรวม' : 'Total Vehicle Cost'}</div>
                   <div className="font-extrabold text-slate-900 text-sm mt-0.5">฿{costBreakdown.totalCost?.toLocaleString()}</div>
                 </div>
                 <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs flex flex-col justify-center">
-                  <div className="text-[10px] text-emerald-100 font-medium">ราคาหารเฉลี่ย ({seats} ที่นั่ง)</div>
+                  <div className="text-[10px] text-emerald-100 font-medium">{isTh ? `ราคาหารเฉลี่ย (${seats} ที่นั่ง)` : `Shared Fare (${seats} seats)`}</div>
                   <div className="font-black text-base mt-0.5">฿{costBreakdown.recommendedSeatPrice}</div>
                 </div>
               </div>
@@ -498,7 +504,9 @@ const computeCostBreakdown = (distKm, seatCount) => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
                 <div className="space-y-0.5">
                   <p className="text-[11px] text-slate-600">
-                    💡 ต้นทุนรวม ฿{costBreakdown.totalCost?.toLocaleString()} ÷ {seats} ที่นั่ง = แนะนำ ฿{costBreakdown.recommendedSeatPrice} ต่อคน (รวมค่าน้ำมันและค่าเสื่อมสึกหรอตามระยะทางจริง)
+                    {isTh
+                      ? `💡 ต้นทุนรวม ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} ที่นั่ง = แนะนำ ฿${costBreakdown.recommendedSeatPrice} ต่อคน (รวมค่าน้ำมันและค่าเสื่อมสึกหรอตามระยะทางจริง)`
+                      : `💡 Total cost ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} seats = Recommended ฿${costBreakdown.recommendedSeatPrice} / seat (includes actual fuel and vehicle wear & tear)`}
                   </p>
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`}
@@ -507,7 +515,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                     className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-bold underline"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>เปิดดูเส้นทางบน Google Maps เต็มจอ</span>
+                    <span>{isTh ? 'เปิดดูเส้นทางบน Google Maps เต็มจอ' : 'Open Route on Google Maps in full view'}</span>
                   </a>
                 </div>
                 <button
@@ -515,7 +523,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
                   onClick={() => setPrice(costBreakdown.recommendedSeatPrice)}
                   className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs shrink-0 self-start sm:self-auto"
                 >
-                  ใช้ราคาแนะนำนี้ (฿{costBreakdown.recommendedSeatPrice})
+                  {isTh ? `ใช้ราคาแนะนำนี้ (฿${costBreakdown.recommendedSeatPrice})` : `Use recommended fare (฿${costBreakdown.recommendedSeatPrice})`}
                 </button>
               </div>
             </div>
@@ -524,7 +532,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">วันที่เดินทาง</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'วันที่เดินทาง' : 'Departure Date'}</label>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Calendar className="w-5 h-5 text-amber-500 shrink-0" />
@@ -541,7 +549,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">เวลาออกเดินทาง</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'เวลาออกเดินทาง' : 'Departure Time'}</label>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Clock className="w-5 h-5 text-amber-500 shrink-0" />
@@ -560,8 +568,10 @@ const computeCostBreakdown = (distKm, seatCount) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">จำนวนที่นั่งเปิดรับ</label>
-                <span className="text-[11px] text-slate-500 font-medium">สูงสุด {selectedCar?.capacity || 4} ที่นั่ง</span>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'จำนวนที่นั่งเปิดรับ' : 'Seats Offered'}</label>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {isTh ? `สูงสุด ${selectedCar?.capacity || 4} ที่นั่ง` : `Max ${selectedCar?.capacity || 4} seats`}
+                </span>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Users className="w-5 h-5 text-amber-500 shrink-0" />
@@ -579,13 +589,13 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">ค่าโดยสารหารเฉลี่ย / ที่นั่ง (บาท)</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'ค่าโดยสารหารเฉลี่ย / ที่นั่ง (บาท)' : 'Shared Fare / Seat (THB)'}</label>
                 {costBreakdown?.reasonableMinPrice ? (
                   <span className="text-[11px] text-slate-500 font-medium">
-                    ขั้นต่ำ ฿{costBreakdown.reasonableMinPrice} (หรือ ฿0)
+                    {isTh ? `ขั้นต่ำ ฿${costBreakdown.reasonableMinPrice} (หรือ ฿0)` : `Min ฿${costBreakdown.reasonableMinPrice} (or ฿0)`}
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-400 font-medium">฿0 หากฟรี</span>
+                  <span className="text-[11px] text-slate-400 font-medium">{isTh ? '฿0 หากฟรี' : '฿0 if free'}</span>
                 )}
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
@@ -606,14 +616,14 @@ const computeCostBreakdown = (distKm, seatCount) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">นิสัยและสไตล์ของคนขับ</label>
-                <span className="text-[11px] text-slate-400 font-medium">ไม่บังคับ</span>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'นิสัยและสไตล์ของคนขับ' : 'Driver Style & Personality'}</label>
+                <span className="text-[11px] text-slate-400 font-medium">{isTh ? 'ไม่บังคับ' : 'Optional'}</span>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Sparkles className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="text"
-                  placeholder="เช่น สายชิล, เปิดเพลงเพราะ, ขับนิ่ม, ไม่สูบบุหรี่"
+                  placeholder={isTh ? "เช่น สายชิล, เปิดเพลงเพราะ, ขับนิ่ม, ไม่สูบบุหรี่" : "e.g. Chill, loves music, safe drive, non-smoking"}
                   value={driverPersonality}
                   onChange={(e) => setDriverPersonality(e.target.value)}
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400 font-medium"
@@ -623,14 +633,14 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">คุณสมบัติผู้ร่วมทริปที่ต้องการ</label>
-                <span className="text-[11px] text-slate-400 font-medium">ไม่บังคับ</span>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'คุณสมบัติผู้ร่วมทริปที่ต้องการ' : 'Preferred Passenger Criteria'}</label>
+                <span className="text-[11px] text-slate-400 font-medium">{isTh ? 'ไม่บังคับ' : 'Optional'}</span>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <HeartHandshake className="w-5 h-5 text-amber-500 shrink-0" />
                 <input
                   type="text"
-                  placeholder="เช่น ตรงต่อเวลา, สัมภาระน้อย, เป็นกันเอง"
+                  placeholder={isTh ? "เช่น ตรงต่อเวลา, สัมภาระน้อย, เป็นกันเอง" : "e.g. Punctual, light luggage, friendly"}
                   value={passengerRequirements}
                   onChange={(e) => setPassengerRequirements(e.target.value)}
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400 font-medium"
@@ -650,7 +660,11 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
               />
               <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
-                ข้าพเจ้ายืนยันว่ายานพาหนะมีสภาพปลอดภัยและมีใบอนุญาตขับขี่/พ.ร.บ. ถูกต้องตามกฎหมาย และรับทราบว่า Iko Share เป็นเพียงสื่อกลางเชื่อมต่อผู้ร่วมเดินทางเพื่อแบ่งปันค่าน้ำมันเท่านั้น <strong>ไม่สามารถเรียกร้องค่าเสียหายหรือดำเนินคดีเอาผิดต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong>
+                {isTh ? (
+                  <>ข้าพเจ้ายืนยันว่ายานพาหนะมีสภาพปลอดภัยและมีใบอนุญาตขับขี่/พ.ร.บ. ถูกต้องตามกฎหมาย และรับทราบว่า Iko Share เป็นเพียงสื่อกลางเชื่อมต่อผู้ร่วมเดินทางเพื่อแบ่งปันค่าน้ำมันเท่านั้น <strong>ไม่สามารถเรียกร้องค่าเสียหายหรือดำเนินคดีเอาผิดต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong></>
+                ) : (
+                  <>I confirm that the vehicle is roadworthy and complies with driving license/insurance laws. I acknowledge that Iko Share is merely a communication platform to share travel costs and <strong>waive all rights to hold website owners or administrators legally liable under all circumstances</strong>.</>
+                )}
               </span>
             </label>
           </div>
@@ -660,7 +674,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
             disabled={submitting || !acceptedDriverTerms}
             className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg"
           >
-            {submitting ? 'กำลังเปิดการเดินทาง...' : '🚀 ยืนยันเปิดทริปท่องเที่ยว'}
+            {submitting ? (isTh ? 'กำลังเปิดการเดินทาง...' : 'Creating journey...') : (isTh ? '🚀 ยืนยันเปิดทริปท่องเที่ยว' : '🚀 Confirm & Create Journey')}
           </button>
 
         </form>

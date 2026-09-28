@@ -2,53 +2,37 @@ const db = require('../config/db');
 
 const getAdminStats = async (req, res) => {
   try {
-    const usersCount = await db.query('SELECT COUNT(*) FROM users');
-    const carsCount = await db.query('SELECT COUNT(*) FROM cars');
-    const eventsCount = await db.query('SELECT COUNT(*) FROM events');
-    const tripsCount = await db.query('SELECT COUNT(*) FROM trips');
-    const bookingsCount = await db.query("SELECT COUNT(*) FROM bookings WHERE booking_status = 'จองแล้ว'");
+    const [
+      usersCount,
+      carsCount,
+      eventsCount,
+      tripsCount,
+      bookingsCount,
+      reportCount,
+      supportCount,
+      vCount,
+      recentUsers,
+      recentTrips,
+    ] = await Promise.all([
+      db.query('SELECT COUNT(*) FROM users'),
+      db.query('SELECT COUNT(*) FROM cars'),
+      db.query('SELECT COUNT(*) FROM events'),
+      db.query('SELECT COUNT(*) FROM trips'),
+      db.query("SELECT COUNT(*) FROM bookings WHERE booking_status = 'จองแล้ว'"),
+      db.query("SELECT COUNT(*) FROM chat_reports WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
+      db.query("SELECT COUNT(*) FROM support_requests WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
+      db.query("SELECT COUNT(*) FROM verification_requests WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
+      db.query('SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC LIMIT 5'),
+      db.query(
+        `SELECT t.*, c.model as car_model, u.name as driver_name
+         FROM trips t
+         LEFT JOIN cars c ON t.license_plate = c.license_plate
+         LEFT JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
+         ORDER BY t.created_at DESC LIMIT 5`
+      ),
+    ]);
 
-    let pendingReports = 0;
-    try {
-      const reportCount = await db.query("SELECT COUNT(*) FROM chat_reports WHERE status = 'รอดำเนินการ'");
-      pendingReports = parseInt(reportCount.rows[0]?.count || 0);
-    } catch (e) {
-      pendingReports = 0;
-    }
-
-    let pendingSupportRequests = 0;
-    try {
-      const supportCount = await db.query("SELECT COUNT(*) FROM support_requests WHERE status = 'รอดำเนินการ'");
-      pendingSupportRequests = parseInt(supportCount.rows[0]?.count || 0);
-    } catch (e) {
-      pendingSupportRequests = 0;
-    }
-
-    let pendingVerifications = 0;
-    try {
-      const vCount = await db.query("SELECT COUNT(*) FROM verification_requests WHERE status = 'รอดำเนินการ'");
-      pendingVerifications = parseInt(vCount.rows[0]?.count || 0);
-    } catch (e) {
-      pendingVerifications = 0;
-    }
-
-    let pendingPdpa = 0;
-    try {
-      const pCount = await db.query("SELECT COUNT(*) FROM pdpa_requests WHERE status = 'รอดำเนินการ'");
-      pendingPdpa = parseInt(pCount.rows[0]?.count || 0);
-    } catch (e) {
-      pendingPdpa = 0;
-    }
-
-    const recentUsers = await db.query('SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC LIMIT 5');
-    const recentTrips = await db.query(
-      `SELECT t.*, c.model as car_model, u.name as driver_name
-       FROM trips t
-       LEFT JOIN cars c ON t.license_plate = c.license_plate
-       LEFT JOIN users u ON u.user_id = COALESCE(c.user_id, t.organizer_id)
-       ORDER BY t.created_at DESC LIMIT 5`
-    );
-
+    res.set('Cache-Control', 'private, max-age=5, stale-while-revalidate=15');
     res.json({
       success: true,
       stats: {
@@ -57,10 +41,9 @@ const getAdminStats = async (req, res) => {
         totalEvents: parseInt(eventsCount.rows[0]?.count || 0),
         totalTrips: parseInt(tripsCount.rows[0]?.count || 0),
         totalBookings: parseInt(bookingsCount.rows[0]?.count || 0),
-        totalReports: pendingReports,
-        totalSupportRequests: pendingSupportRequests,
-        totalVerificationRequests: pendingVerifications,
-        totalPdpaRequests: pendingPdpa,
+        totalReports: parseInt(reportCount.rows[0]?.count || 0),
+        totalSupportRequests: parseInt(supportCount.rows[0]?.count || 0),
+        totalVerificationRequests: parseInt(vCount.rows[0]?.count || 0),
       },
       recentUsers: recentUsers.rows || [],
       recentTrips: recentTrips.rows || [],

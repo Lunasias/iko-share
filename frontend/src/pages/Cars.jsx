@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import CarLoader from '../components/CarLoader';
+import { useTheme } from '../context/ThemeContext';
 import { Car, Plus, Trash2, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 
 export default function Cars() {
+  const { isTh } = useTheme();
   const [cars, setCars] = useState([]);
   const [licensePlate, setLicensePlate] = useState('');
   const [model, setModel] = useState('');
@@ -50,24 +52,24 @@ export default function Cars() {
       });
 
       if (res.data.success) {
-        setSuccessMsg(String(res.data.message || 'เพิ่มข้อมูลรถสำเร็จ'));
+        setSuccessMsg(String(res.data.message || (isTh ? 'เพิ่มข้อมูลรถสำเร็จ' : 'Vehicle added successfully')));
         setLicensePlate('');
         setModel('');
         setCapacity(4);
         fetchCars();
       } else {
-        setError(String(res.data.message || 'ไม่สามารถลงทะเบียนรถได้'));
+        setError(String(res.data.message || (isTh ? 'ไม่สามารถลงทะเบียนรถได้' : 'Failed to register vehicle')));
       }
     } catch (err) {
       console.error('Add car error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการลงทะเบียนรถ'));
+      setError(String(err.response?.data?.message || err.message || (isTh ? 'เกิดข้อผิดพลาดในการลงทะเบียนรถ' : 'Error registering vehicle')));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteCar = async (plate) => {
-    if (!window.confirm(`คุณต้องการลบข้อมูลรถทะเบียน ${plate} หรือไม่?`)) return;
+    if (!window.confirm(isTh ? `คุณต้องการลบข้อมูลรถทะเบียน ${plate} หรือไม่?` : `Are you sure you want to delete vehicle with plate ${plate}?`)) return;
     try {
       const res = await API.delete(`/cars/${plate}`);
       if (res.data.success) {
@@ -77,12 +79,12 @@ export default function Cars() {
         setError(String(res.data.message));
       }
     } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการลบข้อมูลรถ'));
+      setError(String(err.response?.data?.message || err.message || (isTh ? 'เกิดข้อผิดพลาดในการลบข้อมูลรถ' : 'Error deleting vehicle')));
     }
   };
 
   if (loading) {
-    return <CarLoader text="กำลังโหลดข้อมูลยานพาหนะ..." />;
+    return <CarLoader text={isTh ? "กำลังโหลดข้อมูลยานพาหนะ..." : "Loading vehicles..."} />;
   }
 
   return (
@@ -93,9 +95,11 @@ export default function Cars() {
         </div>
         <div>
           <h2 className="text-2xl font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
-            ระบบลงทะเบียนรถยนต์ (Car Registration)
+            {isTh ? 'ระบบลงทะเบียนรถยนต์ (Car Registration)' : 'Vehicle Registration (Car Registration)'}
           </h2>
-          <p className="text-xs text-slate-500 font-medium">ลงทะเบียนรถของคุณเพื่อปลดล็อกการสร้างเที่ยวเดินทางในฐานะคนขับ</p>
+          <p className="text-xs text-slate-500 font-medium">
+            {isTh ? 'ลงทะเบียนรถของคุณเพื่อปลดล็อกการสร้างเที่ยวเดินทางในฐานะคนขับ' : 'Register your vehicles to unlock creating trips as a driver'}
+          </p>
         </div>
       </div>
 
@@ -117,16 +121,16 @@ export default function Cars() {
       <div className="travel-card p-6 sm:p-8 space-y-4 border border-slate-200 shadow-xs">
         <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
           <Plus className="w-5 h-5 text-emerald-600" />
-          <span>เพิ่มข้อมูลรถยนต์คันใหม่</span>
+          <span>{isTh ? 'เพิ่มข้อมูลรถยนต์คันใหม่' : 'Add New Vehicle'}</span>
         </h3>
 
         <form onSubmit={handleAddCar} className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">เลขทะเบียนรถ</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'เลขทะเบียนรถ' : 'License Plate'}</label>
             <input
               type="text"
               required
-              placeholder="เช่น กก-1234 กทม"
+              placeholder={isTh ? "เช่น กก-1234 กทม" : "e.g. 1AB-1234 BKK"}
               value={licensePlate}
               onChange={(e) => setLicensePlate(e.target.value)}
               className="w-full px-4 py-3 travel-input text-xs"
@@ -134,11 +138,11 @@ export default function Cars() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">ยี่ห้อ / รุ่นรถ</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'ยี่ห้อ / รุ่นรถ' : 'Make / Model'}</label>
             <input
               type="text"
               required
-              placeholder="เช่น Honda Civic"
+              placeholder={isTh ? "เช่น Honda Civic" : "e.g. Honda Civic"}
               value={model}
               onChange={(e) => setModel(e.target.value)}
               className="w-full px-4 py-3 travel-input text-xs"
@@ -146,7 +150,7 @@ export default function Cars() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">ความจุที่นั่งสูงสุด</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'ความจุที่นั่งสูงสุด' : 'Max Passenger Capacity'}</label>
             <input
               type="number"
               min="1"
@@ -164,7 +168,7 @@ export default function Cars() {
               disabled={submitting}
               className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-sm"
             >
-              {submitting ? 'กำลังบันทึก...' : 'บันทึกรถยนต์'}
+              {submitting ? (isTh ? 'กำลังบันทึก...' : 'Saving...') : (isTh ? 'บันทึกรถยนต์' : 'Save Vehicle')}
             </button>
           </div>
         </form>
@@ -173,14 +177,16 @@ export default function Cars() {
       {/* Car List */}
       <div className="space-y-4">
         <h3 className="text-base font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-3">
-          รายการรถยนต์ที่ลงทะเบียนแล้ว ({cars.length} คัน)
+          {isTh ? `รายการรถยนต์ที่ลงทะเบียนแล้ว (${cars.length} คัน)` : `Registered Vehicles (${cars.length})`}
         </h3>
 
         {cars.length === 0 ? (
           <div className="travel-card p-8 text-center text-slate-500 text-xs space-y-2 border border-slate-200">
             <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
-            <p className="font-bold text-slate-900 text-sm">ยังไม่มีข้อมูลรถยนต์ในระบบ</p>
-            <p className="text-xs">คุณต้องลงทะเบียนรถยนต์อย่างน้อย 1 คันก่อน จึงจะสามารถเปิดเส้นทางให้บริการได้</p>
+            <p className="font-bold text-slate-900 text-sm">{isTh ? 'ยังไม่มีข้อมูลรถยนต์ในระบบ' : 'No vehicles registered yet'}</p>
+            <p className="text-xs">
+              {isTh ? 'คุณต้องลงทะเบียนรถยนต์อย่างน้อย 1 คันก่อน จึงจะสามารถเปิดเส้นทางให้บริการได้' : 'You must register at least 1 vehicle before offering rides as a driver.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -196,13 +202,13 @@ export default function Cars() {
                     className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 text-xs flex items-center gap-1 font-bold"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>ลบ</span>
+                    <span>{isTh ? 'ลบ' : 'Delete'}</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 pt-2 border-t border-slate-200 font-medium">
-                  <div>รุ่นรถ: <span className="font-bold text-slate-900">{car.model}</span></div>
-                  <div>ความจุ: <span className="font-bold text-emerald-700">{car.capacity} ที่นั่ง</span></div>
+                  <div>{isTh ? 'รุ่นรถ:' : 'Model:'} <span className="font-bold text-slate-900">{car.model}</span></div>
+                  <div>{isTh ? 'ความจุ:' : 'Capacity:'} <span className="font-bold text-emerald-700">{car.capacity} {isTh ? 'ที่นั่ง' : 'seats'}</span></div>
                 </div>
               </div>
             ))}

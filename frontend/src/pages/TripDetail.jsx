@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import TripChat from '../components/TripChat';
 import ReviewModal from '../components/ReviewModal';
 import OwnerProfileModal from '../components/OwnerProfileModal';
@@ -16,6 +17,7 @@ export default function TripDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isTh } = useTheme();
 
   const [trip, setTrip] = useState(null);
   const [passengers, setPassengers] = useState([]);
@@ -315,7 +317,7 @@ export default function TripDetail() {
   };
 
   if (loading) {
-    return <CarLoader text="กำลังโหลดรายละเอียดเที่ยวเดินทาง..." />;
+    return <CarLoader text={isTh ? "กำลังโหลดรายละเอียดเที่ยวเดินทาง..." : "Loading journey details..."} />;
   }
 
   if (error || !trip) {
@@ -323,12 +325,12 @@ export default function TripDetail() {
       <div className="max-w-xl mx-auto my-12 px-4">
         <div className="travel-card p-8 text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-          <h3 className="text-lg font-bold text-red-600">{error || 'ไม่พบข้อมูลการเดินทาง'}</h3>
+          <h3 className="text-lg font-bold text-red-600">{error || (isTh ? 'ไม่พบข้อมูลการเดินทาง' : 'Trip information not found')}</h3>
           <button
             onClick={() => navigate('/trips')}
             className="travel-btn-primary px-5 py-2.5 text-xs font-bold"
           >
-            กลับสู่หน้ารายการเที่ยวรถ
+            {isTh ? 'กลับสู่หน้ารายการเที่ยวรถ' : 'Back to Trips List'}
           </button>
         </div>
       </div>
@@ -359,11 +361,11 @@ export default function TripDetail() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full uppercase tracking-wider">
-                {trip.event_name ? `ทริปอีเวนต์: ${trip.event_name}` : 'ทริปเดินทางท่องเที่ยว'}
+                {trip.event_name ? (isTh ? `ทริปอีเวนต์: ${trip.event_name}` : `Event Trip: ${trip.event_name}`) : (isTh ? 'ทริปเดินทางท่องเที่ยว' : 'Travel Journey')}
               </span>
               {trip.trip_status === 'completed' && (
                 <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-0.5 rounded-full">
-                  ✓ จบทริปแล้ว
+                  {isTh ? '✓ จบทริปแล้ว' : '✓ Completed'}
                 </span>
               )}
             </div>
@@ -378,9 +380,9 @@ export default function TripDetail() {
           <div className="flex items-center gap-4">
             <div className="text-right">
               {/* User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
-              <div className="text-[11px] font-bold text-slate-500">ค่าโดยสาร / ที่นั่ง</div>
+              <div className="text-[11px] font-bold text-slate-500">{isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat'}</div>
               <div className="text-3xl font-black text-emerald-700">
-                {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : 'ฟรี'}
+                {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
               </div>
             </div>
 
@@ -390,17 +392,17 @@ export default function TripDetail() {
                   <button
                     onClick={handleCompleteTrip}
                     className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-200 text-xs font-bold flex items-center gap-1"
-                    title="บันทึกว่าจบทริปแล้ว"
+                    title={isTh ? "บันทึกว่าจบทริปแล้ว" : "Mark trip as completed"}
                   >
                     <Award className="w-4 h-4" />
-                    <span>จบทริป</span>
+                    <span>{isTh ? 'จบทริป' : 'Complete'}</span>
                   </button>
                 )}
                 <button
                   onClick={handleDeleteTrip}
                   disabled={submitting}
                   className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
-                  title="ลบเที่ยวเดินทางนี้"
+                  title={isTh ? "ลบเที่ยวเดินทางนี้" : "Delete this trip"}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -414,33 +416,33 @@ export default function TripDetail() {
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
               <Calendar className="w-4 h-4 text-emerald-600" />
-              <span>วันที่เดินทาง</span>
+              <span>{isTh ? 'วันที่เดินทาง' : 'Travel Date'}</span>
             </div>
             <div className="text-sm font-extrabold text-slate-900">
-              {departureDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {departureDate.toLocaleDateString(isTh ? 'th-TH' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
             </div>
           </div>
 
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
               <Clock className="w-4 h-4 text-amber-500" />
-              <span>เวลาออกเดินทาง</span>
+              <span>{isTh ? 'เวลาออกเดินทาง' : 'Departure Time'}</span>
             </div>
             <div className="text-sm font-extrabold text-slate-900">
-              {departureDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+              {departureDate.toLocaleTimeString(isTh ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })} {isTh ? 'น.' : ''}
             </div>
           </div>
 
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
               <Users className="w-4 h-4 text-teal-600" />
-              <span>สถานะที่นั่ง</span>
+              <span>{isTh ? 'สถานะที่นั่ง' : 'Seat Status'}</span>
             </div>
             <div className="text-sm font-extrabold text-slate-900">
               {trip.available_seats > 0 ? (
-                <span className="text-emerald-700">มีที่ว่าง {trip.available_seats} ที่</span>
+                <span className="text-emerald-700">{isTh ? `มีที่ว่าง ${trip.available_seats} ที่` : `${trip.available_seats} seats left`}</span>
               ) : (
-                <span className="text-red-600">ที่นั่งเต็มแล้ว</span>
+                <span className="text-red-600">{isTh ? 'ที่นั่งเต็มแล้ว' : 'Seats full'}</span>
               )}
             </div>
           </div>
@@ -448,23 +450,23 @@ export default function TripDetail() {
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
               <Car className="w-4 h-4 text-indigo-600" />
-              <span>ข้อมูลรถยนต์</span>
+              <span>{isTh ? 'ข้อมูลรถยนต์' : 'Vehicle Info'}</span>
             </div>
             <div className="text-sm font-extrabold text-slate-900">
               {trip.license_plate
-                ? (trip.car_model || 'รถส่วนตัว')
+                ? (trip.car_model || (isTh ? 'รถส่วนตัว' : 'Private Car'))
                 : trip.trip_type === 'find_driver'
-                ? 'หาคนขับร่วมทาง'
+                ? (isTh ? 'หาคนขับร่วมทาง' : 'Find Driver')
                 : trip.trip_type === 'public_transport'
-                ? 'ขนส่งสาธารณะ'
-                : 'ไม่ระบุพาหนะ'}
+                ? (isTh ? 'ขนส่งสาธารณะ' : 'Public Transport')
+                : (isTh ? 'ไม่ระบุพาหนะ' : 'Unspecified')}
             </div>
             <div className="text-xs text-slate-500 font-mono font-bold">
               {trip.license_plate
-                ? `ทะเบียน ${trip.license_plate}`
+                ? `${isTh ? 'ทะเบียน' : 'Plate'} ${trip.license_plate}`
                 : trip.trip_type === 'find_driver'
-                ? 'ไม่มีรถยนต์ประจำทริป'
-                : 'ไม่ระบุทะเบียน'}
+                ? (isTh ? 'ไม่มีรถยนต์ประจำทริป' : 'No vehicle assigned')
+                : (isTh ? 'ไม่ระบุทะเบียน' : 'No plate specified')}
             </div>
           </div>
 
@@ -474,9 +476,9 @@ export default function TripDetail() {
                 <div className="flex items-center gap-2.5">
                   <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
-                    <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">ระยะทางและเวลาเดินทางโดยประมาณ (Google Maps)</div>
+                    <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">{isTh ? 'ระยะทางและเวลาเดินทางโดยประมาณ (Google Maps)' : 'Estimated Distance & Travel Time (Google Maps)'}</div>
                     <div className="text-sm font-extrabold text-slate-900 mt-0.5">
-                      {trip.distance_km ? `${trip.distance_km} กิโลเมตร` : ''} {trip.duration_text ? `• ใช้เวลาประมาณ ${trip.duration_text}` : ''}
+                      {trip.distance_km ? `${trip.distance_km} ${isTh ? 'กิโลเมตร' : 'km'}` : ''} {trip.duration_text ? `• ${isTh ? 'ใช้เวลาประมาณ' : 'Duration'} ${trip.duration_text}` : ''}
                     </div>
                   </div>
                 </div>
@@ -488,7 +490,7 @@ export default function TripDetail() {
                   className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-bold underline bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>ดูแผนที่เส้นทางบน Google Maps</span>
+                  <span>{isTh ? 'ดูแผนที่เส้นทางบน Google Maps' : 'View route on Google Maps'}</span>
                 </a>
               </div>
 
@@ -514,7 +516,7 @@ export default function TripDetail() {
               <div className="space-y-1">
                 <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>นิสัยและสไตล์คนขับ:</span>
+                  <span>{isTh ? 'นิสัยและสไตล์คนขับ:' : 'Driver Style & Personality:'}</span>
                 </div>
                 <p className="text-xs text-emerald-800 font-medium">{trip.driver_personality}</p>
               </div>
@@ -524,7 +526,7 @@ export default function TripDetail() {
               <div className="space-y-1">
                 <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
                   <HeartHandshake className="w-4 h-4 text-emerald-600" />
-                  <span>คุณสมบัติผู้ร่วมทริปที่ต้องการ:</span>
+                  <span>{isTh ? 'คุณสมบัติผู้ร่วมทริปที่ต้องการ:' : 'Preferred Passenger Criteria:'}</span>
                 </div>
                 <p className="text-xs text-emerald-800 font-medium">{trip.passenger_requirements}</p>
               </div>
@@ -538,7 +540,7 @@ export default function TripDetail() {
             type="button"
             onClick={() => openUserProfile(trip.driver_id)}
             className="flex items-center gap-3 text-left group"
-            title="คลิกเพื่อดูโปรไฟล์คนขับรถ"
+            title={isTh ? "คลิกเพื่อดูโปรไฟล์คนขับรถ" : "Click to view driver profile"}
           >
             {trip.driver_avatar ? (
               <img src={trip.driver_avatar} alt={trip.driver_name} className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-sm" />
@@ -549,18 +551,18 @@ export default function TripDetail() {
             )}
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">คนขับรถ (คลิกดูโปรไฟล์)</span>
+                <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">{isTh ? 'คนขับรถ (คลิกดูโปรไฟล์)' : 'Driver (profile)'}</span>
                 {trip.driver_is_verified && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full font-bold shadow-2xs">
                     <ShieldCheck className="w-3 h-3 text-blue-600" />
-                    <span>🛡️ ยืนยันตัวตนแล้ว</span>
+                    <span>🛡️ {isTh ? 'ยืนยันตัวตนแล้ว' : 'Verified'}</span>
                   </span>
                 )}
               </div>
               <div className="text-base font-black text-slate-900 group-hover:text-emerald-700 underline">
                 {trip.driver_name}
               </div>
-              {trip.driver_phone && <div className="text-xs text-slate-500 font-medium">โทร: {trip.driver_phone}</div>}
+              {trip.driver_phone && <div className="text-xs text-slate-500 font-medium">{isTh ? 'โทร:' : 'Phone:'} {trip.driver_phone}</div>}
             </div>
           </button>
 
@@ -570,7 +572,7 @@ export default function TripDetail() {
               className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold rounded-xl border border-amber-200 text-xs shadow-xs"
             >
               <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-              <span>{reviewedTargetIds.has(Number(trip.driver_id)) ? 'แก้ไขรีวิวหัวห้อง' : 'ให้คะแนนหัวห้อง / คนขับ'}</span>
+              <span>{reviewedTargetIds.has(Number(trip.driver_id)) ? (isTh ? 'แก้ไขรีวิวหัวห้อง' : 'Edit Host Review') : (isTh ? 'ให้คะแนนหัวห้อง / คนขับ' : 'Review Host / Driver')}</span>
             </button>
           )}
         </div>
@@ -586,7 +588,7 @@ export default function TripDetail() {
               type="button"
               onClick={() => setActionError('')}
               className="p-1 hover:bg-rose-100 rounded-lg text-rose-600 transition"
-              title="ปิดการแจ้งเตือน"
+              title={isTh ? "ปิดการแจ้งเตือน" : "Dismiss"}
             >
               <XCircle className="w-4 h-4" />
             </button>
@@ -603,7 +605,7 @@ export default function TripDetail() {
               type="button"
               onClick={() => setSuccessMsg('')}
               className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-600 transition"
-              title="ปิดการแจ้งเตือน"
+              title={isTh ? "ปิดการแจ้งเตือน" : "Dismiss"}
             >
               <XCircle className="w-4 h-4" />
             </button>
@@ -614,12 +616,12 @@ export default function TripDetail() {
         <div className="space-y-3 pt-2">
           <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-600" />
-            <span>รายชื่อเพื่อนร่วมเดินทาง ({passengers.length} คน)</span>
+            <span>{isTh ? `รายชื่อเพื่อนร่วมเดินทาง (${passengers.length} คน)` : `Trip Companions (${passengers.length})`}</span>
           </h4>
 
           {passengers.length === 0 ? (
             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs font-medium">
-              ยังไม่มีผู้โดยสารส่งคำขอร่วมเดินทางในเที่ยวนี้
+              {isTh ? 'ยังไม่มีผู้โดยสารส่งคำขอร่วมเดินทางในเที่ยวนี้' : 'No passengers have requested to join this trip yet'}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -635,7 +637,7 @@ export default function TripDetail() {
                         type="button"
                         onClick={() => openUserProfile(p.user_id)}
                         className="flex items-center gap-2.5 text-left group"
-                        title="คลิกเพื่อดูโปรไฟล์ผู้โดยสาร"
+                        title={isTh ? "คลิกเพื่อดูโปรไฟล์ผู้โดยสาร" : "Click to view passenger profile"}
                       >
                         {p.passenger_avatar ? (
                           <img src={p.passenger_avatar} alt={p.passenger_name} className="w-9 h-9 rounded-full object-cover border border-slate-300" />
@@ -648,7 +650,7 @@ export default function TripDetail() {
                           <div className="font-extrabold text-slate-900 group-hover:text-emerald-700 underline">
                             {p.passenger_name}
                           </div>
-                          <div className="text-[10px] text-slate-500">โทร: {p.passenger_phone || '-'}</div>
+                          <div className="text-[10px] text-slate-500">{isTh ? 'โทร:' : 'Phone:'} {p.passenger_phone || '-'}</div>
                         </div>
                       </button>
 
@@ -656,13 +658,13 @@ export default function TripDetail() {
                         isConfirmed ? 'bg-emerald-100 text-emerald-800' :
                         isPending ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {p.booking_status}
+                        {isConfirmed ? (isTh ? 'จองแล้ว' : 'Confirmed') : isPending ? (isTh ? 'รอการอนุมัติ' : 'Pending') : (isTh ? p.booking_status : 'Cancelled')}
                       </span>
                     </div>
 
                     {p.location && (
                       <div className="text-[11px] text-emerald-800 font-medium bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-                        จุดนัดพบ: {p.location}
+                        {isTh ? 'จุดนัดพบ:' : 'Meeting point:'} {p.location}
                       </div>
                     )}
 
@@ -674,14 +676,14 @@ export default function TripDetail() {
                           className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 shadow-xs"
                         >
                           <Check className="w-3.5 h-3.5" />
-                          <span>อนุมัติเข้าตี้</span>
+                          <span>{isTh ? 'อนุมัติเข้าตี้' : 'Approve'}</span>
                         </button>
                         <button
                           onClick={() => handleRejectBooking(p.booking_id)}
                           className="flex-1 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-xs flex items-center justify-center gap-1 border border-red-200"
                         >
                           <XCircle className="w-3.5 h-3.5" />
-                          <span>ปฏิเสธ</span>
+                          <span>{isTh ? 'ปฏิเสธ' : 'Reject'}</span>
                         </button>
                       </div>
                     )}
@@ -693,10 +695,10 @@ export default function TripDetail() {
                           onClick={() => handleKickPassenger(p.user_id, p.passenger_name)}
                           disabled={submitting}
                           className="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1 disabled:opacity-50"
-                          title="นำสมาชิกท่านนี้ออกจากตี้ (เฉพาะหัวห้อง / แอดมิน)"
+                          title={isTh ? "นำสมาชิกท่านนี้ออกจากตี้ (เฉพาะหัวห้อง / แอดมิน)" : "Remove member from party (Owner / Admin only)"}
                         >
                           <UserMinus className="w-3.5 h-3.5" />
-                          <span>นำออกจากตี้</span>
+                          <span>{isTh ? 'นำออกจากตี้' : 'Remove'}</span>
                         </button>
                       </div>
                     )}
@@ -709,7 +711,7 @@ export default function TripDetail() {
                           className="text-[11px] text-amber-700 font-bold hover:underline flex items-center gap-1"
                         >
                           <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          <span>{reviewedTargetIds.has(Number(p.user_id)) ? 'แก้ไขรีวิวเพื่อนร่วมทาง' : 'รีวิวเพื่อนร่วมทาง'}</span>
+                          <span>{reviewedTargetIds.has(Number(p.user_id)) ? (isTh ? 'แก้ไขรีวิวเพื่อนร่วมทาง' : 'Edit Review') : (isTh ? 'รีวิวเพื่อนร่วมทาง' : 'Review Companion')}</span>
                         </button>
                       </div>
                     )}
@@ -723,14 +725,14 @@ export default function TripDetail() {
         {/* Join Trip or Leave Trip Controls */}
         {isDriver ? (
           <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-800 text-center text-xs font-bold">
-            🚗 คุณคือคนขับผู้เปิดให้บริการการเดินทางนี้
+            {isTh ? '🚗 คุณคือคนขับผู้เปิดให้บริการการเดินทางนี้' : '🚗 You are the driver who created this journey'}
           </div>
         ) : myBooking ? (
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 text-center">
             <div className={`text-xs font-bold ${myBooking.booking_status === 'จองแล้ว' ? 'text-emerald-700' : 'text-amber-700'}`}>
               {myBooking.booking_status === 'จองแล้ว'
-                ? '✓ คำขอของคุณได้รับการอนุมัติแล้ว คุณอยู่ในตี้ร่วมเดินทางนี้'
-                : '⏳ คำขอร่วมเดินทางของคุณกำลังรอคนขับอนุมัติ...'}
+                ? (isTh ? '✓ คำขอของคุณได้รับการอนุมัติแล้ว คุณอยู่ในตี้ร่วมเดินทางนี้' : '✓ Your request is confirmed. You are in this travel party!')
+                : (isTh ? '⏳ คำขอร่วมเดินทางของคุณกำลังรอคนขับอนุมัติ...' : '⏳ Your request is pending approval from the driver...')}
             </div>
             <button
               onClick={handleLeaveTrip}
@@ -738,12 +740,12 @@ export default function TripDetail() {
               className="px-5 py-2.5 travel-btn-danger text-xs flex items-center justify-center gap-1.5 mx-auto"
             >
               <LogOut className="w-4 h-4" />
-              <span>ยกเลิกคำขอ / ออกจากทริป</span>
+              <span>{isTh ? 'ยกเลิกคำขอ / ออกจากทริป' : 'Cancel Request / Leave Trip'}</span>
             </button>
           </div>
         ) : (
           <form onSubmit={handleJoin} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-            <h3 className="text-sm font-black text-slate-900">ขอเข้าร่วมเดินทางในตี้ (Request to Join Party)</h3>
+            <h3 className="text-sm font-black text-slate-900">{isTh ? 'ขอเข้าร่วมเดินทางในตี้ (Request to Join Party)' : 'Request to Join Party'}</h3>
 
             {actionError && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2.5">
@@ -753,10 +755,10 @@ export default function TripDetail() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800">ระบุจุดขึ้นรถ / จุดนัดพบที่สะดวก</label>
+              <label className="text-xs font-bold text-slate-800">{isTh ? 'ระบุจุดขึ้นรถ / จุดนัดพบที่สะดวก' : 'Specify Pickup Point / Preferred Meeting Spot'}</label>
               <input
                 type="text"
-                placeholder="เช่น ป้ายรถเมล์หน้าสวนสาธารณะ, หน้าบีทีเอสอโศก"
+                placeholder={isTh ? "เช่น ป้ายรถเมล์หน้าสวนสาธารณะ, หน้าบีทีเอสอโศก" : "e.g. Bus stop in front of the park, BTS Asok"}
                 value={meetupLocation}
                 onChange={(e) => setMeetupLocation(e.target.value)}
                 className="w-full px-4 py-3 travel-input text-xs"
@@ -774,7 +776,11 @@ export default function TripDetail() {
                   className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
                 />
                 <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
-                  ข้าพเจ้ารับทราบว่าการร่วมเดินทางเป็นการแบ่งปันค่าใช้จ่ายด้วยความสมัครใจ แพลตฟอร์ม Iko Share และผู้ดูแลระบบเป็นเพียงสื่อกลางเชื่อมต่อ <strong>ไม่สามารถเอาผิดหรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong>
+                  {isTh ? (
+                    <>ข้าพเจ้ารับทราบว่าการร่วมเดินทางเป็นการแบ่งปันค่าใช้จ่ายด้วยความสมัครใจ แพลตฟอร์ม Iko Share และผู้ดูแลระบบเป็นเพียงสื่อกลางเชื่อมต่อ <strong>ไม่สามารถเอาผิดหรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong></>
+                  ) : (
+                    <>I acknowledge that carpooling is a voluntary cost-sharing arrangement. Iko Share and its administrators are solely a communication platform and <strong>I waive all rights to claim damages or hold website owners/admins legally liable in any case</strong>.</>
+                  )}
                 </span>
               </label>
             </div>
@@ -784,29 +790,31 @@ export default function TripDetail() {
               disabled={submitting || trip.available_seats <= 0 || !acceptedPassengerTerms}
               className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-md"
             >
-              {submitting ? 'กำลังส่งคำขอเข้าตี้...' : trip.available_seats <= 0 ? 'ที่นั่งเต็มแล้ว' : '🚀 ขอเข้าร่วมตี้เดินทาง'}
+              {submitting ? (isTh ? 'กำลังส่งคำขอเข้าตี้...' : 'Sending request...') : trip.available_seats <= 0 ? (isTh ? 'ที่นั่งเต็มแล้ว' : 'Seats full') : (isTh ? '🚀 ขอเข้าร่วมตี้เดินทาง' : '🚀 Request to Join Party')}
             </button>
 
           </form>
         )}
       </div>
 
-      {/* Post-trip Memories & Photo Album (User request: อยากให้มีที่เก็บภาพของtrip หลังจบไปแล้วและเขียนประสบการ trip ได้) */}
+      {/* Post-trip Memories & Photo Album */}
       <div className="travel-card p-6 sm:p-8 space-y-6 shadow-md border border-slate-200">
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div className="space-y-0.5">
             <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
               <Camera className="w-5 h-5 text-emerald-600" />
-              <span>ภาพความทรงจำ & ประสบการณ์หลังจบทริป (Trip Memories)</span>
+              <span>{isTh ? 'ภาพความทรงจำ & ประสบการณ์หลังจบทริป (Trip Memories)' : 'Trip Memories & Post-Trip Highlights (Trip Memories)'}</span>
             </h3>
-            <p className="text-xs text-slate-500 font-medium">บันทึกภาพถ่าย บรรยากาศ และเรื่องราวประทับใจร่วมกับเพื่อนร่วมทาง</p>
+            <p className="text-xs text-slate-500 font-medium">
+              {isTh ? 'บันทึกภาพถ่าย บรรยากาศ และเรื่องราวประทับใจร่วมกับเพื่อนร่วมทาง' : 'Save photos, vibes, and memorable stories with your travel companions'}
+            </p>
           </div>
         </div>
 
         {/* Upload new memory form (available to trip members) */}
         {canAccessChat && (
           <form onSubmit={handleUploadMemory} className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-            <h4 className="text-xs font-black text-slate-800">แชร์ภาพและเรื่องราวประสบการณ์ทริปนี้</h4>
+            <h4 className="text-xs font-black text-slate-800">{isTh ? 'แชร์ภาพและเรื่องราวประสบการณ์ทริปนี้' : 'Share photos and trip experiences'}</h4>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
@@ -814,7 +822,7 @@ export default function TripDetail() {
                 className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-300 text-xs flex items-center justify-center gap-2 shrink-0"
               >
                 <Image className="w-4 h-4 text-emerald-600" />
-                <span>{memoryPhoto ? '✓ เลือกภาพแล้ว' : 'เลือกรูปภาพทริป'}</span>
+                <span>{memoryPhoto ? (isTh ? '✓ เลือกภาพแล้ว' : '✓ Photo selected') : (isTh ? 'เลือกรูปภาพทริป' : 'Select trip photo')}</span>
               </button>
               <input
                 type="file"
@@ -826,7 +834,7 @@ export default function TripDetail() {
 
               <input
                 type="text"
-                placeholder="เขียนแคปชั่น เล่าประสบการณ์ ความประทับใจ หรือความสนุกในทริป..."
+                placeholder={isTh ? "เขียนแคปชั่น เล่าประสบการณ์ ความประทับใจ หรือความสนุกในทริป..." : "Write a caption, share trip impressions or memories..."}
                 value={memoryCaption}
                 onChange={(e) => setMemoryCaption(e.target.value)}
                 className="flex-1 px-4 py-2.5 travel-input text-xs"
@@ -837,7 +845,7 @@ export default function TripDetail() {
                 disabled={uploadingMemory || !memoryPhoto}
                 className="px-5 py-2.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shrink-0"
               >
-                {uploadingMemory ? 'กำลังโพสต์...' : 'โพสต์ความทรงจำ'}
+                {uploadingMemory ? (isTh ? 'กำลังโพสต์...' : 'Posting...') : (isTh ? 'โพสต์ความทรงจำ' : 'Post Memory')}
               </button>
             </div>
             {memoryPhoto && (
@@ -851,7 +859,7 @@ export default function TripDetail() {
         {/* Memories Gallery */}
         {memories.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-xs font-medium bg-slate-50 rounded-2xl border border-slate-200">
-            ยังไม่มีภาพความทรงจำที่โพสต์ในทริปนี้ สมาชิกในทริปสามารถร่วมกันแชร์ภาพได้เลย!
+            {isTh ? 'ยังไม่มีภาพความทรงจำที่โพสต์ในทริปนี้ สมาชิกในทริปสามารถร่วมกันแชร์ภาพได้เลย!' : 'No memories posted for this trip yet. Trip members can share photos and memories here!'}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -901,14 +909,14 @@ export default function TripDetail() {
               <RefreshCw className="w-8 h-8 animate-spin text-emerald-600" />
             </div>
             <div className="space-y-1.5">
-              <h4 className="text-base font-black text-slate-900">กำลังประมวลผลคำขอร่วมเดินทาง...</h4>
+              <h4 className="text-base font-black text-slate-900">{isTh ? 'กำลังประมวลผลคำขอร่วมเดินทาง...' : 'Processing join request...'}</h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                ระบบกำลังเชื่อมต่อและยืนยันข้อมูล กรุณารอสักครู่เพื่อป้องกันการส่งคำขอซ้ำซ้อน
+                {isTh ? 'ระบบกำลังเชื่อมต่อและยืนยันข้อมูล กรุณารอสักครู่เพื่อป้องกันการส่งคำขอซ้ำซ้อน' : 'Connecting and verifying information. Please wait to prevent duplicate submissions.'}
               </p>
             </div>
             <div className="pt-2">
               <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 py-1 px-3 rounded-full font-bold">
-                ✓ ป้องกันการกดย้ำ (#BUG-102 Active)
+                {isTh ? '✓ ป้องกันการกดย้ำ (#BUG-102 Active)' : '✓ Duplicate click protection active'}
               </span>
             </div>
           </div>

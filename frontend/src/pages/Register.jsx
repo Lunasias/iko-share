@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import TermsModal from '../components/TermsModal';
 import { UserPlus, User, Mail, Lock, Phone, AlertCircle, Compass, ShieldCheck } from 'lucide-react';
 
@@ -16,12 +17,13 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
+  const { isTh } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!acceptedTerms) {
-      setError('กรุณาทำเครื่องหมายยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวก่อนลงทะเบียน');
+      setError(isTh ? 'กรุณาทำเครื่องหมายยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวก่อนลงทะเบียน' : 'Please accept the Terms of Service and Privacy Policy before registering.');
       return;
     }
 
@@ -33,10 +35,10 @@ export default function Register() {
       if (res.success) {
         navigate('/trips');
       } else {
-        setError(String(res.message || 'ลงทะเบียนไม่สำเร็จ'));
+        setError(String(res.message || (isTh ? 'ลงทะเบียนไม่สำเร็จ' : 'Registration failed')));
       }
     } catch (err) {
-      setError(String(err.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'));
+      setError(String(err.message || (isTh ? 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ' : 'Unknown error occurred')));
     } finally {
       setLoading(false);
     }
@@ -49,8 +51,12 @@ export default function Register() {
           <div className="inline-flex p-4 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 mb-1">
             <Compass className="w-8 h-8 animate-spin-slow" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">ลงทะเบียนสมาชิกใหม่</h2>
-          <p className="text-xs text-slate-500 font-medium">ร่วมเป็นส่วนหนึ่งของคอมมูนิตี้ท่องเที่ยว Iko Share</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            {isTh ? 'ลงทะเบียนสมาชิกใหม่' : 'Create New Account'}
+          </h2>
+          <p className="text-xs text-slate-500 font-medium">
+            {isTh ? 'ร่วมเป็นส่วนหนึ่งของคอมมูนิตี้ท่องเที่ยว Iko Share' : 'Join the Iko Share travel community'}
+          </p>
         </div>
 
         {error && (
@@ -61,15 +67,15 @@ export default function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* USER Field (PDF Page 1 note: เปลี่ยนจาก ชื่อนามสกุลเป็น USER) */}
+          {/* USER Field */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">ชื่อผู้ใช้ (USER)</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'ชื่อผู้ใช้ (USER)' : 'Username (USER)'}</label>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <User className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 required
-                placeholder="เช่น Somchai_Traveler หรือ สมชาย ใจดี"
+                placeholder={isTh ? "เช่น Somchai_Traveler หรือ สมชาย ใจดี" : "e.g. Somchai_Traveler"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400"
@@ -78,13 +84,13 @@ export default function Register() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">อีเมล (Email)</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'อีเมล (Email)' : 'Email'}</label>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <Mail className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="email"
                 required
-                placeholder="เช่น yourname@example.com"
+                placeholder={isTh ? "เช่น yourname@example.com" : "e.g. yourname@example.com"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400"
@@ -93,12 +99,12 @@ export default function Register() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">เบอร์โทรศัพท์ติดต่อ</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'เบอร์โทรศัพท์ติดต่อ' : 'Contact Phone'}</label>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <Phone className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="tel"
-                placeholder="เช่น 0812345678"
+                placeholder={isTh ? "เช่น 0812345678" : "e.g. 0812345678"}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400"
@@ -108,7 +114,7 @@ export default function Register() {
 
           {/* Role Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">เลือกบทบาทหลัก</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'เลือกบทบาทหลัก' : 'Select Primary Role'}</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -117,7 +123,7 @@ export default function Register() {
                   role === 'Passenger' ? 'role-passenger shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                ผู้โดยสาร
+                {isTh ? 'ผู้โดยสาร' : 'Passenger'}
               </button>
               <button
                 type="button"
@@ -126,7 +132,7 @@ export default function Register() {
                   role === 'Driver' ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                คนขับรถ
+                {isTh ? 'คนขับรถ' : 'Driver'}
               </button>
               <button
                 type="button"
@@ -135,19 +141,19 @@ export default function Register() {
                   role === 'Both' ? 'role-both shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                ทั้งสองอย่าง
+                {isTh ? 'ทั้งสองอย่าง' : 'Both'}
               </button>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800">รหัสผ่าน</label>
+            <label className="text-xs font-bold text-slate-800">{isTh ? 'รหัสผ่าน' : 'Password'}</label>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">
               <Lock className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="password"
                 required
-                placeholder="อย่างน้อย 6 ตัวอักษร"
+                placeholder={isTh ? "อย่างน้อย 6 ตัวอักษร" : "At least 6 characters"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full placeholder:text-slate-400"
@@ -165,25 +171,48 @@ export default function Register() {
               className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
             />
             <label htmlFor="termsCheckbox" className="text-slate-700 font-medium leading-relaxed cursor-pointer select-none">
-              ฉันได้อ่านและยอมรับ{' '}
-              <button
-                type="button"
-                onClick={() => setTermsModalOpen(true)}
-                className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
-              >
-                ข้อกำหนดการใช้งาน
-              </button>{' '}
-              และ{' '}
-              <button
-                type="button"
-                onClick={() => setTermsModalOpen(true)}
-                className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
-              >
-                นโยบายความเป็นส่วนตัว (PDPA)
-              </button>{' '}
-              รวมถึงข้อจำกัดความรับผิดชอบ (ตกลงสละสิทธิ์เอาผิดเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี)
+              {isTh ? (
+                <>
+                  ฉันได้อ่านและยอมรับ{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+                  >
+                    ข้อกำหนดการใช้งาน
+                  </button>{' '}
+                  และ{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+                  >
+                    นโยบายความเป็นส่วนตัว (PDPA)
+                  </button>{' '}
+                  รวมถึงข้อจำกัดความรับผิดชอบ (ตกลงสละสิทธิ์เอาผิดเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี)
+                </>
+              ) : (
+                <>
+                  I have read and agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>{' '}
+                  and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    className="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
+                  >
+                    Privacy Policy (PDPA)
+                  </button>
+                  , including limitation of liability (waive all rights to claim against site owners and administrators).
+                </>
+              )}
             </label>
-
           </div>
 
           <button
@@ -191,14 +220,14 @@ export default function Register() {
             disabled={loading || !acceptedTerms}
             className="w-full py-3.5 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-sm"
           >
-            {loading ? 'กำลังลงทะเบียน...' : 'ยืนยันลงทะเบียนสมาชิก'}
+            {loading ? (isTh ? 'กำลังลงทะเบียน...' : 'Registering...') : (isTh ? 'ยืนยันลงทะเบียนสมาชิก' : 'Sign Up')}
           </button>
         </form>
 
         <div className="text-center text-xs text-slate-600 font-medium">
-          มีบัญชีอยู่แล้ว?{' '}
+          {isTh ? 'มีบัญชีอยู่แล้ว?' : 'Already have an account?'}{' '}
           <Link to="/login" className="text-emerald-700 hover:text-emerald-800 hover:underline font-bold">
-            เข้าสู่ระบบที่นี่
+            {isTh ? 'เข้าสู่ระบบที่นี่' : 'Sign in here'}
           </Link>
         </div>
       </div>

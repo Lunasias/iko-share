@@ -4,24 +4,26 @@ const db = require('../config/db');
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
-    const userRes = await db.query(
-      'SELECT user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at FROM users WHERE user_id = $1',
-      [userId]
-    );
+    const [userRes, tripsCreated, tripsJoined] = await Promise.all([
+      db.query(
+        'SELECT user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at FROM users WHERE user_id = $1',
+        [userId]
+      ),
+      db.query(
+        'SELECT COUNT(*) FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE COALESCE(c.user_id, t.organizer_id) = $1',
+        [userId]
+      ),
+      db.query(
+        "SELECT COUNT(*) FROM bookings WHERE user_id = $1 AND booking_status = 'จองแล้ว'",
+        [userId]
+      ),
+    ]);
 
     if (!userRes.rows || userRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลผู้ใช้งาน' });
     }
 
-    const tripsCreated = await db.query(
-      'SELECT COUNT(*) FROM trips t LEFT JOIN cars c ON t.license_plate = c.license_plate WHERE COALESCE(c.user_id, t.organizer_id) = $1',
-      [userId]
-    );
-    const tripsJoined = await db.query(
-      "SELECT COUNT(*) FROM bookings WHERE user_id = $1 AND booking_status = 'จองแล้ว'",
-      [userId]
-    );
-
+    res.set('Cache-Control', 'private, max-age=5, stale-while-revalidate=30');
     res.json({
       success: true,
       user: userRes.rows[0],

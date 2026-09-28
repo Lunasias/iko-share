@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import API from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import {
   Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle,
@@ -9,7 +10,19 @@ import {
 } from 'lucide-react';
 
 export default function Admin() {
-  const [stats, setStats] = useState({
+  const { isTh } = useTheme();
+
+  // Stale-While-Revalidate memory cache for instant dashboard display
+  const cachedAdmin = useMemo(() => {
+    try {
+      const data = sessionStorage.getItem('iko_cached_admin_data');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const [stats, setStats] = useState(cachedAdmin?.stats || {
     totalUsers: 0,
     totalCars: 0,
     totalEvents: 0,
@@ -19,13 +32,14 @@ export default function Admin() {
     totalSupportRequests: 0,
     totalVerificationRequests: 0,
   });
-  const [users, setUsers] = useState([]);
-  const [recentTrips, setRecentTrips] = useState([]);
-  const [reports, setReports] = useState([]);
-  const [supportRequests, setSupportRequests] = useState([]);
-  const [verificationRequests, setVerificationRequests] = useState([]);
+  const [users, setUsers] = useState(cachedAdmin?.users || []);
+  const [recentTrips, setRecentTrips] = useState(cachedAdmin?.recentTrips || []);
+  const [reports, setReports] = useState(cachedAdmin?.reports || []);
+  const [supportRequests, setSupportRequests] = useState(cachedAdmin?.supportRequests || []);
+  const [verificationRequests, setVerificationRequests] = useState(cachedAdmin?.verificationRequests || []);
   const [previewImage, setPreviewImage] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedAdmin);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -34,49 +48,71 @@ export default function Admin() {
   }, []);
 
   const fetchAdminData = async () => {
-    setLoading(true);
+    if (!cachedAdmin && users.length === 0) {
+      setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     setError('');
+
     try {
-      const statsRes = await API.get('/admin/stats');
-      if (statsRes.data.success) {
-        setStats(statsRes.data.stats || {
-          totalUsers: 0, totalCars: 0, totalEvents: 0, totalTrips: 0,
-          totalBookings: 0, totalReports: 0, totalSupportRequests: 0,
-          totalVerificationRequests: 0,
-        });
-        setRecentTrips(statsRes.data.recentTrips || []);
+      // Parallelize all 5 admin endpoints simultaneously
+      const [statsRes, usersRes, reportsRes, supportRes, verifRes] = await Promise.allSettled([
+        API.get('/admin/stats'),
+        API.get('/admin/users'),
+        API.get('/admin/reports'),
+        API.get('/admin/support-requests'),
+        API.get('/admin/verification-requests'),
+      ]);
+
+      let newStats = stats;
+      let newRecentTrips = recentTrips;
+      let newUsers = users;
+      let newReports = reports;
+      let newSupport = supportRequests;
+      let newVerif = verificationRequests;
+
+      if (statsRes.status === 'fulfilled' && statsRes.value?.data?.success) {
+        newStats = statsRes.value.data.stats || stats;
+        newRecentTrips = statsRes.value.data.recentTrips || [];
+        setStats(newStats);
+        setRecentTrips(newRecentTrips);
+      }
+      if (usersRes.status === 'fulfilled' && usersRes.value?.data?.success) {
+        newUsers = usersRes.value.data.users || [];
+        setUsers(newUsers);
+      }
+      if (reportsRes.status === 'fulfilled' && reportsRes.value?.data?.success) {
+        newReports = reportsRes.value.data.reports || [];
+        setReports(newReports);
+      }
+      if (supportRes.status === 'fulfilled' && supportRes.value?.data?.success) {
+        newSupport = supportRes.value.data.requests || [];
+        setSupportRequests(newSupport);
+      }
+      if (verifRes.status === 'fulfilled' && verifRes.value?.data?.success) {
+        newVerif = verifRes.value.data.requests || [];
+        setVerificationRequests(newVerif);
       }
 
-      const usersRes = await API.get('/admin/users');
-      if (usersRes.data.success) {
-        setUsers(usersRes.data.users || []);
-      }
-
       try {
-        const reportsRes = await API.get('/admin/reports');
-        if (reportsRes.data.success) {
-          setReports(reportsRes.data.reports || []);
-        }
-      } catch (e) {}
-
-      try {
-        const supportRes = await API.get('/admin/support-requests');
-        if (supportRes.data.success) {
-          setSupportRequests(supportRes.data.requests || []);
-        }
-      } catch (e) {}
-
-      try {
-        const verifRes = await API.get('/admin/verification-requests');
-        if (verifRes.data.success) {
-          setVerificationRequests(verifRes.data.requests || []);
-        }
-      } catch (e) {}
+        sessionStorage.setItem('iko_cached_admin_data', JSON.stringify({
+          stats: newStats,
+          recentTrips: newRecentTrips,
+          users: newUsers,
+          reports: newReports,
+          supportRequests: newSupport,
+          verificationRequests: newVerif,
+        }));
+      } catch {}
     } catch (err) {
       console.error('Fetch admin data error:', err);
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ดูแลระบบ'));
+      if (!cachedAdmin) {
+        setError(String(err.response?.data?.message || err.message || (isTh ? 'เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ดูแลระบบ' : 'Error loading admin data')));
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -236,7 +272,7 @@ export default function Admin() {
 
 
   if (loading) {
-    return <CarLoader text="กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)..." />;
+    return <CarLoader text={isTh ? "กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)..." : "Loading Admin Dashboard..."} />;
   }
 
   return (
@@ -247,9 +283,11 @@ export default function Admin() {
         </div>
         <div>
           <h2 className="text-2xl font-black text-slate-900 font-['Plus_Jakarta_Sans',sans-serif]">
-            ระบบจัดการผู้ดูแลระบบ (Admin Dashboard)
+            {isTh ? "ระบบจัดการผู้ดูแลระบบ (Admin Dashboard)" : "Admin Dashboard"}
           </h2>
-          <p className="text-xs text-slate-500 font-medium">ภาพรวมสถิติแพลตฟอร์มและการจัดการข้อมูลสมาชิก / เที่ยวรถ</p>
+          <p className="text-xs text-slate-500 font-medium">
+            {isTh ? "ภาพรวมสถิติแพลตฟอร์มและการจัดการข้อมูลสมาชิก / เที่ยวรถ" : "Platform overview, user management, and rides"}
+          </p>
         </div>
       </div>
 
@@ -271,43 +309,43 @@ export default function Admin() {
       {/* ER Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
-          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">สมาชิก (Users)</div>
+          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "สมาชิก (Users)" : "Users"}</div>
           <div className="text-xl font-black text-emerald-700">{stats.totalUsers}</div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
-          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">รถยนต์ (Cars)</div>
+          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "รถยนต์ (Cars)" : "Cars"}</div>
           <div className="text-xl font-black text-teal-700">{stats.totalCars}</div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
-          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">เที่ยวรถ (Trips)</div>
+          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "เที่ยวรถ (Trips)" : "Trips"}</div>
           <div className="text-xl font-black text-amber-700">{stats.totalTrips}</div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
-          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">การจอง (Bookings)</div>
+          <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "การจอง (Bookings)" : "Bookings"}</div>
           <div className="text-xl font-black text-rose-700">{stats.totalBookings}</div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-blue-200 bg-blue-50/40 shadow-xs">
           <div className="text-blue-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
             <ShieldCheck className="w-3 h-3 text-blue-600" />
-            <span>ขอ Trust Badge</span>
+            <span>{isTh ? "ขอ Trust Badge" : "Trust Requests"}</span>
           </div>
           <div className="text-xl font-black text-blue-800 flex items-center justify-between">
             <span>{stats.totalVerificationRequests || 0}</span>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">รอตรวจ</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{isTh ? "รอตรวจ" : "Pending"}</span>
           </div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-red-200 bg-red-50/40 shadow-xs">
-          <div className="text-red-600 text-[10px] font-bold uppercase tracking-wider">รายงานแชทค้าง</div>
+          <div className="text-red-600 text-[10px] font-bold uppercase tracking-wider">{isTh ? "รายงานแชทค้าง" : "Chat Reports"}</div>
           <div className="text-xl font-black text-red-700">{stats.totalReports || 0}</div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-amber-200 bg-amber-50/40 shadow-xs">
-          <div className="text-amber-700 text-[10px] font-bold uppercase tracking-wider">คำขอลืมรหัส</div>
+          <div className="text-amber-700 text-[10px] font-bold uppercase tracking-wider">{isTh ? "คำขอลืมรหัส" : "Password Resets"}</div>
           <div className="text-xl font-black text-amber-800">{stats.totalSupportRequests || 0}</div>
         </div>
       </div>
@@ -316,7 +354,7 @@ export default function Admin() {
       <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
         <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
           <Car className="w-5 h-5 text-amber-600" />
-          <span>เที่ยวเดินทางล่าสุด</span>
+          <span>{isTh ? "เที่ยวเดินทางล่าสุด" : "Recent Trips"}</span>
         </h3>
 
         <div className="overflow-x-auto">
@@ -324,10 +362,10 @@ export default function Admin() {
             <thead>
               <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
                 <th className="py-3 px-4">Trip ID</th>
-                <th className="py-3 px-4">เส้นทาง</th>
-                <th className="py-3 px-4">คนขับ</th>
-                <th className="py-3 px-4">ทะเบียนรถ</th>
-                <th className="py-3 px-4 text-right">จัดการ</th>
+                <th className="py-3 px-4">{isTh ? "เส้นทาง" : "Route"}</th>
+                <th className="py-3 px-4">{isTh ? "คนขับ" : "Driver"}</th>
+                <th className="py-3 px-4">{isTh ? "ทะเบียนรถ" : "Plate"}</th>
+                <th className="py-3 px-4 text-right">{isTh ? "จัดการ" : "Action"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
@@ -340,8 +378,8 @@ export default function Admin() {
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => handleDeleteTrip(t.trip_id)}
-                      className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title="ลบเที่ยวเดินทาง"
+                      className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                      title={isTh ? "ลบเที่ยวเดินทาง" : "Delete trip"}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -357,7 +395,7 @@ export default function Admin() {
       <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
         <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
           <Users className="w-5 h-5 text-emerald-600" />
-          <span>รายการสมาชิกในระบบ (Users)</span>
+          <span>{isTh ? "รายการสมาชิกในระบบ (Users)" : "Platform Members (Users)"}</span>
         </h3>
 
         <div className="overflow-x-auto">
@@ -365,13 +403,13 @@ export default function Admin() {
             <thead>
               <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
                 <th className="py-3 px-4">User ID</th>
-                <th className="py-3 px-4">ชื่อ</th>
-                <th className="py-3 px-4">อีเมล</th>
-                <th className="py-3 px-4">เบอร์โทร</th>
-                <th className="py-3 px-4">บทบาทการเดินทาง</th>
-                <th className="py-3 px-4">ความน่าเชื่อถือ (Trust Badge)</th>
-                <th className="py-3 px-4">สิทธิ์ผู้ดูแลระบบ</th>
-                <th className="py-3 px-4 text-right">จัดการ</th>
+                <th className="py-3 px-4">{isTh ? "ชื่อ" : "Name"}</th>
+                <th className="py-3 px-4">{isTh ? "อีเมล" : "Email"}</th>
+                <th className="py-3 px-4">{isTh ? "เบอร์โทร" : "Phone"}</th>
+                <th className="py-3 px-4">{isTh ? "บทบาทการเดินทาง" : "Role"}</th>
+                <th className="py-3 px-4">{isTh ? "ความน่าเชื่อถือ (Trust Badge)" : "Trust Badge"}</th>
+                <th className="py-3 px-4">{isTh ? "สิทธิ์ผู้ดูแลระบบ" : "Admin Rights"}</th>
+                <th className="py-3 px-4 text-right">{isTh ? "จัดการ" : "Action"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">

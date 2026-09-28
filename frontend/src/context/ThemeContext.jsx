@@ -21,7 +21,13 @@ const translations = {
     featureTwoTitle: 'เดินทางมั่นใจในทุกเส้นทาง',
     featureTwoDescription: 'ดูโปรไฟล์และรีวิวก่อนออกเดินทาง แล้วเลือกเพื่อนร่วมทางที่เหมาะกับคุณ',
     featureThreeTitle: 'พบเพื่อนใหม่ สร้างเรื่องราวดี ๆ',
-    featureThreeDescription: 'เปลี่ยนทุกเส้นทางให้เป็นความทรงจำ และพบผู้คนที่รักการเดินทางเหมือนกัน',
+    allEvents: '-- ทุกกิจกรรม/อีเวนต์ --',
+    seatsLeft: 'มีที่ว่าง', full: 'เต็มแล้ว', generalTrip: 'เที่ยวทั่วไป',
+    viewDetailsAndJoin: 'ดูรายละเอียด & เข้าร่วมทริป',
+    driverStyle: 'สไตล์คนขับ', passengerRules: 'เงื่อนไขผู้โดยสาร',
+    farePerSeat: 'ค่าโดยสาร / ที่นั่ง', verified: 'ยืนยันแล้ว',
+    saveChanges: 'บันทึกการเปลี่ยนแปลง', cancel: 'ยกเลิก', confirm: 'ยืนยัน',
+    close: 'ปิด', loading: 'กำลังโหลด...', searchRides: 'ค้นหาเที่ยวรถ',
   },
   en: {
     findTrips: 'Find a ride', createTrip: 'Create a trip', myTrips: 'My journeys', profile: 'Profile',
@@ -44,6 +50,13 @@ const translations = {
     featureTwoDescription: 'Review profiles and ratings, then choose companions who fit your travel style.',
     featureThreeTitle: 'Meet people. Make memories.',
     featureThreeDescription: 'Turn every route into a story and connect with people who love exploring too.',
+    allEvents: '-- All events --',
+    seatsLeft: 'seats left', full: 'Full', generalTrip: 'General trip',
+    viewDetailsAndJoin: 'View Details & Join',
+    driverStyle: 'Driver style', passengerRules: 'Passenger rules',
+    farePerSeat: 'Fare / seat', verified: 'Verified',
+    saveChanges: 'Save Changes', cancel: 'Cancel', confirm: 'Confirm',
+    close: 'Close', loading: 'Loading...', searchRides: 'Search Rides',
   },
 };
 
@@ -63,8 +76,10 @@ export function ThemeProvider({ children }) {
 
   const value = useMemo(() => ({
     language,
+    isTh: language === 'th',
+    isEn: language === 'en',
     toggleLanguage: () => setLanguage((current) => current === 'th' ? 'en' : 'th'),
-    t: (key) => translations[language][key] || translations.th[key] || key,
+    t: (key) => translations[language]?.[key] || translations.th?.[key] || key,
     setLanguage,
   }), [language]);
 
