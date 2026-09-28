@@ -596,32 +596,8 @@ export default function Profile() {
         </div>
       )}
 
-      {/* PDPA & Data Subject Legal Rights Section */}
-      <div className="travel-card p-5 sm:p-6 bg-slate-50/80 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-500/20">
-            <Lock className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-black text-slate-800 flex items-center gap-2">
-              <span>การคุ้มครองข้อมูลส่วนบุคคลและสิทธิตามกฎหมาย (PDPA Rights)</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 font-bold">พ.ร.บ. 2562</span>
-            </h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              คุณสามารถส่งออกข้อมูลทั้งหมด (JSON Export) หรือยื่นคำร้องขอเข้าถึง แก้ไข ลบ คัดค้าน ตามสิทธิ พ.ร.บ. ข้อมูลส่วนบุคคล
-            </p>
-          </div>
-        </div>
-        <Link
-          to="/privacy-rights"
-          className="travel-btn-secondary text-xs font-bold px-4 py-2 flex items-center gap-1.5 shrink-0"
-        >
-          <span>ศูนย์จัดการสิทธิข้อมูล</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
       {/* Verification Modal for requesting Trust Badge */}
+
       <VerificationModal
         isOpen={verificationModalOpen}
         onClose={() => setVerificationModalOpen(false)}
