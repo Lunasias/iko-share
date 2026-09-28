@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import CarLoader from '../components/CarLoader';
 import {
   PlusCircle, MapPin, Calendar, Clock, Users, Car, AlertCircle,
-  ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock
+  ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock, ExternalLink, Map
 } from 'lucide-react';
 
 export default function CreateTrip() {
@@ -335,6 +335,11 @@ export default function CreateTrip() {
                     placeholder="เช่น อนุสาวรีย์ชัยฯ, เซ็นทรัลพระราม 9"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
+                    onBlur={() => {
+                      if (origin.trim() && destination.trim() && !costBreakdown) {
+                        handleCalculateRoute();
+                      }
+                    }}
                     className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                   />
                 </div>
@@ -350,6 +355,11 @@ export default function CreateTrip() {
                     placeholder="เช่น พัทยา, เขาใหญ่, เชียงใหม่"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
+                    onBlur={() => {
+                      if (origin.trim() && destination.trim() && !costBreakdown) {
+                        handleCalculateRoute();
+                      }
+                    }}
                     className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full"
                   />
                 </div>
@@ -401,10 +411,33 @@ export default function CreateTrip() {
                 </div>
               </div>
 
+              {/* Live Interactive Google Maps Embed Preview */}
+              <div className="rounded-2xl overflow-hidden border border-emerald-200 shadow-xs mt-2 bg-slate-100">
+                <iframe
+                  title="Google Maps Route Preview"
+                  width="100%"
+                  height="220"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`}
+                />
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
-                <p className="text-[11px] text-slate-600">
-                  💡 ระบบคิดรวมค่าน้ำมันและค่าเสื่อมสึกหรอของรถตามระยะทางจริง หารจำนวนคน {seats} ที่นั่ง
-                </p>
+                <div className="space-y-0.5">
+                  <p className="text-[11px] text-slate-600">
+                    💡 ระบบคิดรวมค่าน้ำมันและค่าเสื่อมสึกหรอของรถตามระยะทางจริง หารจำนวนคน {seats} ที่นั่ง
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-bold underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>เปิดดูเส้นทางบน Google Maps เต็มจอ</span>
+                  </a>
+                </div>
                 <button
                   type="button"
                   onClick={() => setPrice(costBreakdown.recommendedSeatPrice)}

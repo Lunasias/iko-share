@@ -9,7 +9,7 @@ import CarLoader from '../components/CarLoader';
 import {
   MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle,
   ArrowRight, Star, LogOut, Trash2, Check, XCircle, Camera, Image, Send,
-  Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus, RefreshCw
+  Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus, RefreshCw, ExternalLink
 } from 'lucide-react';
 
 export default function TripDetail() {
@@ -460,16 +460,40 @@ export default function TripDetail() {
             </div>
           </div>
 
-          {(trip.distance_km || trip.duration_text) && (
-            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex flex-wrap items-center justify-between gap-3 col-span-1 sm:col-span-2 md:col-span-4">
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
-                <div>
-                  <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">ระยะทางและเวลาเดินทางโดยประมาณ (Google Maps)</div>
-                  <div className="text-sm font-extrabold text-slate-900 mt-0.5">
-                    {trip.distance_km ? `${trip.distance_km} กิโลเมตร` : ''} {trip.duration_text ? `• ใช้เวลาประมาณ ${trip.duration_text}` : ''}
+          {(trip.distance_km || trip.duration_text || (trip.origin && trip.destination)) && (
+            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 space-y-3 col-span-1 sm:col-span-2 md:col-span-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">ระยะทางและเวลาเดินทางโดยประมาณ (Google Maps)</div>
+                    <div className="text-sm font-extrabold text-slate-900 mt-0.5">
+                      {trip.distance_km ? `${trip.distance_km} กิโลเมตร` : ''} {trip.duration_text ? `• ใช้เวลาประมาณ ${trip.duration_text}` : ''}
+                    </div>
                   </div>
                 </div>
+
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(trip.origin)}&destination=${encodeURIComponent(trip.destination)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-bold underline bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>ดูแผนที่เส้นทางบน Google Maps</span>
+                </a>
+              </div>
+
+              {/* Interactive Google Map Route Frame */}
+              <div className="rounded-xl overflow-hidden border border-emerald-200/80 shadow-2xs">
+                <iframe
+                  title="Trip Route Map"
+                  width="100%"
+                  height="220"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(trip.origin + ' to ' + trip.destination)}&output=embed`}
+                />
               </div>
             </div>
           )}
