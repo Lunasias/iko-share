@@ -221,6 +221,18 @@ const CONSTRAINT_FIXES = [
   `CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests (status)`,
   `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_user ON pdpa_requests (user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_status ON pdpa_requests (status)`,
+
+  `CREATE TABLE IF NOT EXISTS notifications (
+     notification_id SERIAL PRIMARY KEY,
+     user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+     title VARCHAR(255) NOT NULL,
+     message TEXT NOT NULL,
+     type VARCHAR(50) NOT NULL DEFAULT 'general',
+     link_url VARCHAR(255),
+     is_read BOOLEAN NOT NULL DEFAULT FALSE,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC)`,
 ];
 
 const SEEDS = [

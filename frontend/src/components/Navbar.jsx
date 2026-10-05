@@ -4,6 +4,7 @@ import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Car, LogOut, PlusCircle, User, Shield, Compass, Calendar, Menu, X, Languages } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -154,24 +155,35 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Theme and language controls */}
-        <div className="hidden md:flex items-center gap-1 mr-2 border-l border-[var(--border)] pl-3">
-          <button type="button" onClick={toggleLanguage} className="theme-control" aria-label={t('changeLanguage')} title={t('changeLanguage')}>
-            <Languages className="w-4 h-4" />
-            <span>{language === 'th' ? 'EN' : 'TH'}</span>
+        {/* Right side controls: Notifications, Language, and Mobile Menu */}
+        <div className="flex items-center gap-2">
+          {/* Mobile Notification Bell */}
+          {user && (
+            <div className="md:hidden">
+              <NotificationDropdown isMobile={true} />
+            </div>
+          )}
+
+          {/* Theme and language controls */}
+          <div className="hidden md:flex items-center gap-2 mr-2 border-l border-[var(--border)] pl-3">
+            {user && <NotificationDropdown />}
+            <button type="button" onClick={toggleLanguage} className="theme-control" aria-label={t('changeLanguage')} title={t('changeLanguage')}>
+              <Languages className="w-4 h-4" />
+              <span>{language === 'th' ? 'EN' : 'TH'}</span>
+            </button>
+          </div>
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden min-h-[44px] min-w-[44px] p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-
-        {/* Mobile Hamburger Toggle */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden min-h-[44px] min-w-[44px] p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
-          aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')}
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-navigation"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
       {/* Mobile Drawer Menu */}
