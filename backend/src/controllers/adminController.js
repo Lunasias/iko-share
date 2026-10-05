@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { cleanupOrphanEvents } = require('./eventController');
 
 const getAdminStats = async (req, res) => {
   try {
@@ -122,6 +123,7 @@ const deleteTrip = async (req, res) => {
   try {
     const { id } = req.params;
     await db.query('DELETE FROM trips WHERE trip_id = $1', [id]);
+    await cleanupOrphanEvents();
     res.json({ success: true, message: 'ลบเที่ยวเดินทางสำเร็จ' });
   } catch (error) {
     console.error('Delete trip error:', error);

@@ -295,6 +295,11 @@ export default function TripDetail() {
     try {
       const res = await API.delete(`/trips/${id}`);
       if (res.data.success) {
+        try {
+          sessionStorage.removeItem('iko_cached_events');
+          sessionStorage.removeItem('iko_cached_trips');
+          sessionStorage.removeItem('iko_cache_trips_all');
+        } catch {}
         alert(String(res.data.message || 'ลบเที่ยวเดินทางเรียบร้อยแล้ว'));
         navigate('/trips');
       } else {

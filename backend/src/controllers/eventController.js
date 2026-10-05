@@ -1,9 +1,28 @@
 const db = require('../config/db');
 
-// Get all events
+// Helper to remove events that have no associated trips
+const cleanupOrphanEvents = async () => {
+  try {
+    await db.query(`
+      DELETE FROM events e
+      WHERE NOT EXISTS (
+        SELECT 1 FROM trips t
+        WHERE t.event_id = e.event_id
+           OR (t.custom_event_name IS NOT NULL AND LOWER(TRIM(t.custom_event_name)) = LOWER(TRIM(e.event_name)))
+      )
+    `);
+  } catch (err) {
+    console.warn('Cleanup orphan events warning:', err.message);
+  }
+};
+
+// Get all events (Only events that currently have active trips)
 const getEvents = async (req, res) => {
   try {
-    // 1. Auto-sync any custom_event_name on trips into the events table so it is selectable everywhere
+    // 1. Purge orphan events where all corresponding trips were deleted
+    await cleanupOrphanEvents();
+
+    // 2. Auto-sync any custom_event_name on existing active trips into the events table
     await db.query(`
       INSERT INTO events (event_name, location, event_date, category)
       SELECT DISTINCT TRIM(t.custom_event_name), t.destination, t.departure_time, 'Custom'
@@ -15,7 +34,7 @@ const getEvents = async (req, res) => {
         )
     `).catch(() => {});
 
-    // 2. Backfill event_id for trips missing event_id
+    // 3. Backfill event_id for trips missing event_id
     await db.query(`
       UPDATE trips t
       SET event_id = e.event_id
@@ -25,8 +44,20 @@ const getEvents = async (req, res) => {
         AND LOWER(TRIM(t.custom_event_name)) = LOWER(TRIM(e.event_name))
     `).catch(() => {});
 
-    const eventsRes = await db.query('SELECT * FROM events ORDER BY event_date ASC');
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    // 4. Query only events that currently have associated trips
+    const eventsRes = await db.query(`
+      SELECT e.*
+      FROM events e
+      WHERE EXISTS (
+        SELECT 1 FROM trips t
+        WHERE t.event_id = e.event_id
+           OR (t.custom_event_name IS NOT NULL AND LOWER(TRIM(t.custom_event_name)) = LOWER(TRIM(e.event_name)))
+      )
+      ORDER BY e.event_date ASC
+    `);
+
+    // No-cache header so deletions in trips reflect instantly in the event dropdown
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json({ success: true, events: eventsRes.rows || [] });
   } catch (error) {
     console.error('Get events error:', error);
@@ -64,4 +95,5 @@ const createEvent = async (req, res) => {
 module.exports = {
   getEvents,
   createEvent,
+  cleanupOrphanEvents,
 };
