@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-  MapPin, Navigation, ExternalLink, Maximize2, Minimize2,
-  Compass, Layers, Clock, ShieldCheck, Milestone
+  Navigation, ExternalLink, Maximize2, Minimize2,
+  Milestone, MapPin
 } from 'lucide-react';
 
 export default function TripRouteMap({ trip, isTh = true }) {
-  const [mapProvider, setMapProvider] = useState('osm'); // 'osm' | 'google' | 'timeline'
+  // Default to reliable Google Maps directly; OpenStreetMap tab removed per user request (#MAP-201)
+  const [mapProvider, setMapProvider] = useState('google'); // 'google' | 'timeline'
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   if (!trip || (!trip.origin && !trip.destination)) return null;
@@ -15,109 +16,9 @@ export default function TripRouteMap({ trip, isTh = true }) {
   const distanceKm = trip.distance_km ? `${trip.distance_km} ${isTh ? 'กม.' : 'km'}` : (isTh ? 'ตามเส้นทางหลัก' : 'Via main highway');
   const durationText = trip.duration_text || (isTh ? 'ตามสภาพจราจร' : 'Traffic dependent');
 
-  // Interactive Leaflet & OpenStreetMap srcDoc HTML
-  const leafletSrcDoc = useMemo(() => {
-    const safeOrigin = JSON.stringify(origin);
-    const safeDest = JSON.stringify(destination);
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .custom-badge { background: #065f46; color: white; padding: 4px 8px; border-radius: 999px; font-weight: bold; font-size: 11px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .custom-badge-dest { background: #991b1b; }
-    .leaflet-popup-content-wrapper { border-radius: 12px; }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <script>
-    const originName = ${safeOrigin};
-    const destName = ${safeDest};
-
-    const map = L.map('map', { zoomControl: true }).setView([13.7563, 100.5018], 6);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    async function geocode(query) {
-      try {
-        const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query + ', Thailand') + '&limit=1';
-        const res = await fetch(url, { headers: { 'Accept-Language': 'th, en' } });
-        const data = await res.json();
-        if (data && data.length > 0) {
-          return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-        }
-      } catch (err) {
-        console.warn('Geocode error:', err);
-      }
-      return null;
-    }
-
-    async function initRoute() {
-      let p1 = await geocode(originName);
-      let p2 = await geocode(destName);
-
-      // Fallbacks if geocode is rate-limited or fails
-      if (!p1 && !p2) {
-        p1 = [13.7563, 100.5018]; // Bangkok
-        p2 = [18.7883, 98.9853];  // Chiang Mai
-      } else if (!p1 && p2) {
-        p1 = [p2[0] - 0.5, p2[1] - 0.5];
-      } else if (p1 && !p2) {
-        p2 = [p1[0] + 0.5, p1[1] + 0.5];
-      }
-
-      // Origin Marker (Green)
-      const greenIcon = L.divIcon({
-        className: 'custom-pin-origin',
-        html: '<div class="custom-badge">🟢 ' + originName + '</div>',
-        iconSize: [120, 24],
-        iconAnchor: [60, 24]
-      });
-      const m1 = L.marker(p1, { icon: greenIcon }).addTo(map)
-        .bindPopup('<b>จุดเริ่มต้น:</b> ' + originName);
-
-      // Destination Marker (Red)
-      const redIcon = L.divIcon({
-        className: 'custom-pin-dest',
-        html: '<div class="custom-badge custom-badge-dest">🏁 ' + destName + '</div>',
-        iconSize: [120, 24],
-        iconAnchor: [60, 24]
-      });
-      const m2 = L.marker(p2, { icon: redIcon }).addTo(map)
-        .bindPopup('<b>จุดหมายปลายทาง:</b> ' + destName);
-
-      // Connecting Route Line
-      const routeLine = L.polyline([p1, p2], {
-        color: '#059669',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '8, 8',
-        lineCap: 'round'
-      }).addTo(map);
-
-      // Fit both pins smoothly
-      const bounds = L.latLngBounds([p1, p2]);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-
-    initRoute();
-  </script>
-</body>
-</html>`;
-  }, [origin, destination]);
-
+  // Google Maps interactive route embed & external GPS navigation URL
   const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`;
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
-  const osmWebUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(origin + ' ' + destination)}`;
 
   return (
     <div className={`space-y-3 ${isFullscreen ? 'fixed inset-0 z-50 p-4 sm:p-8 bg-slate-900/80 backdrop-blur-md flex flex-col justify-center' : ''}`}>
@@ -140,40 +41,31 @@ export default function TripRouteMap({ trip, isTh = true }) {
             </div>
           </div>
 
-          {/* Mode Switcher Tabs */}
+          {/* Mode Switcher Tabs (OpenStreetMap removed, Google Maps & Timeline only) */}
           <div className="flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-xl text-xs font-bold">
             <button
               type="button"
-              onClick={() => setMapProvider('osm')}
-              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-[11px] ${
-                mapProvider === 'osm'
-                  ? 'bg-white text-emerald-800 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🗺️ OpenStreetMap
-            </button>
-            <button
-              type="button"
               onClick={() => setMapProvider('google')}
-              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-[11px] ${
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer text-[11px] flex items-center gap-1.5 ${
                 mapProvider === 'google'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              🚗 Google Maps
+              <span>🚗</span>
+              <span>{isTh ? 'แผนที่เส้นทาง (Google Maps)' : 'Route Map (Google Maps)'}</span>
             </button>
             <button
               type="button"
               onClick={() => setMapProvider('timeline')}
-              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-[11px] ${
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer text-[11px] flex items-center gap-1.5 ${
                 mapProvider === 'timeline'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              📍 {isTh ? 'จุดจอด/ไทม์ไลน์' : 'Timeline'}
+              <span>📍</span>
+              <span>{isTh ? 'จุดจอด/ไทม์ไลน์' : 'Timeline & Stops'}</span>
             </button>
           </div>
 
@@ -183,11 +75,11 @@ export default function TripRouteMap({ trip, isTh = true }) {
               href={googleMapsDirectionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2.5 py-1.5 rounded-xl border border-emerald-200 transition-colors"
-              title={isTh ? "เปิดแอปนำทาง GPS" : "Open GPS Navigation"}
+              className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-3 py-1.5 rounded-xl border border-emerald-200 transition-colors shadow-2xs"
+              title={isTh ? "เปิดแอปนำทาง GPS ด้วย Google Maps" : "Open GPS Navigation in Google Maps"}
             >
-              <ExternalLink className="w-3 h-3" />
-              <span>{isTh ? 'เปิด GPS' : 'GPS Nav'}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>{isTh ? 'เปิด GPS นำทาง' : 'Open GPS Nav'}</span>
             </a>
 
             <button
@@ -202,22 +94,14 @@ export default function TripRouteMap({ trip, isTh = true }) {
         </div>
 
         {/* Map Body Content */}
-        <div className={`relative bg-slate-100 ${isFullscreen ? 'flex-1 min-h-[480px]' : 'h-64 sm:h-72'}`}>
-          {mapProvider === 'osm' && (
-            <iframe
-              title="OpenStreetMap Interactive Route"
-              srcDoc={leafletSrcDoc}
-              className="w-full h-full border-0"
-              loading="lazy"
-            />
-          )}
-
+        <div className={`relative bg-slate-100 ${isFullscreen ? 'flex-1 min-h-[480px]' : 'h-72 sm:h-80'}`}>
           {mapProvider === 'google' && (
             <iframe
-              title="Google Maps Route Frame"
+              title={`เส้นทาง Google Maps จาก ${origin} ไปยัง ${destination}`}
               src={googleMapsEmbedUrl}
               className="w-full h-full border-0"
               loading="lazy"
+              allowFullScreen
             />
           )}
 
