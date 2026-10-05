@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { estimateRoute, calculateOperatingCost } = require('../services/routeService');
+const { cleanupOrphanEvents } = require('./eventController');
 
 // Get / Search trips
 const getTrips = async (req, res) => {
@@ -313,6 +314,7 @@ const deleteTrip = async (req, res) => {
     }
 
     await db.query('DELETE FROM trips WHERE trip_id = $1', [id]);
+    await cleanupOrphanEvents();
 
     res.json({
       success: true,

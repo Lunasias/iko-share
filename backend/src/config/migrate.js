@@ -254,14 +254,7 @@ const SEEDS = [
            ON CONFLICT (email) DO UPDATE SET role = 'Both', is_admin = TRUE`,
     params: [],
   },
-  {
-    text: `INSERT INTO events (event_name, location, event_date, category)
-           SELECT 'มหกรรมคอนเสิร์ตดนตรีในสวน', 'สวนลุมพินี กรุงเทพฯ', NOW() + INTERVAL '7 days', 'Concert'
-           WHERE NOT EXISTS (
-             SELECT 1 FROM events WHERE event_name = 'มหกรรมคอนเสิร์ตดนตรีในสวน'
-           )`,
-    params: [],
-  },
+
   {
     text: `INSERT INTO events (event_name, location, event_date, category)
            SELECT DISTINCT TRIM(t.custom_event_name), t.destination, t.departure_time, 'Custom'
