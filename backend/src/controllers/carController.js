@@ -23,7 +23,7 @@ const getMyCars = async (req, res) => {
 const addCar = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
-    const { license_plate, model, capacity, car_image_url } = req.body;
+    const { license_plate, model, capacity, car_image_url, consent_pdpa } = req.body;
 
     if (!license_plate || !model || !capacity) {
       return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลรถให้ครบถ้วน (ทะเบียนรถ, รุ่นรถ, ความจุที่นั่ง)' });
@@ -33,14 +33,21 @@ const addCar = async (req, res) => {
       return res.status(400).json({ success: false, message: 'กรุณาถ่ายภาพหรืออัปโหลดรูปถ่ายป้ายทะเบียนรถ เพื่อส่งให้แอดมินตรวจสอบ' });
     }
 
+    if (consent_pdpa === false) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาให้ความยินยอมตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA) ในการจัดเก็บและตรวจสอบภาพถ่ายยานพาหนะ',
+      });
+    }
+
     const checkCar = await db.query('SELECT license_plate FROM cars WHERE LOWER(license_plate) = LOWER($1)', [license_plate.trim()]);
     if (checkCar.rows && checkCar.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'ทะเบียนรถนี้ถูกลงทะเบียนไว้แล้วในระบบ' });
     }
 
     const newCar = await db.query(
-      `INSERT INTO cars (license_plate, user_id, model, capacity, car_image_url, verification_status, created_at)
-       VALUES ($1, $2, $3, $4, $5, 'รอดำเนินการ', CURRENT_TIMESTAMP)
+      `INSERT INTO cars (license_plate, user_id, model, capacity, car_image_url, verification_status, consent_pdpa, consent_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'รอดำเนินการ', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        RETURNING *`,
       [license_plate.trim(), userId, model.trim(), parseInt(capacity), car_image_url.trim()]
     );
