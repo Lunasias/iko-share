@@ -6,12 +6,13 @@ import { useTheme } from '../context/ThemeContext';
 import TripChat from '../components/TripChat';
 import ReviewModal from '../components/ReviewModal';
 import OwnerProfileModal from '../components/OwnerProfileModal';
+import ShareTripModal from '../components/ShareTripModal';
 import CarLoader from '../components/CarLoader';
 import {
   MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle,
   ArrowRight, Star, LogOut, Trash2, Check, XCircle, Camera, Image, Send,
   Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus, RefreshCw, ExternalLink,
-  QrCode, CreditCard, CheckCircle2, Eye, UploadCloud, Download
+  QrCode, CreditCard, CheckCircle2, Eye, UploadCloud, Download, Share2
 } from 'lucide-react';
 import { getPromptPayQrUrl, formatPhoneNumber } from '../utils/promptpay';
 
@@ -58,6 +59,9 @@ export default function TripDetail() {
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [verifyingPaymentId, setVerifyingPaymentId] = useState(null);
   const slipFileInputRef = useRef(null);
+
+  // Share modal state
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const handleUploadSlip = async (e, bookingId) => {
     const file = e.target.files?.[0];
@@ -424,7 +428,7 @@ export default function TripDetail() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="text-right">
               {/* User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
               <div className="text-[11px] font-bold text-slate-500">{isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat'}</div>
@@ -432,6 +436,17 @@ export default function TripDetail() {
                 {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
               </div>
             </div>
+
+            {/* Share Trip Button */}
+            <button
+              type="button"
+              onClick={() => setShareModalOpen(true)}
+              className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              title={isTh ? "แชร์ทริปนี้" : "Share this trip"}
+            >
+              <Share2 className="w-4 h-4 text-emerald-600" />
+              <span>{isTh ? 'แชร์' : 'Share'}</span>
+            </button>
 
             {(isDriver || isAdmin) && (
               <div className="flex items-center gap-2">
@@ -448,7 +463,7 @@ export default function TripDetail() {
                 <button
                   onClick={handleDeleteTrip}
                   disabled={submitting}
-                  className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                  className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 cursor-pointer"
                   title={isTh ? "ลบเที่ยวเดินทางนี้" : "Delete this trip"}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -1150,6 +1165,14 @@ export default function TripDetail() {
               </p>
             </div>
             <div className="pt-2">
+              <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 py-1 px-3 rounded-full font-bold">
+                {isTh ? '✓ ป้องกันการกดย้ำ (#BUG-102 Active)' : '✓ Duplicate click protection active'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Payment Slip Modal Preview */}
       {slipModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
@@ -1162,7 +1185,7 @@ export default function TripDetail() {
               <button
                 type="button"
                 onClick={() => setSlipModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 <XCircle className="w-5 h-5" />
               </button>
@@ -1189,7 +1212,7 @@ export default function TripDetail() {
               <button
                 type="button"
                 onClick={() => setSlipModalOpen(false)}
-                className="travel-btn-primary px-5 py-2 text-xs font-bold"
+                className="travel-btn-primary px-5 py-2 text-xs font-bold cursor-pointer"
               >
                 {isTh ? 'ปิดหน้าต่าง' : 'Close'}
               </button>
@@ -1197,6 +1220,13 @@ export default function TripDetail() {
           </div>
         </div>
       )}
+
+      {/* Share Trip Modal */}
+      <ShareTripModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        trip={trip}
+      />
     </div>
   );
 }
