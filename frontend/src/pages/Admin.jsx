@@ -617,6 +617,8 @@ export default function Admin() {
                             <img
                               src={c.car_image_url}
                               alt={`ทะเบียน ${c.license_plate}`}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             />
                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
@@ -770,6 +772,8 @@ export default function Admin() {
                           <img
                             src={vr.document_url || vr.doc_image_url}
                             alt="หลักฐาน"
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
                           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
@@ -1055,6 +1059,8 @@ export default function Admin() {
               <img
                 src={previewImage}
                 alt="เอกสารหลักฐานขยาย"
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-[70vh] object-contain rounded-lg"
               />
             </div>

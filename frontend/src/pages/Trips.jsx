@@ -131,10 +131,15 @@ export default function Trips() {
   }, [trips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
 
   useEffect(() => {
+    if (events.length === 0) {
+      fetchEvents();
+    }
+  }, []);
+
+  useEffect(() => {
     setOrigin(searchParams.get('origin') || '');
     setDestination(searchParams.get('destination') || '');
     setSelectedEventId(searchParams.get('event_id') || '');
-    fetchEvents();
     fetchTrips();
   }, [searchParams]);
 
@@ -540,6 +545,10 @@ export default function Trips() {
             return (
               <div
                 key={trip.trip_id}
+                onMouseEnter={() => {
+                  // Prefetch trip detail bundle ahead of user click
+                  import('./TripDetail');
+                }}
                 className="travel-card p-6 flex flex-col justify-between travel-card-hover space-y-4 border border-slate-200 shadow-xs"
               >
                 <div className="space-y-4">
@@ -645,7 +654,7 @@ export default function Trips() {
                       title={isTh ? "คลิกดูโปรไฟล์คนขับ" : "Click to view driver profile"}
                     >
                       {trip.driver_avatar ? (
-                        <img src={trip.driver_avatar} alt={trip.driver_name} className="w-9 h-9 rounded-full object-cover border-2 border-[var(--accent)]" />
+                        <img src={trip.driver_avatar} alt={trip.driver_name} loading="lazy" decoding="async" className="w-9 h-9 rounded-full object-cover border-2 border-[var(--accent)]" />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,var(--card))] text-[var(--accent)] border-2 border-[var(--accent)] flex items-center justify-center text-xs font-black">
                           {trip.driver_name?.charAt(0)}

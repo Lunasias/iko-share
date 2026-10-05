@@ -29,6 +29,27 @@ API.interceptors.response.use(
   }
 );
 
+// In-flight GET request deduplication:
+// If multiple components request the same endpoint concurrently (e.g. /trips or /events during page load),
+// reuse the active in-flight promise to avoid duplicate network roundtrips.
+const inflightGetRequests = new Map();
+const originalGet = API.get.bind(API);
+
+API.get = function (url, config = {}) {
+  if (config.dedupe !== false) {
+    const key = url + (config.params ? JSON.stringify(config.params) : '');
+    if (inflightGetRequests.has(key)) {
+      return inflightGetRequests.get(key);
+    }
+    const reqPromise = originalGet(url, config).finally(() => {
+      inflightGetRequests.delete(key);
+    });
+    inflightGetRequests.set(key, reqPromise);
+    return reqPromise;
+  }
+  return originalGet(url, config);
+};
+
 // Helper for Image / File uploads to Image Storage Service
 export const uploadImage = async (file) => {
   const formData = new FormData();

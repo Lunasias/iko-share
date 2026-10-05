@@ -25,9 +25,20 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
 const pdpaRoutes = require('./routes/pdpaRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const compression = require('compression');
 const { ensureSchema, runMigrations } = require('./config/migrate');
 
 const app = express();
+
+// High-performance gzip/deflate response compression:
+// Compresses JSON API responses >= 1KB (reduces network payload sizes by up to 75-85%)
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  },
+}));
 
 // Security and middleware (keep 10mb for existing Base64 photo uploads)
 app.disable('x-powered-by');
