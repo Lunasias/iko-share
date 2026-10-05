@@ -41,6 +41,11 @@ export default function MyTrips() {
     try {
       const res = await API.delete(`/trips/${tripId}`);
       if (res.data.success) {
+        try {
+          sessionStorage.removeItem('iko_cached_events');
+          sessionStorage.removeItem('iko_cached_trips');
+          sessionStorage.removeItem('iko_cache_trips_all');
+        } catch {}
         setActionMsg(String(res.data.message));
         fetchMyTrips();
       } else {

@@ -616,11 +616,19 @@ async function estimateRoute(origin, destination, seats = 4) {
     }
   }
 
-  // Misroute guard: If Google Routes API returned a distance that deviates unnaturally from crow distance (>2.2x or <0.7x),
-  // it indicates Google Geocoder resolved to a distant postal center instead of the local landmark. Fall back to calibrated engine.
+  // Calibrated direct road distance using regional winding coefficient (1.18 for local, 1.28 for highways)
+  const windingFactor = (crowDistance && crowDistance < 20) ? 1.18 : 1.28;
+  const expectedRoadDistance = crowDistance !== null ? Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10) : 15;
+
+  // Misroute guard:
+  // For local trips (< 25km), road winding should be within 1.25x of crow distance.
+  // If Google Routes API returns a distance that is > 1.25x crow distance (such as a 14.3km detour for an 8.4km route)
+  // or < 0.85x, Google API misrouted or snapped to a dead-end/loop. Fall back to calibrated local engine!
   if (routeResult && crowDistance !== null) {
-    if (routeResult.distance_km > crowDistance * 2.2 || routeResult.distance_km < crowDistance * 0.7) {
-      console.warn(`[RouteService] Google API distance (${routeResult.distance_km}km) differs abnormally from direct distance (${crowDistance.toFixed(1)}km). Falling back to calibrated local engine.`);
+    const maxAllowedRatio = crowDistance < 25 ? 1.25 : 1.38;
+    const minAllowedRatio = 0.85;
+    if (routeResult.distance_km > crowDistance * maxAllowedRatio || routeResult.distance_km < crowDistance * minAllowedRatio) {
+      console.warn(`[RouteService] Google API distance (${routeResult.distance_km}km) differs abnormally from direct distance (${crowDistance.toFixed(1)}km, expected ~${expectedRoadDistance}km). Falling back to calibrated local engine.`);
       routeResult = null;
     }
   }
@@ -631,11 +639,9 @@ async function estimateRoute(origin, destination, seats = 4) {
     let durationMinutes = 20;
 
     if (crowDistance !== null) {
-      // For short/local trips (<20km), winding factor is ~1.18x; for longer trips ~1.28x
-      const windingFactor = crowDistance < 20 ? 1.18 : 1.28;
-      distanceKm = Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10);
-      // Speed estimate: 45 km/h for local roads, 72 km/h for highways
-      const speedKmh = distanceKm < 25 ? 45 : 72;
+      distanceKm = expectedRoadDistance;
+      // Speed estimate: 40 km/h for local roads, 72 km/h for highways
+      const speedKmh = distanceKm < 25 ? 40 : 72;
       durationMinutes = Math.max(5, Math.round((distanceKm / speedKmh) * 60));
     }
 

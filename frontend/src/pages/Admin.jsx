@@ -245,6 +245,11 @@ export default function Admin() {
     try {
       const res = await API.delete(`/admin/trips/${tripId}`);
       if (res.data.success) {
+        try {
+          sessionStorage.removeItem('iko_cached_events');
+          sessionStorage.removeItem('iko_cached_trips');
+          sessionStorage.removeItem('iko_cache_trips_all');
+        } catch {}
         setRecentTrips((prev) => prev.filter((t) => t.trip_id !== tripId));
         fetchAdminData();
       }
