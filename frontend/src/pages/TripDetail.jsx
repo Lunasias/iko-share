@@ -12,7 +12,8 @@ import {
   MapPin, Calendar, Clock, Users, Car, Phone, Mail, AlertCircle, CheckCircle,
   ArrowRight, Star, LogOut, Trash2, Check, XCircle, Camera, Image, Send,
   Sparkles, HeartHandshake, Award, ShieldCheck, UserMinus, RefreshCw, ExternalLink,
-  QrCode, CreditCard, CheckCircle2, Eye, UploadCloud, Download, Share2
+  QrCode, CreditCard, CheckCircle2, Eye, UploadCloud, Download, Share2,
+  Leaf, Trees
 } from 'lucide-react';
 import { getPromptPayQrUrl, formatPhoneNumber } from '../utils/promptpay';
 
@@ -570,6 +571,81 @@ export default function TripDetail() {
             </div>
           )}
         </div>
+
+        {/* Eco-Friendly Carbon Saved & Green Impact Card */}
+        {(() => {
+          const distanceNum = parseFloat(trip.distance_km) || (trip.origin && trip.destination ? 35 : 0);
+          const activeRiderCount = Math.max(1, passengers.filter((p) => p.booking_status === 'จองแล้ว').length);
+          const co2SavedKg = ((distanceNum * activeRiderCount * 0.12)).toFixed(1);
+          const treeDaysEquiv = Math.max(1, Math.round(co2SavedKg / 0.06));
+          const carsOffRoad = activeRiderCount;
+
+          return (
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/70 to-emerald-100/40 border border-emerald-200/90 shadow-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <Leaf className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
+                      <span>{isTh ? 'สถิติการเดินทางสีเขียว (Eco-Impact)' : 'Green Travel Impact'}</span>
+                      <span className="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-full font-bold">
+                        🌱 Carpool for Earth
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-emerald-800 font-medium">
+                      {isTh
+                        ? 'การเดินทางร่วมกันในทริปนี้ช่วยลดการปล่อยก๊าซเรือนกระจกและบรรเทาปัญหาโลกร้อน'
+                        : 'Carpooling on this journey helps reduce carbon emissions and global warming'}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                  {isTh ? `ผู้ร่วมทาง ${activeRiderCount} คน` : `${activeRiderCount} carpoolers`}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* CO2 Saved */}
+                <div className="p-3 bg-white/90 backdrop-blur-xs rounded-xl border border-emerald-200/70 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'ลดการปล่อย CO₂' : 'CO₂ Avoided'}</span>
+                    <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <div className="text-lg font-black text-emerald-700">
+                    ~{co2SavedKg} <span className="text-xs font-bold text-slate-600">kg CO₂e</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">{isTh ? 'เทียบกับการขับรถแยกคัน' : 'vs driving separately'}</p>
+                </div>
+
+                {/* Trees Equivalent */}
+                <div className="p-3 bg-white/90 backdrop-blur-xs rounded-xl border border-emerald-200/70 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'เทียบเท่าการดูดซับ' : 'Tree Absorption'}</span>
+                    <Trees className="w-3.5 h-3.5 text-teal-600" />
+                  </div>
+                  <div className="text-lg font-black text-teal-700">
+                    ~{treeDaysEquiv} <span className="text-xs font-bold text-slate-600">{isTh ? 'วันต้นไม้' : 'tree-days'}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">{isTh ? 'เทียบเท่าการดูดซับของต้นไม้' : 'natural carbon absorption'}</p>
+                </div>
+
+                {/* Cars off road */}
+                <div className="p-3 bg-white/90 backdrop-blur-xs rounded-xl border border-emerald-200/70 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'ลดรถบนท้องถนน' : 'Cars Reduced'}</span>
+                    <Car className="w-3.5 h-3.5 text-indigo-600" />
+                  </div>
+                  <div className="text-lg font-black text-indigo-700">
+                    -{carsOffRoad} <span className="text-xs font-bold text-slate-600">{isTh ? 'คัน' : 'cars'}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">{isTh ? 'ช่วยลดปัญหาการจราจร' : 'reduces traffic congestion'}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Driver Personality & Passenger Criteria Badges */}
         {(trip.driver_personality || trip.passenger_requirements) && (
