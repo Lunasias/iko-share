@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { createNotification } = require('./notificationController');
 
 // Join Trip / Request Booking (Status: 'รอการอนุมัติ'). Administrators join instantly.
 // Protected against double submits and race conditions (#BUG-102) with transactions and row locks.
@@ -324,6 +325,28 @@ const submitPaymentSlip = async (req, res) => {
       [slip_url, id]
     );
 
+    // Notify the trip driver
+    try {
+      const tripInfo = await db.query(
+        `SELECT t.trip_id, t.origin, t.destination, COALESCE(c.user_id, t.organizer_id) as driver_id
+         FROM trips t
+         LEFT JOIN cars c ON t.license_plate = c.license_plate
+         WHERE t.trip_id = $1`,
+        [booking.trip_id]
+      );
+      if (tripInfo.rows.length > 0 && tripInfo.rows[0].driver_id) {
+        createNotification(
+          tripInfo.rows[0].driver_id,
+          '💳 สลิปชำระเงินใหม่',
+          `ผู้โดยสารได้แนบสลิปชำระเงินสำหรับทริป ${tripInfo.rows[0].origin} ➔ ${tripInfo.rows[0].destination} แล้ว กรุณาตรวจสอบและยืนยัน`,
+          'payment',
+          `/trips/${booking.trip_id}`
+        );
+      }
+    } catch (e) {
+      console.warn('Driver payment notification error:', e.message);
+    }
+
     res.json({
       success: true,
       message: 'แนบสลิปการโอนเงินเรียบร้อยแล้ว กรุณารอคนขับตรวจสอบและยืนยัน',
@@ -371,6 +394,22 @@ const verifyPayment = async (req, res) => {
        RETURNING *`,
       [targetStatus, id]
     );
+
+    // Notify the passenger
+    try {
+      const isPaid = targetStatus === 'paid';
+      createNotification(
+        booking.user_id,
+        isPaid ? '✓ ยืนยันการชำระเงินแล้ว 💳' : '⚠️ แจ้งเตือนสถานะการชำระเงิน',
+        isPaid
+          ? 'คนขับได้ตรวจสอบและยืนยันสลิปการชำระเงินของคุณเรียบร้อยแล้ว ขอให้เดินทางปลอดภัย!'
+          : 'คนขับได้เปลี่ยนสถานะการชำระเงินเป็นยังไม่ชำระ กรุณาติดต่อคนขับหรือแนบสลิปใหม่อีกครั้ง',
+        'payment',
+        `/trips/${booking.trip_id}`
+      );
+    } catch (e) {
+      console.warn('Passenger payment verification notification error:', e.message);
+    }
 
     res.json({
       success: true,
