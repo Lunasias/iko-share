@@ -249,7 +249,7 @@ export default function Profile() {
           {/* Avatar with Direct Photo Upload Button */}
           <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl" />
+              <img src={avatarUrl} alt={name} loading="lazy" decoding="async" className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl" />
             ) : (
               <div className="w-28 h-28 rounded-full bg-white text-emerald-700 flex items-center justify-center text-4xl font-black border-4 border-white shadow-xl">
                 {name ? name.charAt(0).toUpperCase() : 'U'}

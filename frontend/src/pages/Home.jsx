@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { useTheme } from '../context/ThemeContext';
@@ -8,16 +8,31 @@ export default function Home() {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
-  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  const heroContentRef = useRef(null);
+  const rafId = useRef(null);
   const navigate = useNavigate();
   const { t } = useTheme();
 
+  // High-performance 60fps/120fps direct CSS transform without triggering React re-renders
   const handlePointerMove = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    setPointer({
-      x: ((event.clientX - rect.left) / rect.width - 0.5) * 2,
-      y: ((event.clientY - rect.top) / rect.height - 0.5) * 2,
+    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 6;
+    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 6;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(() => {
+      if (heroContentRef.current) {
+        heroContentRef.current.style.setProperty('--pointer-x', `${x}px`);
+        heroContentRef.current.style.setProperty('--pointer-y', `${y}px`);
+      }
     });
+  };
+
+  const handlePointerLeave = () => {
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    if (heroContentRef.current) {
+      heroContentRef.current.style.setProperty('--pointer-x', '0px');
+      heroContentRef.current.style.setProperty('--pointer-y', '0px');
+    }
   };
 
   useEffect(() => {
@@ -57,6 +72,7 @@ export default function Home() {
     return () => {
       clearTimeout(warmUpTimer);
       observer.disconnect();
+      if (rafId.current) cancelAnimationFrame(rafId.current);
     };
   }, []);
 
@@ -75,11 +91,11 @@ export default function Home() {
       <section
         className="home-hero relative pt-28 sm:pt-32 pb-20 text-center px-4 reveal-on-scroll"
         onPointerMove={handlePointerMove}
-        onPointerLeave={() => setPointer({ x: 0, y: 0 })}
+        onPointerLeave={handlePointerLeave}
       >
         <div
+          ref={heroContentRef}
           className="max-w-4xl mx-auto space-y-6 home-hero-content"
-          style={{ '--pointer-x': `${pointer.x * 3}px`, '--pointer-y': `${pointer.y * 3}px` }}
         >
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight font-['Plus_Jakarta_Sans',sans-serif]">
             {t('headline')} <br className="hidden sm:block" />

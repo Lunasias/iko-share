@@ -57,7 +57,7 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
             {/* Header Avatar & Basic Info */}
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
               {data.owner.avatar_url ? (
-                <img src={data.owner.avatar_url} alt={data.owner.name} className="w-20 h-20 rounded-full object-cover border-2 border-[var(--accent)] shadow-md" />
+                <img src={data.owner.avatar_url} alt={data.owner.name} loading="lazy" decoding="async" className="w-20 h-20 rounded-full object-cover border-2 border-[var(--accent)] shadow-md" />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,var(--card))] text-[var(--accent)] flex items-center justify-center text-2xl font-black border-2 border-[var(--accent)] shadow-md">
                   {data.owner.name ? data.owner.name.charAt(0).toUpperCase() : 'U'}
