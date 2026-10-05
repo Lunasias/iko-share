@@ -176,10 +176,18 @@ const COLUMN_PATCHES = [
   ['bookings', 'payment_status', "VARCHAR(30) NOT NULL DEFAULT 'unpaid'"],
   ['bookings', 'payment_slip_url', 'TEXT'],
   ['bookings', 'payment_time', 'TIMESTAMP WITH TIME ZONE'],
+  ['cars', 'car_image_url', 'TEXT'],
+  ['cars', 'verification_status', "VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ'"],
+  ['cars', 'admin_reply', 'TEXT'],
+  ['cars', 'verified_by', 'INT'],
+  ['cars', 'verified_at', 'TIMESTAMP WITH TIME ZONE'],
+  ['cars', 'created_at', 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP'],
 ];
 
 // Administration is a permission separate from the user's travel role.
 const CONSTRAINT_FIXES = [
+  `UPDATE cars SET verification_status = 'อนุมัติแล้ว' WHERE verification_status IS NULL OR verification_status = ''`,
+  `CREATE INDEX IF NOT EXISTS idx_cars_verification_status ON cars (verification_status)`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`,
   `UPDATE users SET is_admin = TRUE, role = 'Both' WHERE role = 'Admin' OR email = 'admin@ikoshare.com'`,
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`,

@@ -83,8 +83,9 @@ export default function CreateTrip() {
         const userCars = carsRes.data.cars || [];
         setCars(userCars);
         if (userCars.length > 0) {
-          setLicensePlate(userCars[0].license_plate);
-          setSeats(userCars[0].capacity);
+          const firstApproved = userCars.find((c) => (c.verification_status || 'อนุมัติแล้ว') === 'อนุมัติแล้ว') || userCars[0];
+          setLicensePlate(firstApproved.license_plate);
+          setSeats(firstApproved.capacity);
         }
       }
 
@@ -286,6 +287,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
   }
 
   const selectedCar = cars.find((c) => c.license_plate === licensePlate);
+  const isCarApproved = !usesCar || (selectedCar && (selectedCar.verification_status || 'อนุมัติแล้ว') === 'อนุมัติแล้ว');
 
   return (
     <div className="max-w-3xl mx-auto my-8 px-4">
@@ -333,9 +335,12 @@ const computeCostBreakdown = (distKm, seatCount) => {
           </div>
 
           {/* Select Registered Car */}
-          <div className={`space-y-1.5 ${usesCar ? '' : 'hidden'}`}>
+          <div className={`space-y-2 ${usesCar ? '' : 'hidden'}`}>
             <div className="flex items-center justify-between min-h-[20px]">
               <label className="text-xs font-bold text-slate-800">{isTh ? 'เลือกรถยนต์ที่ใช้เดินทาง (ทะเบียนรถ)' : 'Select Vehicle (License Plate)'}</label>
+              <Link to="/cars" className="text-[11px] text-emerald-600 font-bold hover:underline">
+                {isTh ? '+ ลงทะเบียนรถ / ถ่ายรูปป้ายทะเบียน' : '+ Register Car / Plate Photo'}
+              </Link>
             </div>
             <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
               <Car className="w-5 h-5 text-amber-500 shrink-0" />
@@ -345,13 +350,42 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 onChange={(e) => handleCarChange(e.target.value)}
                 className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-semibold"
               >
-                {cars.map((c) => (
-                  <option key={c.license_plate} value={c.license_plate}>
-                    {c.license_plate} - {c.model} ({isTh ? `ความจุ ${c.capacity} ที่นั่ง` : `Capacity ${c.capacity} seats`})
-                  </option>
-                ))}
+                {cars.map((c) => {
+                  const status = c.verification_status || 'อนุมัติแล้ว';
+                  const statusLabel = status === 'อนุมัติแล้ว' ? '✓ [อนุมัติแล้ว]' : status === 'รอดำเนินการ' ? '⏳ [รอแอดมินตรวจ]' : '❌ [ไม่ผ่านการอนุมัติ]';
+                  return (
+                    <option key={c.license_plate} value={c.license_plate}>
+                      {c.license_plate} - {c.model} ({c.capacity} ที่นั่ง) {statusLabel}
+                    </option>
+                  );
+                })}
               </select>
             </div>
+
+            {/* Warning if selected car is pending or rejected */}
+            {selectedCar && selectedCar.verification_status === 'รอดำเนินการ' && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2 shadow-2xs">
+                <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="font-bold">{isTh ? 'รถคันนี้อยู่ระหว่างรอแอดมินตรวจสอบป้ายทะเบียน' : 'Car is pending admin review'}</div>
+                  <div className="text-[11px] text-amber-800 leading-relaxed">
+                    {isTh ? 'เพื่อความปลอดภัยของผู้ร่วมเดินทาง รถยนต์ต้องได้รับการอนุมัติจากผู้ดูแลระบบก่อน จึงจะสามารถเปิดทริปได้' : 'For passenger safety, vehicle must be approved by admin before offering rides.'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedCar && selectedCar.verification_status === 'ปฏิเสธ' && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2 shadow-2xs">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="font-bold">{isTh ? 'รถคันนี้ไม่ผ่านการอนุมัติจากผู้ดูแลระบบ' : 'Car rejected by admin'}</div>
+                  <div className="text-[11px] text-rose-800 leading-relaxed">
+                    {isTh ? `สาเหตุ: ${selectedCar.admin_reply || 'รูปถ่ายป้ายทะเบียนไม่ชัดเจน'} (กรุณาไปที่หน้ารถยนต์เพื่อลงทะเบียนใหม่)` : `Reason: ${selectedCar.admin_reply || 'Invalid photo'}`}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Event Selection & Custom Event Name */}
@@ -690,10 +724,16 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
           <button
             type="submit"
-            disabled={submitting || !acceptedDriverTerms}
-            className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg"
+            disabled={submitting || !acceptedDriverTerms || !isCarApproved}
+            className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg cursor-pointer"
           >
-            {submitting ? (isTh ? 'กำลังเปิดการเดินทาง...' : 'Creating journey...') : (isTh ? '🚀 ยืนยันเปิดทริปท่องเที่ยว' : '🚀 Confirm & Create Journey')}
+            {submitting ? (
+              isTh ? 'กำลังเปิดการเดินทาง...' : 'Creating journey...'
+            ) : !isCarApproved ? (
+              isTh ? '⚠️ รถคันนี้ยังไม่ผ่านการอนุมัติจากแอดมิน' : '⚠️ Car not approved by admin yet'
+            ) : (
+              isTh ? '🚀 ยืนยันเปิดทริปท่องเที่ยว' : '🚀 Confirm & Create Journey'
+            )}
           </button>
 
         </form>

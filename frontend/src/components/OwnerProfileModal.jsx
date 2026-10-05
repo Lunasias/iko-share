@@ -123,7 +123,14 @@ export default function OwnerProfileModal({ isOpen, onClose, userId }) {
                   {data.cars.map((c) => (
                     <div key={c.license_plate} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
                       <div>
-                        <div className="font-extrabold text-slate-900">{c.model}</div>
+                        <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
+                          <span>{c.model}</span>
+                          {(c.verification_status || 'อนุมัติแล้ว') === 'อนุมัติแล้ว' && (
+                            <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-bold">
+                              ✓ ป้ายทะเบียนยืนยันแล้ว
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-500 font-mono font-bold">ทะเบียน: {c.license_plate}</div>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">

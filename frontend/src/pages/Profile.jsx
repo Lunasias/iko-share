@@ -42,9 +42,6 @@ export default function Profile() {
 
   // Car management state inside profile
   const [cars, setCars] = useState(cachedProfile?.cars || []);
-  const [licensePlate, setLicensePlate] = useState('');
-  const [carModel, setCarModel] = useState('');
-  const [capacity, setCapacity] = useState(4);
 
   const [loading, setLoading] = useState(!cachedProfile);
   const [saving, setSaving] = useState(false);
@@ -222,33 +219,6 @@ export default function Profile() {
     } finally {
       setSaving(false);
       isSavingRef.current = false;
-    }
-  };
-
-  const handleAddCar = async (e) => {
-    e.preventDefault();
-    if (!licensePlate || !carModel) return;
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      const res = await API.post('/cars', {
-        license_plate: licensePlate,
-        model: carModel,
-        capacity: parseInt(capacity),
-      });
-
-      if (res.data.success) {
-        setSuccessMsg('เพิ่มรถยนต์เรียบร้อยแล้ว');
-        setLicensePlate('');
-        setCarModel('');
-        setCapacity(4);
-        fetchProfileData();
-      } else {
-        setError(String(res.data.message));
-      }
-    } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการเพิ่มรถ'));
     }
   };
 
@@ -672,78 +642,89 @@ export default function Profile() {
       {/* Integrated Car Management (Shown for Driver or Both) */}
       {(role === 'Driver' || role === 'Both') && (
         <div className="travel-card p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Car className="w-5 h-5 text-emerald-600" />
-              <span>{isTh ? 'จัดการข้อมูลรถยนต์ของคุณ (Car Registration)' : 'Manage Vehicles (Car Registration)'}</span>
-            </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-3">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <Car className="w-5 h-5 text-emerald-600" />
+                <span>{isTh ? 'จัดการข้อมูลรถยนต์ของคุณ (Car Registration)' : 'Manage Vehicles (Car Registration)'}</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                {isTh ? 'รถทุกคันต้องผ่านการถ่ายภาพป้ายทะเบียนและตรวจสอบโดยผู้ดูแลระบบ' : 'Vehicles require license plate photo verification by admin'}
+              </p>
+            </div>
+            <Link
+              to="/cars"
+              className="travel-btn-primary px-4 py-2.5 text-xs font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <Camera className="w-4 h-4" />
+              <span>{isTh ? '+ ลงทะเบียนรถพร้อมถ่ายรูปป้ายทะเบียน' : '+ Register Car & Plate Photo'}</span>
+            </Link>
           </div>
 
-          <form onSubmit={handleAddCar} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              required
-              placeholder={isTh ? "ทะเบียนรถ (เช่น กก-1234)" : "Plate (e.g. 1AB-2345)"}
-              value={licensePlate}
-              onChange={(e) => setLicensePlate(e.target.value)}
-              className="px-4 py-3 travel-input text-xs"
-            />
-            <input
-              type="text"
-              required
-              placeholder={isTh ? "ยี่ห้อ/รุ่นรถ (เช่น Honda Civic)" : "Model (e.g. Honda Civic)"}
-              value={carModel}
-              onChange={(e) => setCarModel(e.target.value)}
-              className="px-4 py-3 travel-input text-xs"
-            />
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="1"
-                max="15"
-                required
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                className="w-24 px-3 py-3 travel-input text-xs font-bold text-center"
-              />
-              <button
-                type="submit"
-                className="flex-1 travel-btn-primary text-xs flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{isTh ? 'เพิ่มรถ' : 'Add Car'}</span>
-              </button>
+          <div className="space-y-3 pt-2">
+            <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span>{isTh ? `รถยนต์ที่ลงทะเบียนไว้ (${cars.length} คัน):` : `Registered Vehicles (${cars.length}):`}</span>
+              <Link to="/cars" className="text-[11px] text-emerald-700 font-bold hover:underline">
+                {isTh ? 'ดูหน้าระบบลงทะเบียนรถยนต์ ➔' : 'Go to Cars page ➔'}
+              </Link>
             </div>
-          </form>
 
-          <div className="space-y-2 pt-2">
-            <div className="text-xs font-bold text-slate-700">{isTh ? `รถยนต์ที่ลงทะเบียนไว้ (${cars.length} คัน):` : `Registered Vehicles (${cars.length}):`}</div>
             {cars.length === 0 ? (
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs text-center font-medium">
-                {isTh ? 'ยังไม่มีรถยนต์ที่ลงทะเบียนไว้ กรุณาเพิ่มรถยนต์เพื่อสร้างเที่ยวเดินทาง' : 'No registered cars yet. Please add a car to offer rides.'}
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-xs text-center space-y-2 font-medium">
+                <p>{isTh ? 'ยังไม่มีรถยนต์ที่ลงทะเบียนไว้ กรุณาลงทะเบียนและถ่ายรูปป้ายทะเบียนเพื่อสร้างเที่ยวเดินทาง' : 'No registered cars yet. Please register your car with a plate photo to offer rides.'}</p>
+                <Link
+                  to="/cars"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-2xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isTh ? 'ลงทะเบียนรถยนต์คันแรก' : 'Register First Vehicle'}</span>
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {cars.map((c) => (
-                  <div key={c.license_plate} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-extrabold text-slate-900">{c.model}</div>
-                      <div className="text-xs text-slate-600 font-mono font-bold">{isTh ? 'ทะเบียน:' : 'Plate:'} {c.license_plate}</div>
+                {cars.map((c) => {
+                  const status = c.verification_status || 'อนุมัติแล้ว';
+                  const isAppr = status === 'อนุมัติแล้ว';
+                  const isPend = status === 'รอดำเนินการ';
+
+                  return (
+                    <div key={c.license_plate} className="p-4 rounded-xl bg-white border border-slate-200 flex items-center justify-between text-xs shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="font-extrabold text-slate-900 flex items-center gap-2">
+                          <span>{c.model}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                            isAppr
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              : isPend
+                              ? 'bg-amber-100 text-amber-800 border-amber-200'
+                              : 'bg-rose-100 text-rose-800 border-rose-200'
+                          }`}>
+                            {isAppr ? '✓ ยืนยันแล้ว' : isPend ? '⏳ รอแอดมินตรวจ' : '❌ ไม่ผ่าน'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-600 font-mono font-bold">{isTh ? 'ทะเบียน:' : 'Plate:'} {c.license_plate}</div>
+                        {c.car_image_url && (
+                          <Link to="/cars" className="text-[10px] text-emerald-600 hover:underline flex items-center gap-1 font-bold">
+                            <Camera className="w-3 h-3" />
+                            <span>{isTh ? 'มีรูปถ่ายป้ายทะเบียนแนบแล้ว' : 'Plate photo attached'}</span>
+                          </Link>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                          {c.capacity} {isTh ? 'ที่นั่ง' : 'seats'}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteCar(c.license_plate)}
+                          className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+                          title={isTh ? "ลบรถ" : "Delete vehicle"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                        {c.capacity} {isTh ? 'ที่นั่ง' : 'seats'}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteCar(c.license_plate)}
-                        className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
-                        title={isTh ? "ลบรถ" : "Delete vehicle"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

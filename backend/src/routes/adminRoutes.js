@@ -20,6 +20,9 @@ const {
   getAdminPdpaRequests,
   updateAdminPdpaRequest,
   deleteAdminPdpaRequest,
+  getAdminCars,
+  reviewCarRegistration,
+  deleteAdminCar,
 } = require('../controllers/adminController');
 const { authenticateToken, requireAdmin } = require('../middleware/authMiddleware');
 
@@ -32,6 +35,11 @@ router.put('/users/:id/admin-access', updateUserAdminAccess);
 router.delete('/users-by-email/:email', deleteUserByEmail);
 router.delete('/users/:id', deleteUser);
 router.delete('/trips/:id', deleteTrip);
+
+// Car registrations & license plate verifications
+router.get('/cars', getAdminCars);
+router.put('/cars/:plate/review', reviewCarRegistration);
+router.delete('/cars/:plate', deleteAdminCar);
 
 // Reports sent from the trip chat (คำหยาบ / ข้อความไม่เหมาะสม)
 router.get('/reports', getReports);

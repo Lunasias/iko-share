@@ -18,7 +18,13 @@ CREATE TABLE IF NOT EXISTS cars (
   license_plate VARCHAR(50) PRIMARY KEY,
   user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   model VARCHAR(100) NOT NULL,
-  capacity INT NOT NULL DEFAULT 4
+  capacity INT NOT NULL DEFAULT 4,
+  car_image_url TEXT,
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ' CHECK (verification_status IN ('รอดำเนินการ', 'อนุมัติแล้ว', 'ปฏิเสธ')),
+  admin_reply TEXT,
+  verified_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+  verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS events (
