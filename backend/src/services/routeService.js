@@ -322,17 +322,41 @@ function findCoordinatesInDict(text) {
   if (!text || typeof text !== 'string') return null;
   const cleaned = text.trim().toLowerCase().replace(/[.\s_-]/g, '');
 
-  // Sort keys by descending length so "สจลชุมพร" matches before generic "ชุมพร"
-  const sortedKeys = Object.keys(THAI_COORDINATES).sort((a, b) => b.length - a.length);
+  const keys = Object.keys(THAI_COORDINATES);
 
-  for (const key of sortedKeys) {
+  // 1. Exact match (Highest priority)
+  for (const key of keys) {
     const cleanKey = key.toLowerCase().replace(/[.\s_-]/g, '');
-    if (cleaned.includes(cleanKey) || cleanKey.includes(cleaned)) {
+    if (cleaned === cleanKey) {
       return THAI_COORDINATES[key];
     }
   }
+
+  // 2. User input contains dictionary key (e.g. 'ไปตลาดปะทิว' contains 'ปะทิว')
+  // Sort keys by descending length so compound specific names (e.g. 'สจล.ชุมพร') match before generic ('ชุมพร')
+  const descKeys = [...keys].sort((a, b) => b.length - a.length);
+  for (const key of descKeys) {
+    const cleanKey = key.toLowerCase().replace(/[.\s_-]/g, '');
+    if (cleaned.includes(cleanKey)) {
+      return THAI_COORDINATES[key];
+    }
+  }
+
+  // 3. Fallback: Dictionary key contains user input (e.g. user typed abbreviation, at least 3 chars)
+  // Sort keys by ascending length so shortest match is preferred
+  if (cleaned.length >= 3) {
+    const ascKeys = [...keys].sort((a, b) => a.length - b.length);
+    for (const key of ascKeys) {
+      const cleanKey = key.toLowerCase().replace(/[.\s_-]/g, '');
+      if (cleanKey.includes(cleaned)) {
+        return THAI_COORDINATES[key];
+      }
+    }
+  }
+
   return null;
 }
+
 
 // Dynamic OpenStreetMap Nominatim Live Geocoder Fallback
 function geocodeWithNominatim(query) {
