@@ -48,10 +48,34 @@ const THAI_COORDINATES = {
   'สมุย': { lat: 9.5357, lng: 100.0605 },
   'หาดใหญ่': { lat: 7.0087, lng: 100.4747 },
   'สงขลา': { lat: 7.1988, lng: 100.5954 },
-  'ชุมพร': { lat: 10.4930, lng: 99.1800 },
-  'chumphon': { lat: 10.4930, lng: 99.1800 },
+
+  // Chumphon & Pathiu (KMITL Prince of Chumphon Campus Area)
+  'สจล.ชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'สจลชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'kmitl chumphon': { lat: 10.7229, lng: 99.3789 },
+  'วิทยาเขตชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'สจล.': { lat: 10.7229, lng: 99.3789 },
   'สจล': { lat: 10.7229, lng: 99.3789 },
   'kmitl': { lat: 10.7229, lng: 99.3789 },
+  'สถานีรถไฟปะทิว': { lat: 10.7447, lng: 99.3175 },
+  'ตลาดปะทิว': { lat: 10.7447, lng: 99.3175 },
+  'ปะทิว': { lat: 10.7447, lng: 99.3175 },
+  'pathiu': { lat: 10.7447, lng: 99.3175 },
+  'สนามบินชุมพร': { lat: 10.7128, lng: 99.3622 },
+  'ท่าอากาศยานชุมพร': { lat: 10.7128, lng: 99.3622 },
+  'หาดทุ่งวัวแล่น': { lat: 10.5645, lng: 99.2748 },
+  'หาดทรายรี': { lat: 10.3995, lng: 99.2818 },
+  'สะพลี': { lat: 10.5840, lng: 99.2600 },
+  'สถานีรถไฟชุมพร': { lat: 10.4990, lng: 99.1800 },
+  'บขส.ชุมพร': { lat: 10.4680, lng: 99.1380 },
+  'เมืองชุมพร': { lat: 10.4930, lng: 99.1800 },
+  'ชุมพร': { lat: 10.4930, lng: 99.1800 },
+  'chumphon': { lat: 10.4930, lng: 99.1800 },
+  'หลังสวน': { lat: 9.9486, lng: 99.0768 },
+  'ละแม': { lat: 9.7719, lng: 99.0984 },
+  'สวี': { lat: 10.2458, lng: 99.0931 },
+  'ท่าแซะ': { lat: 10.6725, lng: 99.1819 },
+
   'ลาดกระบัง': { lat: 13.7299, lng: 100.7782 },
   'ตราด': { lat: 12.2428, lng: 102.5175 },
   'จันทบุรี': { lat: 12.6114, lng: 102.1039 },
@@ -83,10 +107,15 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 // Find closest coordinates matching a search query string
 function findCoordinates(text) {
   if (!text || typeof text !== 'string') return null;
-  const cleaned = text.trim().toLowerCase();
-  for (const [key, coords] of Object.entries(THAI_COORDINATES)) {
-    if (cleaned.includes(key) || key.includes(cleaned)) {
-      return coords;
+  const cleaned = text.trim().toLowerCase().replace(/[.\s_-]/g, '');
+
+  // Sort keys by descending length so "สจลชุมพร" matches before generic "ชุมพร"
+  const sortedKeys = Object.keys(THAI_COORDINATES).sort((a, b) => b.length - a.length);
+
+  for (const key of sortedKeys) {
+    const cleanKey = key.toLowerCase().replace(/[.\s_-]/g, '');
+    if (cleaned.includes(cleanKey) || cleanKey.includes(cleaned)) {
+      return THAI_COORDINATES[key];
     }
   }
   return null;
@@ -266,14 +295,16 @@ async function estimateRoute(origin, destination, seats = 4) {
         destCoords.lat,
         destCoords.lng
       );
-      // Multiply by Thai highway network winding factor (~1.28x)
-      distanceKm = Math.max(15, Math.round(crowDistance * 1.28 * 10) / 10);
-      // Average highway speed ~70 km/h + 15 mins local traffic
-      durationMinutes = Math.max(20, Math.round((distanceKm / 72) * 60 + 15));
+      // For short/local trips (<20km), winding factor is ~1.18x; for longer trips ~1.28x
+      const windingFactor = crowDistance < 20 ? 1.18 : 1.28;
+      distanceKm = Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10);
+      // Speed estimate: 45 km/h for local roads, 72 km/h for highways
+      const speedKmh = distanceKm < 25 ? 45 : 72;
+      durationMinutes = Math.max(5, Math.round((distanceKm / speedKmh) * 60));
     } else {
-      // Basic heuristic for typical inter-province trips
-      distanceKm = 120;
-      durationMinutes = 95;
+      // Sensible default fallback for local/regional commute
+      distanceKm = 15;
+      durationMinutes = 20;
     }
 
     routeResult = {
