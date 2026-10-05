@@ -13,6 +13,12 @@ const THAI_COORDINATES = {
   'สจลชุมพร': { lat: 10.7229, lng: 99.3789 },
   'kmitl chumphon': { lat: 10.7229, lng: 99.3789 },
   'วิทยาเขตชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'พระจอมเกล้าชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'พระจอมเกล้าลาดกระบัง วิทยาเขตชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'พระจอมเกล้าชุมพรเขตรอุดมศักดิ์': { lat: 10.7229, lng: 99.3789 },
+  'ม.พระจอมเกล้าชุมพร': { lat: 10.7229, lng: 99.3789 },
+  'หอในสจล': { lat: 10.7229, lng: 99.3789 },
+  'หอนอกสจล': { lat: 10.7229, lng: 99.3789 },
   'สจล.': { lat: 10.7229, lng: 99.3789 },
   'สจล': { lat: 10.7229, lng: 99.3789 },
   'kmitl': { lat: 10.7229, lng: 99.3789 },
@@ -20,8 +26,14 @@ const THAI_COORDINATES = {
   'ตลาดปะทิว': { lat: 10.7447, lng: 99.3175 },
   'ปะทิว': { lat: 10.7447, lng: 99.3175 },
   'pathiu': { lat: 10.7447, lng: 99.3175 },
+  'ชุมโค': { lat: 10.7300, lng: 99.3400 },
+  'อ่าวบ่อเมา': { lat: 10.7090, lng: 99.3880 },
+  'บ่อเมา': { lat: 10.7090, lng: 99.3880 },
+  'หาดบ่อเมา': { lat: 10.7090, lng: 99.3880 },
   'สนามบินชุมพร': { lat: 10.7128, lng: 99.3622 },
   'ท่าอากาศยานชุมพร': { lat: 10.7128, lng: 99.3622 },
+  'หาดทุ่งซาง': { lat: 10.7850, lng: 99.3800 },
+  'หาดบางเบิด': { lat: 10.9850, lng: 99.4900 },
   'หาดทุ่งวัวแล่น': { lat: 10.5645, lng: 99.2748 },
   'สะพลี': { lat: 10.5840, lng: 99.2600 },
   'หาดทรายรี': { lat: 10.3995, lng: 99.2818 },
@@ -429,12 +441,19 @@ function formatDurationThai(totalMinutes) {
   return `${mins || 10} นาที`;
 }
 
-// Query Google Routes API (Modern computeRoutes endpoint)
-function fetchGoogleRoutesAPI(origin, destination, apiKey) {
+// Query Google Routes API (Modern computeRoutes endpoint with LatLng coordinates support)
+function fetchGoogleRoutesAPI(origin, destination, apiKey, originCoords = null, destCoords = null) {
   return new Promise((resolve, reject) => {
+    const originLocation = originCoords
+      ? { location: { latLng: { latitude: originCoords.lat, longitude: originCoords.lng } } }
+      : { address: origin + ' ประเทศไทย' };
+    const destLocation = destCoords
+      ? { location: { latLng: { latitude: destCoords.lat, longitude: destCoords.lng } } }
+      : { address: destination + ' ประเทศไทย' };
+
     const postData = JSON.stringify({
-      origin: { address: origin },
-      destination: { address: destination },
+      origin: originLocation,
+      destination: destLocation,
       travelMode: 'DRIVE',
     });
 
@@ -482,12 +501,17 @@ function fetchGoogleRoutesAPI(origin, destination, apiKey) {
   });
 }
 
-// Query Google Maps Distance Matrix API (Legacy fallback)
-function fetchGoogleMapsDistance(origin, destination, apiKey) {
+// Query Google Maps Distance Matrix API (Legacy fallback with coordinates support)
+function fetchGoogleMapsDistance(origin, destination, apiKey, originCoords = null, destCoords = null) {
   return new Promise((resolve, reject) => {
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
-      origin
-    )}&destinations=${encodeURIComponent(destination)}&key=${apiKey}&language=th`;
+    const originParam = originCoords
+      ? `${originCoords.lat},${originCoords.lng}`
+      : encodeURIComponent(origin + ' ประเทศไทย');
+    const destParam = destCoords
+      ? `${destCoords.lat},${destCoords.lng}`
+      : encodeURIComponent(destination + ' ประเทศไทย');
+
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originParam}&destinations=${destParam}&key=${apiKey}&language=th`;
 
     https
       .get(url, (res) => {
@@ -559,40 +583,54 @@ async function estimateRoute(origin, destination, seats = 4) {
     throw new Error('กรุณาระบุต้นทางและปลายทาง');
   }
 
+  // 1. Resolve geographic coordinates first via smart engine (built-in dict + OSM)
+  const [originCoords, destCoords] = await Promise.all([
+    findCoordinatesSmart(origin),
+    findCoordinatesSmart(destination),
+  ]);
+
+  let crowDistance = null;
+  if (originCoords && destCoords) {
+    crowDistance = haversineDistance(
+      originCoords.lat,
+      originCoords.lng,
+      destCoords.lat,
+      destCoords.lng
+    );
+  }
+
   const googleApiKey = process.env.GOOGLE_MAPS_API_KEY;
   let routeResult = null;
 
-  // 1. Try Google Routes API if key configured
+  // 2. Try Google Routes API with exact coordinates for 100% precision
   if (googleApiKey) {
     try {
-      routeResult = await fetchGoogleRoutesAPI(origin, destination, googleApiKey);
+      routeResult = await fetchGoogleRoutesAPI(origin, destination, googleApiKey, originCoords, destCoords);
     } catch (err) {
       console.warn('Google Routes API error, trying Distance Matrix fallback:', err.message);
       try {
-        routeResult = await fetchGoogleMapsDistance(origin, destination, googleApiKey);
+        routeResult = await fetchGoogleMapsDistance(origin, destination, googleApiKey, originCoords, destCoords);
       } catch (err2) {
         console.warn('Google Maps API fallback error:', err2.message);
       }
     }
   }
 
-  // 2. Dual-Layer Thai Coordinates Engine (Built-in Dict + Live OSM Geocoding)
-  if (!routeResult) {
-    const [originCoords, destCoords] = await Promise.all([
-      findCoordinatesSmart(origin),
-      findCoordinatesSmart(destination),
-    ]);
+  // Misroute guard: If Google Routes API returned a distance that deviates unnaturally from crow distance (>2.2x or <0.7x),
+  // it indicates Google Geocoder resolved to a distant postal center instead of the local landmark. Fall back to calibrated engine.
+  if (routeResult && crowDistance !== null) {
+    if (routeResult.distance_km > crowDistance * 2.2 || routeResult.distance_km < crowDistance * 0.7) {
+      console.warn(`[RouteService] Google API distance (${routeResult.distance_km}km) differs abnormally from direct distance (${crowDistance.toFixed(1)}km). Falling back to calibrated local engine.`);
+      routeResult = null;
+    }
+  }
 
+  // 3. Dual-Layer Thai Coordinates Engine Fallback
+  if (!routeResult) {
     let distanceKm = 15;
     let durationMinutes = 20;
 
-    if (originCoords && destCoords) {
-      const crowDistance = haversineDistance(
-        originCoords.lat,
-        originCoords.lng,
-        destCoords.lat,
-        destCoords.lng
-      );
+    if (crowDistance !== null) {
       // For short/local trips (<20km), winding factor is ~1.18x; for longer trips ~1.28x
       const windingFactor = crowDistance < 20 ? 1.18 : 1.28;
       distanceKm = Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10);
