@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import VerificationModal from '../components/VerificationModal';
-import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock } from 'lucide-react';
+import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock, Leaf, Trees } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -339,6 +339,94 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Eco-Impact & Carbon Saved Badge Card */}
+      {(() => {
+        const totalTrips = (stats.tripsCreated || 0) + (stats.tripsJoined || 0);
+        const co2SavedKg = (totalTrips * 4.8).toFixed(1);
+        const treeDays = Math.round(co2SavedKg / 0.06);
+
+        let ecoLevel = {
+          badgeTh: '🌱 ผู้เริ่มต้นรักษ์โลก',
+          badgeEn: '🌱 Eco Beginner',
+          descTh: 'ร่วมเป็นส่วนหนึ่งของการเดินทางสีเขียว',
+          descEn: 'Starting your green travel journey'
+        };
+        if (totalTrips >= 15) {
+          ecoLevel = {
+            badgeTh: '🌍 ผู้พิทักษ์สิ่งแวดล้อม',
+            badgeEn: '🌍 Eco Champion',
+            descTh: 'ลดก๊าซเรือนกระจกได้อย่างมหาศาล ยอดเยี่ยมมาก!',
+            descEn: 'Exceptional carbon reduction for our planet!'
+          };
+        } else if (totalTrips >= 5) {
+          ecoLevel = {
+            badgeTh: '🌳 ฮีโร่เพื่อโลกสีเขียว',
+            badgeEn: '🌳 Planet Hero',
+            descTh: 'แชร์การเดินทางเป็นประจำ ช่วยลดมลพิษในชุมชน',
+            descEn: 'Frequent green commuter helping community emissions'
+          };
+        } else if (totalTrips >= 1) {
+          ecoLevel = {
+            badgeTh: '🌿 นักเดินทางรักษ์โลก',
+            badgeEn: '🌿 Green Commuter',
+            descTh: 'ลดการใช้รถยนต์ส่วนตัวผ่านการแชร์ทาง',
+            descEn: 'Reducing private car usage via carpooling'
+          };
+        }
+
+        return (
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-100/50 border border-emerald-200/90 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/60 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Leaf className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-emerald-950 flex items-center gap-2">
+                    <span>{isTh ? 'สถิติการอนุรักษ์สิ่งแวดล้อม (Eco Impact)' : 'Eco Impact & Sustainability'}</span>
+                    <span className="text-[11px] bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full font-black">
+                      {isTh ? ecoLevel.badgeTh : ecoLevel.badgeEn}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 font-medium">
+                    {isTh ? ecoLevel.descTh : ecoLevel.descEn}
+                  </p>
+                </div>
+              </div>
+              <div className="text-[11px] text-emerald-700 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 font-bold self-start sm:self-auto shadow-2xs">
+                {isTh ? `รวมการเดินทางสีเขียว: ${totalTrips} เที่ยว` : `Total green rides: ${totalTrips}`}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'CO₂ สะสมที่ลดได้' : 'Total CO₂ Avoided'}</div>
+                <div className="text-xl font-black text-emerald-700 mt-1">
+                  ~{co2SavedKg} <span className="text-xs font-bold text-slate-600">kg CO₂e</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'จากการแชร์คาร์พูล' : 'from sharing rides'}</p>
+              </div>
+
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'เทียบเท่าการดูดซับ' : 'Tree Days Equivalent'}</div>
+                <div className="text-xl font-black text-teal-700 mt-1">
+                  ~{treeDays} <span className="text-xs font-bold text-slate-600">{isTh ? 'วันต้นไม้' : 'tree-days'}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'การดูดซับคาร์บอนตามธรรมชาติ' : 'natural carbon absorption'}</p>
+              </div>
+
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'ลดจำนวนรถยนต์บนถนน' : 'Cars Avoided on Road'}</div>
+                <div className="text-xl font-black text-indigo-700 mt-1">
+                  -{totalTrips} <span className="text-xs font-bold text-slate-600">{isTh ? 'คัน-เที่ยว' : 'car-trips'}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'ช่วยลดมลพิษและการจราจร' : 'reduces pollution & congestion'}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Trust Badge Status Banner & Action */}
       {verificationData?.is_verified ? (
