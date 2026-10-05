@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import VerificationModal from '../components/VerificationModal';
-import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock } from 'lucide-react';
+import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock, Leaf, Trees } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -42,9 +42,6 @@ export default function Profile() {
 
   // Car management state inside profile
   const [cars, setCars] = useState(cachedProfile?.cars || []);
-  const [licensePlate, setLicensePlate] = useState('');
-  const [carModel, setCarModel] = useState('');
-  const [capacity, setCapacity] = useState(4);
 
   const [loading, setLoading] = useState(!cachedProfile);
   const [saving, setSaving] = useState(false);
@@ -225,33 +222,6 @@ export default function Profile() {
     }
   };
 
-  const handleAddCar = async (e) => {
-    e.preventDefault();
-    if (!licensePlate || !carModel) return;
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      const res = await API.post('/cars', {
-        license_plate: licensePlate,
-        model: carModel,
-        capacity: parseInt(capacity),
-      });
-
-      if (res.data.success) {
-        setSuccessMsg('เพิ่มรถยนต์เรียบร้อยแล้ว');
-        setLicensePlate('');
-        setCarModel('');
-        setCapacity(4);
-        fetchProfileData();
-      } else {
-        setError(String(res.data.message));
-      }
-    } catch (err) {
-      setError(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการเพิ่มรถ'));
-    }
-  };
-
   const handleDeleteCar = async (plate) => {
     if (!window.confirm(`ต้องการลบข้อมูลรถทะเบียน ${plate} หรือไม่?`)) return;
     try {
@@ -339,6 +309,94 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Eco-Impact & Carbon Saved Badge Card */}
+      {(() => {
+        const totalTrips = (stats.tripsCreated || 0) + (stats.tripsJoined || 0);
+        const co2SavedKg = (totalTrips * 4.8).toFixed(1);
+        const treeDays = Math.round(co2SavedKg / 0.06);
+
+        let ecoLevel = {
+          badgeTh: '🌱 ผู้เริ่มต้นรักษ์โลก',
+          badgeEn: '🌱 Eco Beginner',
+          descTh: 'ร่วมเป็นส่วนหนึ่งของการเดินทางสีเขียว',
+          descEn: 'Starting your green travel journey'
+        };
+        if (totalTrips >= 15) {
+          ecoLevel = {
+            badgeTh: '🌍 ผู้พิทักษ์สิ่งแวดล้อม',
+            badgeEn: '🌍 Eco Champion',
+            descTh: 'ลดก๊าซเรือนกระจกได้อย่างมหาศาล ยอดเยี่ยมมาก!',
+            descEn: 'Exceptional carbon reduction for our planet!'
+          };
+        } else if (totalTrips >= 5) {
+          ecoLevel = {
+            badgeTh: '🌳 ฮีโร่เพื่อโลกสีเขียว',
+            badgeEn: '🌳 Planet Hero',
+            descTh: 'แชร์การเดินทางเป็นประจำ ช่วยลดมลพิษในชุมชน',
+            descEn: 'Frequent green commuter helping community emissions'
+          };
+        } else if (totalTrips >= 1) {
+          ecoLevel = {
+            badgeTh: '🌿 นักเดินทางรักษ์โลก',
+            badgeEn: '🌿 Green Commuter',
+            descTh: 'ลดการใช้รถยนต์ส่วนตัวผ่านการแชร์ทาง',
+            descEn: 'Reducing private car usage via carpooling'
+          };
+        }
+
+        return (
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-100/50 border border-emerald-200/90 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/60 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Leaf className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-emerald-950 flex items-center gap-2">
+                    <span>{isTh ? 'สถิติการอนุรักษ์สิ่งแวดล้อม (Eco Impact)' : 'Eco Impact & Sustainability'}</span>
+                    <span className="text-[11px] bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full font-black">
+                      {isTh ? ecoLevel.badgeTh : ecoLevel.badgeEn}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 font-medium">
+                    {isTh ? ecoLevel.descTh : ecoLevel.descEn}
+                  </p>
+                </div>
+              </div>
+              <div className="text-[11px] text-emerald-700 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 font-bold self-start sm:self-auto shadow-2xs">
+                {isTh ? `รวมการเดินทางสีเขียว: ${totalTrips} เที่ยว` : `Total green rides: ${totalTrips}`}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'CO₂ สะสมที่ลดได้' : 'Total CO₂ Avoided'}</div>
+                <div className="text-xl font-black text-emerald-700 mt-1">
+                  ~{co2SavedKg} <span className="text-xs font-bold text-slate-600">kg CO₂e</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'จากการแชร์คาร์พูล' : 'from sharing rides'}</p>
+              </div>
+
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'เทียบเท่าการดูดซับ' : 'Tree Days Equivalent'}</div>
+                <div className="text-xl font-black text-teal-700 mt-1">
+                  ~{treeDays} <span className="text-xs font-bold text-slate-600">{isTh ? 'วันต้นไม้' : 'tree-days'}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'การดูดซับคาร์บอนตามธรรมชาติ' : 'natural carbon absorption'}</p>
+              </div>
+
+              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'ลดจำนวนรถยนต์บนถนน' : 'Cars Avoided on Road'}</div>
+                <div className="text-xl font-black text-indigo-700 mt-1">
+                  -{totalTrips} <span className="text-xs font-bold text-slate-600">{isTh ? 'คัน-เที่ยว' : 'car-trips'}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'ช่วยลดมลพิษและการจราจร' : 'reduces pollution & congestion'}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Trust Badge Status Banner & Action */}
       {verificationData?.is_verified ? (
@@ -584,78 +642,89 @@ export default function Profile() {
       {/* Integrated Car Management (Shown for Driver or Both) */}
       {(role === 'Driver' || role === 'Both') && (
         <div className="travel-card p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Car className="w-5 h-5 text-emerald-600" />
-              <span>{isTh ? 'จัดการข้อมูลรถยนต์ของคุณ (Car Registration)' : 'Manage Vehicles (Car Registration)'}</span>
-            </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-3">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <Car className="w-5 h-5 text-emerald-600" />
+                <span>{isTh ? 'จัดการข้อมูลรถยนต์ของคุณ (Car Registration)' : 'Manage Vehicles (Car Registration)'}</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                {isTh ? 'รถทุกคันต้องผ่านการถ่ายภาพป้ายทะเบียนและตรวจสอบโดยผู้ดูแลระบบ' : 'Vehicles require license plate photo verification by admin'}
+              </p>
+            </div>
+            <Link
+              to="/cars"
+              className="travel-btn-primary px-4 py-2.5 text-xs font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <Camera className="w-4 h-4" />
+              <span>{isTh ? '+ ลงทะเบียนรถพร้อมถ่ายรูปป้ายทะเบียน' : '+ Register Car & Plate Photo'}</span>
+            </Link>
           </div>
 
-          <form onSubmit={handleAddCar} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              required
-              placeholder={isTh ? "ทะเบียนรถ (เช่น กก-1234)" : "Plate (e.g. 1AB-2345)"}
-              value={licensePlate}
-              onChange={(e) => setLicensePlate(e.target.value)}
-              className="px-4 py-3 travel-input text-xs"
-            />
-            <input
-              type="text"
-              required
-              placeholder={isTh ? "ยี่ห้อ/รุ่นรถ (เช่น Honda Civic)" : "Model (e.g. Honda Civic)"}
-              value={carModel}
-              onChange={(e) => setCarModel(e.target.value)}
-              className="px-4 py-3 travel-input text-xs"
-            />
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="1"
-                max="15"
-                required
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                className="w-24 px-3 py-3 travel-input text-xs font-bold text-center"
-              />
-              <button
-                type="submit"
-                className="flex-1 travel-btn-primary text-xs flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{isTh ? 'เพิ่มรถ' : 'Add Car'}</span>
-              </button>
+          <div className="space-y-3 pt-2">
+            <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span>{isTh ? `รถยนต์ที่ลงทะเบียนไว้ (${cars.length} คัน):` : `Registered Vehicles (${cars.length}):`}</span>
+              <Link to="/cars" className="text-[11px] text-emerald-700 font-bold hover:underline">
+                {isTh ? 'ดูหน้าระบบลงทะเบียนรถยนต์ ➔' : 'Go to Cars page ➔'}
+              </Link>
             </div>
-          </form>
 
-          <div className="space-y-2 pt-2">
-            <div className="text-xs font-bold text-slate-700">{isTh ? `รถยนต์ที่ลงทะเบียนไว้ (${cars.length} คัน):` : `Registered Vehicles (${cars.length}):`}</div>
             {cars.length === 0 ? (
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs text-center font-medium">
-                {isTh ? 'ยังไม่มีรถยนต์ที่ลงทะเบียนไว้ กรุณาเพิ่มรถยนต์เพื่อสร้างเที่ยวเดินทาง' : 'No registered cars yet. Please add a car to offer rides.'}
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-xs text-center space-y-2 font-medium">
+                <p>{isTh ? 'ยังไม่มีรถยนต์ที่ลงทะเบียนไว้ กรุณาลงทะเบียนและถ่ายรูปป้ายทะเบียนเพื่อสร้างเที่ยวเดินทาง' : 'No registered cars yet. Please register your car with a plate photo to offer rides.'}</p>
+                <Link
+                  to="/cars"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-2xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isTh ? 'ลงทะเบียนรถยนต์คันแรก' : 'Register First Vehicle'}</span>
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {cars.map((c) => (
-                  <div key={c.license_plate} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-extrabold text-slate-900">{c.model}</div>
-                      <div className="text-xs text-slate-600 font-mono font-bold">{isTh ? 'ทะเบียน:' : 'Plate:'} {c.license_plate}</div>
+                {cars.map((c) => {
+                  const status = c.verification_status || 'อนุมัติแล้ว';
+                  const isAppr = status === 'อนุมัติแล้ว';
+                  const isPend = status === 'รอดำเนินการ';
+
+                  return (
+                    <div key={c.license_plate} className="p-4 rounded-xl bg-white border border-slate-200 flex items-center justify-between text-xs shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="font-extrabold text-slate-900 flex items-center gap-2">
+                          <span>{c.model}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                            isAppr
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              : isPend
+                              ? 'bg-amber-100 text-amber-800 border-amber-200'
+                              : 'bg-rose-100 text-rose-800 border-rose-200'
+                          }`}>
+                            {isAppr ? '✓ ยืนยันแล้ว' : isPend ? '⏳ รอแอดมินตรวจ' : '❌ ไม่ผ่าน'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-600 font-mono font-bold">{isTh ? 'ทะเบียน:' : 'Plate:'} {c.license_plate}</div>
+                        {c.car_image_url && (
+                          <Link to="/cars" className="text-[10px] text-emerald-600 hover:underline flex items-center gap-1 font-bold">
+                            <Camera className="w-3 h-3" />
+                            <span>{isTh ? 'มีรูปถ่ายป้ายทะเบียนแนบแล้ว' : 'Plate photo attached'}</span>
+                          </Link>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                          {c.capacity} {isTh ? 'ที่นั่ง' : 'seats'}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteCar(c.license_plate)}
+                          className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+                          title={isTh ? "ลบรถ" : "Delete vehicle"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                        {c.capacity} {isTh ? 'ที่นั่ง' : 'seats'}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteCar(c.license_plate)}
-                        className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
-                        title={isTh ? "ลบรถ" : "Delete vehicle"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

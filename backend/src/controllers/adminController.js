@@ -11,6 +11,7 @@ const getAdminStats = async (req, res) => {
       reportCount,
       supportCount,
       vCount,
+      pendingCarsCount,
       recentUsers,
       recentTrips,
     ] = await Promise.all([
@@ -22,6 +23,7 @@ const getAdminStats = async (req, res) => {
       db.query("SELECT COUNT(*) FROM chat_reports WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
       db.query("SELECT COUNT(*) FROM support_requests WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
       db.query("SELECT COUNT(*) FROM verification_requests WHERE status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
+      db.query("SELECT COUNT(*) FROM cars WHERE verification_status = 'รอดำเนินการ'").catch(() => ({ rows: [{ count: 0 }] })),
       db.query('SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC LIMIT 5'),
       db.query(
         `SELECT t.*, c.model as car_model, u.name as driver_name
@@ -38,6 +40,7 @@ const getAdminStats = async (req, res) => {
       stats: {
         totalUsers: parseInt(usersCount.rows[0]?.count || 0),
         totalCars: parseInt(carsCount.rows[0]?.count || 0),
+        pendingCars: parseInt(pendingCarsCount.rows[0]?.count || 0),
         totalEvents: parseInt(eventsCount.rows[0]?.count || 0),
         totalTrips: parseInt(tripsCount.rows[0]?.count || 0),
         totalBookings: parseInt(bookingsCount.rows[0]?.count || 0),
@@ -423,6 +426,104 @@ const deleteAdminPdpaRequest = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Car Registrations & License Plate Verifications
+// ---------------------------------------------------------------------------
+const getAdminCars = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT c.*, 
+             u.name as owner_name, u.email as owner_email, u.phone as owner_phone, u.avatar_url as owner_avatar,
+             v.name as reviewer_name
+      FROM cars c
+      LEFT JOIN users u ON c.user_id = u.user_id
+      LEFT JOIN users v ON c.verified_by = v.user_id
+      ORDER BY 
+        CASE WHEN c.verification_status = 'รอดำเนินการ' THEN 0 ELSE 1 END,
+        c.created_at DESC
+    `);
+    res.json({ success: true, cars: result.rows || [] });
+  } catch (error) {
+    console.error('Get admin cars error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลรถยนต์: ' + (error.message || String(error)) });
+  }
+};
+
+const reviewCarRegistration = async (req, res) => {
+  try {
+    const { plate } = req.params;
+    const { status, admin_reply } = req.body;
+    const reviewerId = req.user?.user_id || req.user?.id;
+
+    if (!['อนุมัติแล้ว', 'ปฏิเสธ'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'สถานะต้องเป็น อนุมัติแล้ว หรือ ปฏิเสธ' });
+    }
+
+    const checkCar = await db.query('SELECT * FROM cars WHERE license_plate = $1', [plate]);
+    if (!checkCar.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลรถยนต์ทะเบียนนี้ในระบบ' });
+    }
+
+    const car = checkCar.rows[0];
+    const targetUserId = car.user_id;
+
+    const defaultReply = status === 'อนุมัติแล้ว' 
+      ? 'ภาพถ่ายป้ายทะเบียนชัดเจนและถูกต้อง ได้รับการอนุมัติแล้ว' 
+      : 'ภาพถ่ายป้ายทะเบียนไม่ชัดเจนหรือไม่ถูกต้องตามเกณฑ์ความปลอดภัย';
+
+    const updateCar = await db.query(
+      `UPDATE cars 
+       SET verification_status = $1, admin_reply = $2, verified_by = $3, verified_at = CURRENT_TIMESTAMP
+       WHERE license_plate = $4 RETURNING *`,
+      [status, admin_reply ? admin_reply.trim() : defaultReply, reviewerId, plate]
+    );
+
+    // If approved, ensure user has driver/both role
+    if (status === 'อนุมัติแล้ว') {
+      const userRes = await db.query('SELECT role FROM users WHERE user_id = $1', [targetUserId]);
+      if (userRes.rows.length && userRes.rows[0].role === 'Passenger') {
+        await db.query("UPDATE users SET role = 'Both' WHERE user_id = $1", [targetUserId]);
+      }
+    }
+
+    // Insert notification to car owner
+    try {
+      const notifTitle = status === 'อนุมัติแล้ว' ? 'การลงทะเบียนรถยนต์ได้รับการอนุมัติ 🚗✅' : 'การลงทะเบียนรถยนต์ไม่ผ่านการอนุมัติ ⚠️';
+      const notifMsg = status === 'อนุมัติแล้ว'
+        ? `รถยนต์ทะเบียน ${plate} (${car.model}) ได้รับการอนุมัติจากผู้ดูแลระบบเรียบร้อยแล้ว คุณสามารถสร้างทริป carpool ได้ทันที`
+        : `รถยนต์ทะเบียน ${plate} (${car.model}) ไม่ผ่านการอนุมัติ: ${admin_reply ? admin_reply.trim() : defaultReply}`;
+
+      await db.query(
+        `INSERT INTO notifications (user_id, title, message, type, link_url)
+         VALUES ($1, $2, $3, 'car_verification', '/cars')`,
+        [targetUserId, notifTitle, notifMsg]
+      );
+    } catch (notifErr) {
+      console.warn('Failed to insert car verification notification:', notifErr.message);
+    }
+
+    res.json({
+      success: true,
+      message: status === 'อนุมัติแล้ว' ? 'อนุมัติการลงทะเบียนรถยนต์เรียบร้อยแล้ว' : 'ปฏิเสธการลงทะเบียนรถยนต์เรียบร้อยแล้ว',
+      car: updateCar.rows[0],
+    });
+  } catch (error) {
+    console.error('Review car registration error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบรถ: ' + (error.message || String(error)) });
+  }
+};
+
+const deleteAdminCar = async (req, res) => {
+  try {
+    const { plate } = req.params;
+    await db.query('DELETE FROM cars WHERE license_plate = $1', [plate]);
+    res.json({ success: true, message: 'ลบข้อมูลรถยนต์ออกจากระบบเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Delete admin car error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบรถยนต์: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getAllUsers,
@@ -443,4 +544,7 @@ module.exports = {
   getAdminPdpaRequests,
   updateAdminPdpaRequest,
   deleteAdminPdpaRequest,
+  getAdminCars,
+  reviewCarRegistration,
+  deleteAdminCar,
 };

@@ -173,10 +173,21 @@ const COLUMN_PATCHES = [
   ['chat_reports', 'status', "VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ'"],
   ['chat_reports', 'resolved_at', 'TIMESTAMP WITH TIME ZONE'],
   ['chat_reports', 'resolved_by', 'INT'],
+  ['bookings', 'payment_status', "VARCHAR(30) NOT NULL DEFAULT 'unpaid'"],
+  ['bookings', 'payment_slip_url', 'TEXT'],
+  ['bookings', 'payment_time', 'TIMESTAMP WITH TIME ZONE'],
+  ['cars', 'car_image_url', 'TEXT'],
+  ['cars', 'verification_status', "VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ'"],
+  ['cars', 'admin_reply', 'TEXT'],
+  ['cars', 'verified_by', 'INT'],
+  ['cars', 'verified_at', 'TIMESTAMP WITH TIME ZONE'],
+  ['cars', 'created_at', 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP'],
 ];
 
 // Administration is a permission separate from the user's travel role.
 const CONSTRAINT_FIXES = [
+  `UPDATE cars SET verification_status = 'อนุมัติแล้ว' WHERE verification_status IS NULL OR verification_status = ''`,
+  `CREATE INDEX IF NOT EXISTS idx_cars_verification_status ON cars (verification_status)`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`,
   `UPDATE users SET is_admin = TRUE, role = 'Both' WHERE role = 'Admin' OR email = 'admin@ikoshare.com'`,
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`,
@@ -218,6 +229,18 @@ const CONSTRAINT_FIXES = [
   `CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests (status)`,
   `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_user ON pdpa_requests (user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_pdpa_requests_status ON pdpa_requests (status)`,
+
+  `CREATE TABLE IF NOT EXISTS notifications (
+     notification_id SERIAL PRIMARY KEY,
+     user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+     title VARCHAR(255) NOT NULL,
+     message TEXT NOT NULL,
+     type VARCHAR(50) NOT NULL DEFAULT 'general',
+     link_url VARCHAR(255),
+     is_read BOOLEAN NOT NULL DEFAULT FALSE,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC)`,
 ];
 
 const SEEDS = [

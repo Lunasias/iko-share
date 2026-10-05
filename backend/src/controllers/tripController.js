@@ -130,11 +130,29 @@ const createTrip = async (req, res) => {
 
     let capacity = null;
     if (trip_type === 'carpool') {
-      const carRes = await db.query('SELECT capacity FROM cars WHERE license_plate = $1 AND user_id = $2', [license_plate, userId]);
+      const carRes = await db.query(
+        'SELECT capacity, verification_status, admin_reply FROM cars WHERE license_plate = $1 AND user_id = $2',
+        [license_plate, userId]
+      );
       if (!carRes.rows || carRes.rows.length === 0) {
         return res.status(403).json({ success: false, message: 'ไม่พบข้อมูลรถของคุณ หรือเลือกรถไม่ถูกต้อง' });
       }
-      capacity = carRes.rows[0].capacity;
+
+      const car = carRes.rows[0];
+      if (car.verification_status === 'ปฏิเสธ') {
+        return res.status(400).json({
+          success: false,
+          message: `รถยนต์ทะเบียน ${license_plate} ไม่ผ่านการอนุมัติจากผู้ดูแลระบบ (${car.admin_reply || 'รูปถ่ายไม่ชัดเจน'}) กรุณาตรวจสอบหรือลงทะเบียนใหม่`,
+        });
+      }
+      if (car.verification_status === 'รอดำเนินการ') {
+        return res.status(400).json({
+          success: false,
+          message: `รถยนต์ทะเบียน ${license_plate} อยู่ระหว่างรอการตรวจสอบป้ายทะเบียนจากผู้ดูแลระบบ (Admin) เพื่อความปลอดภัยของผู้โดยสาร กรุณารอผลการอนุมัติก่อนเปิดทริป`,
+        });
+      }
+
+      capacity = car.capacity;
     }
     const seatsToOffer = parseInt(available_seats);
     if (!Number.isInteger(seatsToOffer) || seatsToOffer < 1) {

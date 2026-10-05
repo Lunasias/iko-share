@@ -18,7 +18,13 @@ CREATE TABLE IF NOT EXISTS cars (
   license_plate VARCHAR(50) PRIMARY KEY,
   user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
   model VARCHAR(100) NOT NULL,
-  capacity INT NOT NULL DEFAULT 4
+  capacity INT NOT NULL DEFAULT 4,
+  car_image_url TEXT,
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ' CHECK (verification_status IN ('รอดำเนินการ', 'อนุมัติแล้ว', 'ปฏิเสธ')),
+  admin_reply TEXT,
+  verified_by INT REFERENCES users(user_id) ON DELETE SET NULL,
+  verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -55,6 +61,9 @@ CREATE TABLE IF NOT EXISTS bookings (
   trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
   booking_status VARCHAR(20) NOT NULL DEFAULT 'รอการอนุมัติ' CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว', 'ถูกนำออกจากตี้')),
   location VARCHAR(255),
+  payment_status VARCHAR(30) NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'pending_verification', 'paid')),
+  payment_slip_url TEXT,
+  payment_time TIMESTAMP WITH TIME ZONE,
   booking_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -159,6 +168,18 @@ CREATE INDEX IF NOT EXISTS idx_verification_requests_user ON verification_reques
 CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests (status);
 CREATE INDEX IF NOT EXISTS idx_pdpa_requests_user ON pdpa_requests (user_id);
 CREATE INDEX IF NOT EXISTS idx_pdpa_requests_status ON pdpa_requests (status);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  notification_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(50) NOT NULL DEFAULT 'general',
+  link_url VARCHAR(255),
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC);
 
 -- Seed Initial Admin User (Password: admin123456)
 -- NOTE: this hash was regenerated because the previous one did not match 'admin123456'.

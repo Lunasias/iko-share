@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
 import OwnerProfileModal from '../components/OwnerProfileModal';
 import CarLoader from '../components/CarLoader';
 import { useTheme } from '../context/ThemeContext';
-import { Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle, Filter, Sparkles, HeartHandshake } from 'lucide-react';
+import {
+  Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle,
+  Filter, Sparkles, HeartHandshake, SlidersHorizontal, ArrowUpDown,
+  ShieldCheck, RotateCcw, X, Sun, Moon, Compass, DollarSign
+} from 'lucide-react';
 
 export default function Trips() {
   const { isTh } = useTheme();
@@ -56,6 +60,75 @@ export default function Trips() {
   // Owner profile modal state
   const [ownerModalOpen, setOwnerModalOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState(null);
+
+  // Advanced filters state
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [timeFilter, setTimeFilter] = useState('all'); // 'all' | 'morning' | 'afternoon' | 'evening'
+  const [priceFilter, setPriceFilter] = useState('all'); // 'all' | 'under100' | '100to300' | 'over300'
+  const [tripTypeFilter, setTripTypeFilter] = useState('all'); // 'all' | 'carpool' | 'public_transport' | 'find_driver'
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('earliest'); // 'earliest' | 'cheapest' | 'seats'
+
+  const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) +
+    (priceFilter !== 'all' ? 1 : 0) +
+    (tripTypeFilter !== 'all' ? 1 : 0) +
+    (verifiedOnly ? 1 : 0);
+
+  const resetFilters = () => {
+    setTimeFilter('all');
+    setPriceFilter('all');
+    setTripTypeFilter('all');
+    setVerifiedOnly(false);
+    setSortBy('earliest');
+  };
+
+  const filteredTrips = useMemo(() => {
+    let result = [...trips];
+
+    // 1. Time of day filter
+    if (timeFilter !== 'all') {
+      result = result.filter((t) => {
+        const d = new Date(t.departure_time);
+        const hour = d.getHours();
+        if (timeFilter === 'morning') return hour >= 6 && hour < 12;
+        if (timeFilter === 'afternoon') return hour >= 12 && hour < 18;
+        if (timeFilter === 'evening') return hour >= 18 || hour < 6;
+        return true;
+      });
+    }
+
+    // 2. Price filter
+    if (priceFilter !== 'all') {
+      result = result.filter((t) => {
+        const price = parseFloat(t.price_seat) || 0;
+        if (priceFilter === 'under100') return price <= 100;
+        if (priceFilter === '100to300') return price > 100 && price <= 300;
+        if (priceFilter === 'over300') return price > 300;
+        return true;
+      });
+    }
+
+    // 3. Trip Type filter
+    if (tripTypeFilter !== 'all') {
+      result = result.filter((t) => (t.trip_type || 'carpool') === tripTypeFilter);
+    }
+
+    // 4. Verified Driver Only
+    if (verifiedOnly) {
+      result = result.filter((t) => Boolean(t.driver_is_verified));
+    }
+
+    // 5. Sorting
+    if (sortBy === 'earliest') {
+      result.sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time));
+    } else if (sortBy === 'cheapest') {
+      result.sort((a, b) => (parseFloat(a.price_seat) || 0) - (parseFloat(b.price_seat) || 0));
+    } else if (sortBy === 'seats') {
+      result.sort((a, b) => (b.available_seats || 0) - (a.available_seats || 0));
+    }
+
+    return result;
+  }, [trips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
 
   useEffect(() => {
     setOrigin(searchParams.get('origin') || '');
@@ -187,6 +260,193 @@ export default function Trips() {
         </form>
       </div>
 
+      {/* Advanced Filter & Sorting Toolbar */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs backdrop-blur-sm">
+          {/* Left: Result count & active chips */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-700">
+              {isTh
+                ? `พบ ${filteredTrips.length} ทริป`
+                : `Found ${filteredTrips.length} trips`}
+              {trips.length !== filteredTrips.length && (
+                <span className="text-slate-400 font-medium ml-1">
+                  ({isTh ? `จากทั้งหมด ${trips.length}` : `out of ${trips.length}`})
+                </span>
+              )}
+            </span>
+
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                title={isTh ? 'ล้างตัวกรองทั้งหมด' : 'Reset all filters'}
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>{isTh ? 'ล้างตัวกรอง' : 'Clear filters'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Right: Sort and Filter Toggle Buttons */}
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent border-none text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="earliest">{isTh ? '🕒 ออกเดินทางเร็วสุด' : '🕒 Earliest Departure'}</option>
+                <option value="cheapest">{isTh ? '💰 ราคาประหยัดสุด' : '💰 Lowest Price'}</option>
+                <option value="seats">{isTh ? '💺 ที่นั่งว่างมากสุด' : '💺 Most Seats Left'}</option>
+              </select>
+            </div>
+
+            {/* Filter Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowFilterPanel(!showFilterPanel)}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                showFilterPanel || activeFilterCount > 0
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{isTh ? 'ตัวกรองขั้นสูง' : 'Filters'}</span>
+              {activeFilterCount > 0 && (
+                <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black ${
+                  showFilterPanel || activeFilterCount > 0 ? 'bg-white text-emerald-800' : 'bg-emerald-600 text-white'
+                }`}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Collapsible Filter Panel */}
+        {showFilterPanel && (
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 1. Time of Day */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  {isTh ? 'ช่วงเวลาเดินทาง' : 'Time of Day'}
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'all', labelTh: 'ทั้งหมด', labelEn: 'All' },
+                    { id: 'morning', labelTh: 'เช้า (06-12)', labelEn: 'Morning' },
+                    { id: 'afternoon', labelTh: 'บ่าย (12-18)', labelEn: 'Afternoon' },
+                    { id: 'evening', labelTh: 'ค่ำ/ดึก (18+)', labelEn: 'Evening' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTimeFilter(t.id)}
+                      className={`text-[11px] py-1.5 px-2 rounded-lg font-bold border transition-colors ${
+                        timeFilter === t.id
+                          ? 'bg-emerald-100/80 text-emerald-800 border-emerald-300'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {isTh ? t.labelTh : t.labelEn}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Price Range */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  {isTh ? 'งบประมาณ / ราคา' : 'Price Range'}
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'all', labelTh: 'ทั้งหมด', labelEn: 'All' },
+                    { id: 'under100', labelTh: '≤ 100฿', labelEn: '≤ 100฿' },
+                    { id: '100to300', labelTh: '101 - 300฿', labelEn: '101 - 300฿' },
+                    { id: 'over300', labelTh: '> 300฿', labelEn: '> 300฿' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPriceFilter(p.id)}
+                      className={`text-[11px] py-1.5 px-2 rounded-lg font-bold border transition-colors ${
+                        priceFilter === p.id
+                          ? 'bg-emerald-100/80 text-emerald-800 border-emerald-300'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {isTh ? p.labelTh : p.labelEn}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Trip Type */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  {isTh ? 'ประเภทการเดินทาง' : 'Trip Type'}
+                </label>
+                <select
+                  value={tripTypeFilter}
+                  onChange={(e) => setTripTypeFilter(e.target.value)}
+                  className="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-800 focus:outline-none"
+                >
+                  <option value="all">{isTh ? 'ทุกรูปแบบ' : 'All Types'}</option>
+                  <option value="carpool">{isTh ? '🚗 รถยนต์ร่วมเดินทาง (Carpool)' : '🚗 Carpool'}</option>
+                  <option value="public_transport">{isTh ? '🚆 ขนส่งสาธารณะ' : '🚆 Public Transport'}</option>
+                  <option value="find_driver">{isTh ? '🙋 หาคนขับร่วมทาง' : '🙋 Find Driver'}</option>
+                </select>
+              </div>
+
+              {/* 4. Safety & Verification */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  {isTh ? 'ความน่าเชื่อถือ' : 'Trust & Safety'}
+                </label>
+                <label className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-800 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                      {isTh ? 'เฉพาะคนขับยืนยันตัวตน' : 'Verified Drivers Only'}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block">
+                      {isTh ? 'ผ่านการตรวจสอบเอกสารแล้ว' : 'Identity verified'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Quick Reset in Panel */}
+            {activeFilterCount > 0 && (
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>{isTh ? 'รีเซ็ตตัวกรองทั้งหมด' : 'Reset All Filters'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Background SWR Sync Indicator */}
       {isRefreshing && (
         <div className="flex items-center justify-between px-4 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold transition-all shadow-xs">
@@ -241,21 +501,41 @@ export default function Trips() {
             ))}
           </div>
         </div>
-      ) : trips.length === 0 ? (
+      ) : filteredTrips.length === 0 ? (
         <div className="travel-card text-center py-16 space-y-4 border border-slate-200">
           <Car className="w-14 h-14 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-black text-slate-900">{isTh ? 'ยังไม่พบเที่ยวเดินทางที่ตรงกับการค้นหา' : 'No trips found matching your search'}</h3>
-          <p className="text-slate-500 text-xs font-medium">{isTh ? 'ลองเปลี่ยนจุดหมาย หรือเปิดเส้นทางใหม่ชวนเพื่อนร่วมทางไปด้วยกัน' : 'Try changing your destination or create a new trip to invite companions'}</p>
-          <Link
-            to="/create-trip"
-            className="inline-flex items-center gap-2 travel-btn-primary px-6 py-2.5 font-bold text-xs shadow-md"
-          >
-            {isTh ? '+ เปิดการเดินทางใหม่' : '+ Create New Trip'}
-          </Link>
+          <h3 className="text-lg font-black text-slate-900">
+            {trips.length > 0 && activeFilterCount > 0
+              ? (isTh ? 'ไม่พบเที่ยวเดินทางที่ตรงกับตัวกรองที่คุณเลือก' : 'No trips match the selected filters')
+              : (isTh ? 'ยังไม่พบเที่ยวเดินทางที่ตรงกับการค้นหา' : 'No trips found matching your search')}
+          </h3>
+          <p className="text-slate-500 text-xs font-medium">
+            {trips.length > 0 && activeFilterCount > 0
+              ? (isTh ? 'ลองปรับเปลี่ยนเงื่อนไขตัวกรอง หรือล้างตัวกรองเพื่อดูเที่ยวเดินทางทั้งหมด' : 'Try adjusting your filters or clear filters to view all trips')
+              : (isTh ? 'ลองเปลี่ยนจุดหมาย หรือเปิดเส้นทางใหม่ชวนเพื่อนร่วมทางไปด้วยกัน' : 'Try changing your destination or create a new trip to invite companions')}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-2 travel-btn-secondary px-5 py-2.5 font-bold text-xs shadow-xs"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {isTh ? 'ล้างตัวกรอง' : 'Clear Filters'}
+              </button>
+            )}
+            <Link
+              to="/create-trip"
+              className="inline-flex items-center gap-2 travel-btn-primary px-6 py-2.5 font-bold text-xs shadow-md"
+            >
+              {isTh ? '+ เปิดการเดินทางใหม่' : '+ Create New Trip'}
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trips.map((trip) => {
+          {filteredTrips.map((trip) => {
             const departureDate = new Date(trip.departure_time);
             return (
               <div
