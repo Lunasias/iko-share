@@ -118,6 +118,90 @@ flowchart TD
 | **Interactive Map** | **Google Maps Embed & Directions** | รองรับการระบุสถานที่ในไทยทุกระดับ (อำเภอ, ตำบล, สถานที่ท่องเที่ยว, มหาวิทยาลัย, จุดนัดพบภาษาไทย) แม่นยำ 100% | OpenStreetMap/Leaflet มีปัญหาเรื่อง Geocoding ชื่อเฉพาะภาษาไทย (เช่น วค.สุราษฎร์ธานี) ปักหมุดเพี้ยนไปต่างประเทศ |
 | **Payment Standard** | **PromptPay EMVCo QR Code** | มาตรฐานกลางของธนาคารแห่งประเทศไทย (BOT) ผู้โดยสารสแกนจ่ายได้ทุกแอปธนาคารโดยไม่มีค่าธรรมเนียม | บัตรเครดิตมีค่าธรรมเนียมธุรกรรมสูง (2.5–3.5%) ไม่เหมาะกับการหารค่าน้ำมันราคาหลักสิบ-หลักร้อย |
 
+### 2.3 รายละเอียดเจาะลึกเทคโนโลยีและไลบรารีแต่ละตัว (Detailed Technology Breakdown & Project Roles)
+
+เพื่อให้สามารถตอบข้อซักถามของคณะกรรมการได้อย่างแม่นยำและครบถ้วน ทุกเทคโนโลยีที่นำมาใช้ในระบบแบ่งตามหมวดหมู่และหน้าที่จริงใน Iko-Share ดังนี้:
+
+#### 1. ส่วนหน้า (Frontend Client Tier)
+1. **React 18 (`react`, `react-dom`)**:
+   - **หน้าที่หลัก:** เป็น JavaScript Library สำหรับสร้าง Single Page Application (SPA) ด้วยแนวคิด Component-Based
+   - **บทบาทในโปรเจกต์:** จัดการ UI ทั้งหมด แบ่งเป็นชิ้นส่วน Reusable Components (เช่น `Navbar`, `TripCard`, `VehicleConsentModal`, `ShareTripModal`), จัดการ State ในหน้าจอด้วย React Hooks (`useState`, `useEffect`, `useRef`, `useCallback`, `useMemo`) และส่งข้อมูลส่วนกลางผ่าน Context API (`AuthContext`, `ThemeContext`)
+2. **Vite (`vite`, `@vitejs/plugin-react`)**:
+   - **หน้าที่หลัก:** Next-generation Frontend Build Tool และ Development Server ที่รวดเร็วเป็นพิเศษ
+   - **บทบาทในโปรเจกต์:** รัน Local Dev Server ด้วย Native ES Modules ทำให้เริ่มงานได้ทันที (Instant Server Start), มีระบบ Hot Module Replacement (HMR) อัปเดต UI ทันทีโดยไม่ต้องรีเฟรชหน้า, ทำ Code Splitting อัตโนมัติแยกไฟล์ Bundle เป็น Chunks ขนาดเล็ก และรองรับ Dynamic Prefetching เพื่อโหลดโค้ดล่วงหน้า
+3. **Tailwind CSS (`tailwindcss`, `postcss`, `autoprefixer`)**:
+   - **หน้าที่หลัก:** Utility-First CSS Framework สำหรับจัดสไตล์หน้าเว็บ
+   - **บทบาทในโปรเจกต์:** ดีไซน์หน้าตาเว็บสไตล์ "Morning Forest" คุมโทนสีเขียวมิ้นต์-มรกตแบบโมเดิร์น, รองรับ Glassmorphism (พื้นหลังเบลอโปร่งแสง `backdrop-blur-md`), จัดการ Responsive Design ครอบคลุม Mobile, Tablet และ Desktop, และใช้คำสั่ง Hardware Acceleration เช่น `transform`, `will-change` เพื่อผลักดันการเรนเดอร์ให้ลื่นไหลระดับ 120 FPS
+4. **React Router DOM v6 (`react-router-dom`)**:
+   - **หน้าที่หลัก:** Library จัดการการเปลี่ยนหน้าแบบ Client-Side Routing
+   - **บทบาทในโปรเจกต์:** นำทางผู้ใช้ระหว่างหน้าต่างๆ (`/`, `/find-trip`, `/create-trip`, `/my-trips`, `/profile`, `/admin`, `/login`) โดยไม่เกิดการ Reload ทั้งหน้า, ทำระบบ Route Protection ป้องกันไม่ให้ผู้ใช้ที่ยังไม่ล็อกอินเข้าถึงหน้าส่วนตัว และอนุญาตเฉพาะ Role `admin` เข้าถึงหน้าจัดการระบบ
+5. **Axios (`axios`)**:
+   - **หน้าที่หลัก:** Promise-based HTTP Client สำหรับสื่อสารกับเซิร์ฟเวอร์
+   - **บทบาทในโปรเจกต์:** ยิง REST API ไปยัง Backend, ตั้งค่า Interceptors เพื่อแนบ Bearer JWT Token ในทุก Request โดยอัตโนมัติ, ดักจับ Error จัดการ Timeout และทำงานร่วมกับโมดูล Request Deduplication เพื่อป้องกันการส่งคำขอซ้ำซ้อน
+6. **Lucide React (`lucide-react`)**:
+   - **หน้าที่หลัก:** SVG Icon Library น้ำหนักเบา
+   - **บทบาทในโปรเจกต์:** แสดงสัญลักษณ์และไอคอนใน UI เช่น ไอคอนรถยนต์, ป้ายทะเบียน, แผนที่/เข็มทิศ, กระดิ่งแจ้งเตือน, ดาวรีวิว, ไอคอนแชร์, คิวอาร์โค้ด และสลิปการโอนเงิน
+
+#### 2. ส่วนหลัง (Backend Application Tier)
+1. **Node.js**:
+   - **หน้าที่หลัก:** JavaScript Runtime ฝั่งเซิร์ฟเวอร์ที่ทำงานแบบ Non-blocking Event-driven I/O
+   - **บทบาทในโปรเจกต์:** ประมวลผลคำขอทางธุรกิจ (Business Logic), คำนวณระยะทางและราคาค่าแชร์น้ำมัน, ตรวจสอบสิทธิ์ผู้ใช้งาน และควบคุมการเชื่อมต่อฐานข้อมูล
+2. **Express.js (`express`)**:
+   - **หน้าที่หลัก:** Web Application Framework น้ำหนักเบาบน Node.js
+   - **บทบาทในโปรเจกต์:** วางโครงสร้าง RESTful API Endpoint จัดหมวดหมู่ Controllers (`trips`, `bookings`, `cars`, `auth`, `admin`, `notifications`), จัดการ Middleware Pipeline ตรวจสอบข้อมูลก่อนเข้าสู่ตรรกะหลัก
+3. **pg (node-postgres) (`pg`)**:
+   - **หน้าที่หลัก:** PostgreSQL Client Library สำหรับเชื่อมต่อฐานข้อมูล
+   - **บทบาทในโปรเจกต์:** จัดการ Database Connection Pooling (`pg.Pool`) เพื่อนำการเชื่อมต่อไปใช้ซ้ำอย่างมีประสิทธิภาพ, ทำ Parameterized Queries (`$1, $2, ...`) 100% เพื่อป้องกันช่องโหว่ SQL Injection, และขับเคลื่อนระบบ Self-Healing Auto-Migration ที่สร้างหรืออัปเกรดตารางในฐานข้อมูลอัตโนมัติเมื่อเปิดเซิร์ฟเวอร์
+4. **JSON Web Token (`jsonwebtoken`)**:
+   - **หน้าที่หลัก:** มาตรฐานการเข้ารหัสและสร้าง Token สำหรับ Authentication แบบ Stateless
+   - **บทบาทในโปรเจกต์:** เข้ารหัส User ID, Email, Role เป็นสตริง Token พร้อมเซ็นลายเซ็นดิจิทัลด้วย Secret Key เมื่อผู้ใช้ล็อกอินสำเร็จ และให้ Backend ตรวจสอบลายเซ็นในทุก API Request เพื่อยืนยันตัวตนโดยไม่ต้องเก็บ Session ในหน่วยความจำเซิร์ฟเวอร์
+5. **bcryptjs (`bcryptjs`)**:
+   - **หน้าที่หลัก:** อัลกอริทึมการเข้ารหัสทางเดียว (One-way Cryptographic Hash Function) สำหรับรหัสผ่าน
+   - **บทบาทในโปรเจกต์:** สร้าง Salt สุ่มและแฮชรหัสผ่านของผู้ใช้ก่อนบันทึกลงฐานข้อมูล และใช้เปรียบเทียบรหัสผ่านตอนล็อกอิน เพื่อให้มั่นใจว่าจะไม่มีผู้ใด (รวมถึงแอดมินหรือผู้ดูแลระบบ) ล่วงรู้รหัสผ่านจริงของผู้ใช้งานได้
+6. **Multer (`multer`)**:
+   - **หน้าที่หลัก:** Middleware สำหรับจัดการข้อมูลแบบ `multipart/form-data` (File Upload)
+   - **บทบาทในโปรเจกต์:** รับไฟล์รูปภาพที่อัปโหลดจากหน้าเว็บ เช่น รูปโปรไฟล์, รูปถ่ายรถยนต์และป้ายทะเบียนสำหรับยืนยันตัวตน, และรูปสลิปการโอนเงิน PromptPay เพื่อส่งต่อไปจัดเก็บยัง Cloud Storage
+7. **Compression (`compression`)**:
+   - **หน้าที่หลัก:** Middleware บีบอัด HTTP Response ด้วยอัลกอริทึม Gzip / Deflate
+   - **บทบาทในโปรเจกต์:** บีบอัดขนาดของข้อมูล JSON Response ที่ส่งกลับไปยังเบราว์เซอร์ ช่วยลดขนาด Payload ลงได้ถึง 60-80% ทำให้หน้าเว็บดึงข้อมูลรายการทริปและประวัติการเดินทางได้รวดเร็วทันใจแม้ใช้งานผ่านเครือข่ายมือถือ
+8. **Helmet (`helmet`)**:
+   - **หน้าที่หลัก:** Security Middleware ที่ตั้งค่า HTTP Security Response Headers
+   - **บทบาทในโปรเจกต์:** ปกป้องแอปพลิเคชันจากภัยคุกคามทางเว็บที่พบบ่อย เช่น Content Security Policy (CSP), ป้องกัน Cross-Site Scripting (XSS), ป้องกัน Clickjacking ด้วย X-Frame-Options และปิดการทำ MIME sniffing
+9. **CORS (`cors`)**:
+   - **หน้าที่หลัก:** Middleware จัดการ Cross-Origin Resource Sharing
+   - **บทบาทในโปรเจกต์:** ควบคุมและกำหนดสิทธิ์ให้เฉพาะโดเมนของ Frontend (เช่น โดเมนบน Vercel และ Localhost) สามารถยิง API มายังเซิร์ฟเวอร์ได้ ป้องกันไม่ให้เว็บไซต์บุคคลที่สามอื่นแอบยิงคำขอเข้ามา
+10. **express-rate-limit (`express-rate-limit`)**:
+    - **หน้าที่หลัก:** ระบบจำกัดความถี่ของ Request ที่ส่งมาจาก IP เดียวกัน
+    - **บทบาทในโปรเจกต์:** ป้องกันการโจมตีแบบ Brute Force Password Guessing ในหน้า Login/Register และป้องกันการยิงสแปม API หรือ DoS (Denial of Service)
+11. **cookie-parser (`cookie-parser`) & dotenv (`dotenv`)**:
+    - **หน้าที่หลัก:** ตัวแปลงคุกกี้ และตัวจัดการ Environment Variables
+    - **บทบาทในโปรเจกต์:** `cookie-parser` ใช้แยกวิเคราะห์คุกกี้ที่ส่งมากับ Header และ `dotenv` ใช้ดึงค่าความลับของระบบจากไฟล์ `.env` (เช่น `DATABASE_URL`, `JWT_SECRET`) เพื่อแยกการตั้งค่าคอนฟิกออกจาก Source Code อย่างปลอดภัย
+
+#### 3. ฐานข้อมูลและบริการคลาวด์ (Database, Storage & Deployment)
+1. **PostgreSQL (บน Supabase Cloud)**:
+   - **หน้าที่หลัก:** ระบบจัดการฐานข้อมูลเชิงสัมพันธ์ระดับองค์กร (Enterprise RDBMS)
+   - **บทบาทในโปรเจกต์:** บันทึกข้อมูลหลัก 14 ตาราง โดยควบคุมความถูกต้องของข้อมูลตามกฎ ACID, จัดการ Foreign Keys, Cascades, Check Constraints และ B-Tree Indexes เพื่อให้ Query ค้นหาเส้นทางและเที่ยวรถได้อย่างแม่นยำและรวดเร็ว
+2. **Supabase Storage**:
+   - **หน้าที่หลัก:** ระบบจัดเก็บไฟล์บนคลาวด์แบบ S3-Compatible Object Storage
+   - **บทบาทในโปรเจกต์:** จัดเก็บและให้บริการเข้าถึงไฟล์รูปภาพ ได้แก่ รูปถ่ายรถและป้ายทะเบียน (`car_image_url`), สลิปการโอนเงิน (`payment_slip_url`) และรูปอวตารผู้ใช้
+3. **Vercel Cloud Platform**:
+   - **หน้าที่หลัก:** Cloud Platform สำหรับโฮสติ้ง Frontend แบบ Global Edge CDN และรัน Serverless Functions
+   - **บทบาทในโปรเจกต์:** ปรับใช้ระบบ (Deploy) โดยตรงจาก GitHub อัตโนมัติ (CI/CD), กระจายไฟล์หน้าเว็บไปยัง Edge ทั่วโลก และประมวลผล Backend API ผ่าน Serverless Node.js Runtime
+
+#### 4. โพรโทคอลและมาตรฐานภายนอก (Protocols & External Standards)
+1. **Server-Sent Events (SSE)**:
+   - **หน้าที่หลัก:** โพรโทคอลสตรีมมิ่งข้อมูลทิศทางเดียว (Unidirectional Streaming) แบบ Real-time ตามมาตรฐาน W3C
+   - **บทบาทในโปรเจกต์:** ให้เซิร์ฟเวอร์พุชข้อความแชทใหม่ในห้องแชทของทริป (`TripChat`) สู่หน้าจอผู้โดยสารและคนขับทันทีโดยไม่ต้องกดรีเฟรชหน้า และใช้ทรัพยากรน้อยกว่า WebSocket บนสถาปัตยกรรม Serverless
+2. **Google Maps Embed & Directions API**:
+   - **หน้าที่หลัก:** บริการแผนที่และเส้นทางนำทางของ Google
+   - **บทบาทในโปรเจกต์:** แสดงแผนที่เส้นทางแบบโต้ตอบ (Interactive Map), มีจุดแวะรับ-ส่ง (Waypoints Timeline), รองรับชื่อสถานที่ภาษาไทยทุกรูปแบบ (เช่น อำเภอ, มหาวิทยาลัย, จุดสังเกตเฉพาะถิ่น) อย่างแม่นยำ 100% พร้อมปุ่มเปิดเส้นทางนำทางในแอป Google Maps ทันที
+3. **PromptPay EMVCo Standard**:
+   - **หน้าที่หลัก:** มาตรฐานการเข้ารหัสข้อมูล QR Code ชำระเงินของธนาคารแห่งประเทศไทย (BOT)
+   - **บทบาทในโปรเจกต์:** สร้าง Dynamic QR Code จากเบอร์พร้อมเพย์ของคนขับและยอดเงินค่าโดยสารที่คำนวณตามจำนวนที่นั่ง ให้ผู้โดยสารสแกนจ่ายได้จากทุกแอปพลิเคชันธนาคารในไทยโดยไม่มีค่าธรรมเนียม
+4. **Web Share API**:
+   - **หน้าที่หลัก:** Browser Native API สำหรับเรียกเมนูการแชร์ของระบบปฏิบัติการ
+   - **บทบาทในโปรเจกต์:** ใช้ใน `ShareTripModal` เพื่อแชร์ลิงก์ทริปไปยัง LINE, Facebook, X หรือคัดลอกลิงก์ได้ในคลิกเดียว
+
 ---
 
 ## 3. โครงสร้างฐานข้อมูลและโมเดลข้อมูล (Database Schema & ER Design)
