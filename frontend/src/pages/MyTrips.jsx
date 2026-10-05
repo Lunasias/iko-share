@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import CarLoader from '../components/CarLoader';
+import ShareTripModal from '../components/ShareTripModal';
 import { useTheme } from '../context/ThemeContext';
-import { Calendar, Clock, MapPin, Users, Trash2, ArrowRight, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Trash2, ArrowRight, CheckCircle2, AlertCircle, Plus, Share2 } from 'lucide-react';
 
 export default function MyTrips() {
   const { isTh } = useTheme();
@@ -12,6 +13,7 @@ export default function MyTrips() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
+  const [tripToShare, setTripToShare] = useState(null);
 
   useEffect(() => {
     fetchMyTrips();
@@ -142,12 +144,23 @@ export default function MyTrips() {
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-                  <Link to={`/trips/${trip.trip_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
-                    {isTh ? 'ดูรายละเอียด & จัดการตี้' : 'View Details & Party'}
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link to={`/trips/${trip.trip_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
+                      {isTh ? 'ดูรายละเอียด & จัดการตี้' : 'View Details & Party'}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setTripToShare(trip)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                      title={isTh ? 'แชร์ทริปนี้' : 'Share this trip'}
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{isTh ? 'แชร์' : 'Share'}</span>
+                    </button>
+                  </div>
                   <button
                     onClick={() => handleCancelTrip(trip.trip_id)}
-                    className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                    className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>{isTh ? 'ลบเส้นทาง' : 'Delete Trip'}</span>
@@ -203,13 +216,31 @@ export default function MyTrips() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-                    <Link to={`/trips/${booking.trip_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
-                      {isTh ? 'ดูรายละเอียด & ห้องแชท' : 'Details & Group Chat'}
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/trips/${booking.trip_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
+                        {isTh ? 'ดูรายละเอียด & ห้องแชท' : 'Details & Group Chat'}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setTripToShare({
+                          trip_id: booking.trip_id,
+                          origin: booking.origin,
+                          destination: booking.destination,
+                          departure_time: booking.departure_time,
+                          available_seats: booking.available_seats,
+                          price_seat: booking.price_seat
+                        })}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                        title={isTh ? 'แชร์ทริปนี้' : 'Share this trip'}
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{isTh ? 'แชร์' : 'Share'}</span>
+                      </button>
+                    </div>
                     {['จองแล้ว', 'รอการอนุมัติ'].includes(booking.booking_status) && (
                       <button
                         onClick={() => handleLeaveBooking(booking.trip_id)}
-                        className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                        className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>{isTh ? 'ยกเลิกคำขอ' : 'Cancel Request'}</span>
@@ -222,6 +253,15 @@ export default function MyTrips() {
           </div>
         )}
       </div>
+
+      {/* Share Trip Modal */}
+      {tripToShare && (
+        <ShareTripModal
+          isOpen={Boolean(tripToShare)}
+          onClose={() => setTripToShare(null)}
+          trip={tripToShare}
+        />
+      )}
     </div>
   );
 }

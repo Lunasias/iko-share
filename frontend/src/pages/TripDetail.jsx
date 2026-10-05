@@ -448,11 +448,11 @@ export default function TripDetail() {
             <button
               type="button"
               onClick={() => setShareModalOpen(true)}
-              className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
               title={isTh ? "แชร์ทริปนี้" : "Share this trip"}
             >
               <Share2 className="w-4 h-4 text-emerald-600" />
-              <span>{isTh ? 'แชร์' : 'Share'}</span>
+              <span>{isTh ? 'แชร์ทริป' : 'Share Trip'}</span>
             </button>
 
             {(isDriver || isAdmin) && (

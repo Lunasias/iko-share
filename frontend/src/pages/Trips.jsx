@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
 import OwnerProfileModal from '../components/OwnerProfileModal';
+import ShareTripModal from '../components/ShareTripModal';
 import CarLoader from '../components/CarLoader';
 import { useTheme } from '../context/ThemeContext';
 import {
   Search, MapPin, Calendar, Users, Car, ArrowRight, Clock, AlertCircle,
   Filter, Sparkles, HeartHandshake, SlidersHorizontal, ArrowUpDown,
-  ShieldCheck, RotateCcw, X, Sun, Moon, Compass, DollarSign
+  ShieldCheck, RotateCcw, X, Sun, Moon, Compass, DollarSign, Share2
 } from 'lucide-react';
 
 export default function Trips() {
@@ -60,6 +61,9 @@ export default function Trips() {
   // Owner profile modal state
   const [ownerModalOpen, setOwnerModalOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState(null);
+
+  // Share modal state
+  const [tripToShare, setTripToShare] = useState(null);
 
   // Advanced filters state
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -682,12 +686,27 @@ export default function Trips() {
                   </div>
                 </div>
 
-                <Link
-                  to={`/trips/${trip.trip_id}`}
-                  className="mt-3 w-full block text-center py-2.5 travel-btn-secondary font-bold text-xs"
-                >
-                  {isTh ? 'ดูรายละเอียด & เข้าร่วมทริป' : 'View Details & Join'}
-                </Link>
+                <div className="mt-3 flex items-center gap-2">
+                  <Link
+                    to={`/trips/${trip.trip_id}`}
+                    className="flex-1 block text-center py-2.5 travel-btn-secondary font-bold text-xs"
+                  >
+                    {isTh ? 'ดูรายละเอียด & เข้าร่วมทริป' : 'View Details & Join'}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTripToShare(trip);
+                    }}
+                    className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                    title={isTh ? 'แชร์ทริปนี้' : 'Share this trip'}
+                    aria-label={isTh ? 'แชร์ทริปนี้' : 'Share this trip'}
+                  >
+                    <Share2 className="w-4 h-4 text-emerald-600" />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -700,6 +719,15 @@ export default function Trips() {
         onClose={() => setOwnerModalOpen(false)}
         userId={selectedDriverId}
       />
+
+      {/* Share Trip Modal */}
+      {tripToShare && (
+        <ShareTripModal
+          isOpen={Boolean(tripToShare)}
+          onClose={() => setTripToShare(null)}
+          trip={tripToShare}
+        />
+      )}
     </div>
   );
 }
