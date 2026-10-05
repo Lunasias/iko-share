@@ -465,9 +465,28 @@ const computeCostBreakdown = (distKm, seatCount) => {
                   <Gauge className="w-4 h-4 text-emerald-600" />
                   <span>{isTh ? 'ข้อมูลเส้นทาง & การคำนวณค่าเสื่อมรถสำหรับเจ้าของรถ' : 'Route & Depreciation Calculation for Vehicle Owners'}</span>
                 </span>
-                <span className="font-extrabold text-emerald-800 bg-white px-3 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
-                  {isTh ? `ระยะทาง ${distanceKm} กม. (${durationText})` : `Distance ${distanceKm} km (${durationText})`}
-                </span>
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
+                  <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'ระยะทาง:' : 'Distance:'}</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={distanceKm}
+                    onChange={(e) => {
+                      const newDist = parseFloat(e.target.value) || 0;
+                      setDistanceKm(newDist);
+                      const recalculated = computeCostBreakdown(newDist, seats);
+                      setCostBreakdown(recalculated);
+                      setPrice(recalculated.recommendedSeatPrice);
+                    }}
+                    className="w-16 text-center font-black text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
+                    title={isTh ? 'คลิกเพื่อแก้ไขระยะทางได้' : 'Click to adjust distance'}
+                  />
+                  <span className="font-bold text-emerald-800">{isTh ? 'กม.' : 'km'}</span>
+                  {durationText && (
+                    <span className="text-slate-400 font-normal ml-0.5">({durationText})</span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
