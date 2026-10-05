@@ -173,6 +173,9 @@ const COLUMN_PATCHES = [
   ['chat_reports', 'status', "VARCHAR(20) NOT NULL DEFAULT 'รอดำเนินการ'"],
   ['chat_reports', 'resolved_at', 'TIMESTAMP WITH TIME ZONE'],
   ['chat_reports', 'resolved_by', 'INT'],
+  ['bookings', 'payment_status', "VARCHAR(30) NOT NULL DEFAULT 'unpaid'"],
+  ['bookings', 'payment_slip_url', 'TEXT'],
+  ['bookings', 'payment_time', 'TIMESTAMP WITH TIME ZONE'],
 ];
 
 // Administration is a permission separate from the user's travel role.
