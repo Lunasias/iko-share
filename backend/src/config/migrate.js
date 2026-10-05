@@ -182,6 +182,8 @@ const COLUMN_PATCHES = [
   ['cars', 'verified_by', 'INT'],
   ['cars', 'verified_at', 'TIMESTAMP WITH TIME ZONE'],
   ['cars', 'created_at', 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP'],
+  ['cars', 'consent_pdpa', 'BOOLEAN DEFAULT TRUE'],
+  ['cars', 'consent_at', 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP'],
 ];
 
 // Administration is a permission separate from the user's travel role.

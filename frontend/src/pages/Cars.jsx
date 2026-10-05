@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API, { uploadImage } from '../services/api';
 import CarLoader from '../components/CarLoader';
+import VehicleConsentModal from '../components/VehicleConsentModal';
 import { useTheme } from '../context/ThemeContext';
 import {
   Car, Plus, Trash2, AlertCircle, CheckCircle, ShieldCheck,
   Camera, Upload, Eye, X, Clock, AlertTriangle, ShieldAlert,
-  Image as ImageIcon, CheckCircle2, RefreshCw
+  Image as ImageIcon, CheckCircle2, RefreshCw, FileText
 } from 'lucide-react';
 
 export default function Cars() {
@@ -23,6 +24,10 @@ export default function Cars() {
 
   // Image preview modal state
   const [previewModalUrl, setPreviewModalUrl] = useState(null);
+
+  // PDPA and Vehicle Verification Consent state
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [consentModalOpen, setConsentModalOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -109,6 +114,12 @@ export default function Cars() {
       return;
     }
 
+    if (!consentGiven) {
+      setError(isTh ? 'กรุณาอ่านและกดยินยอมให้จัดเก็บและตรวจสอบภาพถ่ายยานพาหนะตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA) ก่อนส่งข้อมูล' : 'Please provide PDPA consent for vehicle photo verification before submitting');
+      setConsentModalOpen(true);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -117,6 +128,7 @@ export default function Cars() {
         model: model.trim(),
         capacity: parseInt(capacity),
         car_image_url: carImageUrl,
+        consent_pdpa: true,
       });
 
       if (res.data.success) {
@@ -124,6 +136,7 @@ export default function Cars() {
         setLicensePlate('');
         setModel('');
         setCapacity(4);
+        setConsentGiven(false);
         handleRemovePhoto();
         fetchCars();
       } else {
@@ -422,10 +435,58 @@ export default function Cars() {
             )}
           </div>
 
+          {/* PDPA & Vehicle Photo Verification Consent Box */}
+          <div className={`p-4 rounded-2xl border transition-all ${
+            consentGiven
+              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 shadow-2xs'
+              : 'bg-amber-50/70 border-amber-200 text-slate-800'
+          }`}>
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="car-pdpa-consent"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer shrink-0"
+              />
+              <div className="space-y-1.5 flex-1">
+                <label htmlFor="car-pdpa-consent" className="text-xs text-slate-800 leading-relaxed cursor-pointer select-none block">
+                  <span className="font-black text-slate-900 flex items-center gap-1.5">
+                    <ShieldCheck className={`w-4 h-4 ${consentGiven ? 'text-emerald-600' : 'text-amber-600'}`} />
+                    <span>{isTh ? 'ความยินยอมในการจัดเก็บและตรวจสอบข้อมูลยานพาหนะ (PDPA Consent)' : 'Vehicle Verification & Data Consent (PDPA)'}</span>
+                    <span className="text-rose-500">*</span>
+                  </span>
+                  <span className="text-[11px] text-slate-600 block mt-0.5">
+                    {isTh
+                      ? 'ข้าพเจ้ายินยอมให้แพลตฟอร์ม Iko Share จัดเก็บและใช้ภาพถ่ายป้ายทะเบียนรถยนต์ เพื่อวัตถุประสงค์ในการตรวจสอบความถูกต้องของรถยนต์และความปลอดภัยของผู้ร่วมเดินทางตามกฎหมาย โดยภาพถ่ายจะถูกเก็บรักษาเป็นความลับและเข้าถึงเฉพาะทีมงานผู้ดูแลระบบเท่านั้น'
+                      : 'I consent to Iko Share collecting and verifying my vehicle plate photo strictly for safety verification and authenticity check by administrators under PDPA.'}
+                  </span>
+                </label>
+
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setConsentModalOpen(true)}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{isTh ? '📄 คลิกอ่านรายละเอียดความยินยอมและสิทธิ PDPA ฉบับเต็ม' : '📄 Read Full Consent & PDPA Terms'}</span>
+                  </button>
+
+                  {consentGiven && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      {isTh ? 'ยินยอมแล้ว' : 'Consented'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={submitting || uploadingImage || !carImageUrl}
+            disabled={submitting || uploadingImage || !carImageUrl || !consentGiven}
             className="w-full py-4 travel-btn-primary font-black text-sm disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
             {submitting ? (
@@ -643,6 +704,14 @@ export default function Cars() {
           </div>
         </div>
       )}
+
+      {/* Vehicle PDPA & Safety Verification Consent Modal */}
+      <VehicleConsentModal
+        isOpen={consentModalOpen}
+        onClose={() => setConsentModalOpen(false)}
+        onAccept={() => setConsentGiven(true)}
+        isAccepted={consentGiven}
+      />
     </div>
   );
 }
