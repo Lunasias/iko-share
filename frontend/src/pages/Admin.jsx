@@ -6,7 +6,7 @@ import {
   Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle,
   Flag, MessageSquare, Check, X, UserX, ShieldCheck,
   FileCheck, ExternalLink, Image as ImageIcon, Lock, Eye,
-  CheckCircle2, XCircle, Clock
+  CheckCircle2, XCircle, Clock, Camera, ShieldAlert
 } from 'lucide-react';
 
 export default function Admin() {
@@ -25,6 +25,7 @@ export default function Admin() {
   const [stats, setStats] = useState(cachedAdmin?.stats || {
     totalUsers: 0,
     totalCars: 0,
+    pendingCars: 0,
     totalEvents: 0,
     totalTrips: 0,
     totalBookings: 0,
@@ -37,6 +38,7 @@ export default function Admin() {
   const [reports, setReports] = useState(cachedAdmin?.reports || []);
   const [supportRequests, setSupportRequests] = useState(cachedAdmin?.supportRequests || []);
   const [verificationRequests, setVerificationRequests] = useState(cachedAdmin?.verificationRequests || []);
+  const [adminCars, setAdminCars] = useState(cachedAdmin?.adminCars || []);
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(!cachedAdmin);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,13 +58,14 @@ export default function Admin() {
     setError('');
 
     try {
-      // Parallelize all 5 admin endpoints simultaneously
-      const [statsRes, usersRes, reportsRes, supportRes, verifRes] = await Promise.allSettled([
+      // Parallelize all admin endpoints simultaneously
+      const [statsRes, usersRes, reportsRes, supportRes, verifRes, carsRes] = await Promise.allSettled([
         API.get('/admin/stats'),
         API.get('/admin/users'),
         API.get('/admin/reports'),
         API.get('/admin/support-requests'),
         API.get('/admin/verification-requests'),
+        API.get('/admin/cars'),
       ]);
 
       let newStats = stats;
@@ -71,6 +74,7 @@ export default function Admin() {
       let newReports = reports;
       let newSupport = supportRequests;
       let newVerif = verificationRequests;
+      let newCars = adminCars;
 
       if (statsRes.status === 'fulfilled' && statsRes.value?.data?.success) {
         newStats = statsRes.value.data.stats || stats;
@@ -94,6 +98,10 @@ export default function Admin() {
         newVerif = verifRes.value.data.requests || [];
         setVerificationRequests(newVerif);
       }
+      if (carsRes.status === 'fulfilled' && carsRes.value?.data?.success) {
+        newCars = carsRes.value.data.cars || [];
+        setAdminCars(newCars);
+      }
 
       try {
         sessionStorage.setItem('iko_cached_admin_data', JSON.stringify({
@@ -103,6 +111,7 @@ export default function Admin() {
           reports: newReports,
           supportRequests: newSupport,
           verificationRequests: newVerif,
+          adminCars: newCars,
         }));
       } catch {}
     } catch (err) {
@@ -270,6 +279,46 @@ export default function Admin() {
     }
   };
 
+  const handleReviewCar = async (plate, status, currentReply = '') => {
+    let reply = '';
+    if (status === 'ปฏิเสธ') {
+      reply = window.prompt(isTh ? 'ระบุเหตุผลที่ไม่อนุมัติ (เช่น ภาพป้ายทะเบียนไม่ชัดเจน, ข้อมูลไม่ถูกต้อง):' : 'Enter rejection reason:', currentReply || '');
+      if (reply === null) return;
+    } else {
+      const confirmed = window.confirm(isTh ? `ยืนยันอนุมัติการลงทะเบียนรถยนต์ทะเบียน ${plate} ใช่หรือไม่?` : `Approve vehicle ${plate}?`);
+      if (!confirmed) return;
+      reply = 'ภาพถ่ายป้ายทะเบียนชัดเจนและถูกต้อง อนุมัติการใช้งาน';
+    }
+
+    try {
+      const res = await API.put(`/admin/cars/${encodeURIComponent(plate)}/review`, {
+        status,
+        admin_reply: reply,
+      });
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 4000);
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถบันทึกผลการตรวจสอบรถได้'));
+    }
+  };
+
+  const handleDeleteAdminCar = async (plate) => {
+    if (!window.confirm(isTh ? `ต้องการลบข้อมูลรถทะเบียน ${plate} ออกจากระบบใช่หรือไม่?` : `Delete vehicle ${plate}?`)) return;
+    try {
+      const res = await API.delete(`/admin/cars/${encodeURIComponent(plate)}`);
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 4000);
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert(String(err.response?.data?.message || err.message || 'ไม่สามารถลบข้อมูลรถได้'));
+    }
+  };
+
 
   if (loading) {
     return <CarLoader text={isTh ? "กำลังโหลดระบบผู้ดูแลระบบ (Admin Dashboard)..." : "Loading Admin Dashboard..."} />;
@@ -307,7 +356,7 @@ export default function Admin() {
       )}
 
       {/* ER Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
           <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "สมาชิก (Users)" : "Users"}</div>
           <div className="text-xl font-black text-emerald-700">{stats.totalUsers}</div>
@@ -316,6 +365,17 @@ export default function Admin() {
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
           <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">{isTh ? "รถยนต์ (Cars)" : "Cars"}</div>
           <div className="text-xl font-black text-teal-700">{stats.totalCars}</div>
+        </div>
+
+        <div className="travel-card p-4 space-y-1 border border-amber-200 bg-amber-50/50 shadow-xs">
+          <div className="text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <Car className="w-3 h-3 text-amber-600" />
+            <span>{isTh ? "รถรอตรวจ" : "Pending Cars"}</span>
+          </div>
+          <div className="text-xl font-black text-amber-800 flex items-center justify-between">
+            <span>{stats.pendingCars ?? adminCars.filter((c) => c.verification_status === 'รอดำเนินการ').length}</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">{isTh ? "รอตรวจ" : "Pending"}</span>
+          </div>
         </div>
 
         <div className="travel-card p-4 space-y-1 border border-slate-200 shadow-xs">
@@ -344,9 +404,9 @@ export default function Admin() {
           <div className="text-xl font-black text-red-700">{stats.totalReports || 0}</div>
         </div>
 
-        <div className="travel-card p-4 space-y-1 border border-amber-200 bg-amber-50/40 shadow-xs">
-          <div className="text-amber-700 text-[10px] font-bold uppercase tracking-wider">{isTh ? "คำขอลืมรหัส" : "Password Resets"}</div>
-          <div className="text-xl font-black text-amber-800">{stats.totalSupportRequests || 0}</div>
+        <div className="travel-card p-4 space-y-1 border border-purple-200 bg-purple-50/40 shadow-xs">
+          <div className="text-purple-700 text-[10px] font-bold uppercase tracking-wider">{isTh ? "คำขอลืมรหัส" : "Password Resets"}</div>
+          <div className="text-xl font-black text-purple-800">{stats.totalSupportRequests || 0}</div>
         </div>
       </div>
 
@@ -479,6 +539,161 @@ export default function Admin() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Car Registration & License Plate Verification Table */}
+      <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Car className="w-5 h-5 text-emerald-600" />
+            <h3 className="text-lg font-black text-slate-900">
+              {isTh ? "ตรวจสอบการลงทะเบียนรถยนต์และป้ายทะเบียน (Car Registration Verification)" : "Car Registration Verification"}
+            </h3>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+              {adminCars.filter((c) => c.verification_status === 'รอดำเนินการ').length} {isTh ? "รอตรวจสอบ" : "Pending"}
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            {isTh ? "ตรวจดูรูปถ่ายป้ายทะเบียนรถ และอนุมัติการใช้งานให้คนขับเพื่อความปลอดภัย" : "Review plate photos and approve cars for safe carpooling"}
+          </span>
+        </div>
+
+        {adminCars.length === 0 ? (
+          <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
+            {isTh ? "ยังไม่มีข้อมูลรถยนต์ลงทะเบียนในระบบ" : "No registered cars yet"}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
+                  <th className="py-3 px-3">{isTh ? "วันที่ลงทะเบียน" : "Registered At"}</th>
+                  <th className="py-3 px-3">{isTh ? "เจ้าของรถ (คนขับ)" : "Owner / Driver"}</th>
+                  <th className="py-3 px-3">{isTh ? "ทะเบียนรถ" : "License Plate"}</th>
+                  <th className="py-3 px-3">{isTh ? "ยี่ห้อ / รุ่นรถ" : "Make / Model"}</th>
+                  <th className="py-3 px-3">{isTh ? "ความจุ" : "Seats"}</th>
+                  <th className="py-3 px-3">{isTh ? "รูปถ่ายป้ายทะเบียน" : "Plate Photo"}</th>
+                  <th className="py-3 px-3">{isTh ? "สถานะ" : "Status"}</th>
+                  <th className="py-3 px-3">{isTh ? "บันทึกการตรวจสอบ" : "Admin Reply"}</th>
+                  <th className="py-3 px-3 text-right">{isTh ? "การดำเนินการ" : "Action"}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
+                {adminCars.map((c) => {
+                  const status = c.verification_status || 'อนุมัติแล้ว';
+                  const isApproved = status === 'อนุมัติแล้ว';
+                  const isPending = status === 'รอดำเนินการ';
+                  const isRejected = status === 'ปฏิเสธ';
+
+                  return (
+                    <tr key={c.license_plate} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">
+                        {c.created_at ? new Date(c.created_at).toLocaleDateString('th-TH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-slate-900">
+                        <div>{c.owner_name || `User #${c.user_id}`}</div>
+                        <div className="text-[11px] font-normal text-slate-500">{c.owner_email}</div>
+                        {c.owner_phone && <div className="text-[10px] text-slate-400">โทร: {c.owner_phone}</div>}
+                      </td>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                          {c.license_plate}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-bold text-slate-800">
+                        {c.model}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-emerald-700">{c.capacity} ที่นั่ง</span>
+                      </td>
+                      <td className="py-3 px-3">
+                        {c.car_image_url ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(c.car_image_url)}
+                            className="group relative block w-14 h-10 rounded-lg overflow-hidden border border-slate-200 hover:border-emerald-500 shadow-2xs cursor-pointer"
+                            title={isTh ? "คลิกเพื่อดูรูปป้ายทะเบียนขนาดใหญ่" : "Click to view full photo"}
+                          >
+                            <img
+                              src={c.car_image_url}
+                              alt={`ทะเบียน ${c.license_plate}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                              <Eye className="w-3.5 h-3.5" />
+                            </div>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">ไม่มีรูป</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${
+                          isApproved
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            : isPending
+                            ? 'bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-rose-100 text-rose-800 border-rose-200'
+                        }`}>
+                          {isApproved && <ShieldCheck className="w-3 h-3 text-emerald-600" />}
+                          {isPending && <Clock className="w-3 h-3 text-amber-600" />}
+                          {isRejected && <ShieldAlert className="w-3 h-3 text-rose-600" />}
+                          <span>{status}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs break-words">
+                        {c.admin_reply || '-'}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isPending ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleReviewCar(c.license_plate, 'อนุมัติแล้ว')}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer"
+                                title="อนุมัติการลงทะเบียนรถยนต์"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>อนุมัติ</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleReviewCar(c.license_plate, 'ปฏิเสธ', c.admin_reply)}
+                                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer"
+                                title="ไม่อนุมัติและระบุเหตุผล"
+                              >
+                                <X className="w-3 h-3" />
+                                <span>ไม่อนุมัติ</span>
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleReviewCar(c.license_plate, isApproved ? 'ปฏิเสธ' : 'อนุมัติแล้ว', c.admin_reply)}
+                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold cursor-pointer"
+                              title="สลับสถานะ"
+                            >
+                              เปลี่ยนสถานะ
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAdminCar(c.license_plate)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            title="ลบรถยนต์ออกจากระบบ"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Trust Badge Verification Requests */}

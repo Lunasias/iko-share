@@ -95,7 +95,7 @@ const getPublicProfile = async (req, res) => {
     const owner = userRes.rows[0];
 
     // Cars owned by driver
-    const carsRes = await db.query('SELECT * FROM cars WHERE user_id = $1', [userId]);
+    const carsRes = await db.query('SELECT * FROM cars WHERE user_id = $1 ORDER BY created_at DESC, license_plate ASC', [userId]);
 
     // Stats
     const tripsCreated = await db.query(
