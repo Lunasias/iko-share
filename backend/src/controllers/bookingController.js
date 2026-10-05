@@ -285,9 +285,109 @@ const cancelBooking = async (req, res) => {
   }
 };
 
+// Submit Payment Slip (Passenger Action)
+const submitPaymentSlip = async (req, res) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const { id } = req.params; // booking_id
+    const { slip_url } = req.body;
+
+    if (!slip_url) {
+      return res.status(400).json({ success: false, message: 'กรุณาแนบรูปภาพสลิปการโอนเงิน' });
+    }
+
+    const bookingRes = await db.query(
+      'SELECT * FROM bookings WHERE booking_id = $1',
+      [id]
+    );
+
+    if (!bookingRes.rows || bookingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรายการคำขอจองนี้' });
+    }
+
+    const booking = bookingRes.rows[0];
+
+    // Only the booked passenger can submit their slip
+    if (booking.user_id !== userId && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
+      return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ในการอัปโหลดสลิปสำหรับคำขอนี้' });
+    }
+
+    if (booking.booking_status !== 'จองแล้ว') {
+      return res.status(400).json({ success: false, message: 'สามารถแนบสลิปได้เฉพาะคำขอที่ได้รับการอนุมัติแล้วเท่านั้น' });
+    }
+
+    const updated = await db.query(
+      `UPDATE bookings
+       SET payment_slip_url = $1, payment_status = 'pending_verification', payment_time = NOW()
+       WHERE booking_id = $2
+       RETURNING *`,
+      [slip_url, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'แนบสลิปการโอนเงินเรียบร้อยแล้ว กรุณารอคนขับตรวจสอบและยืนยัน',
+      booking: updated.rows[0],
+    });
+  } catch (error) {
+    console.error('Submit payment slip error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการแนบสลิป: ' + (error.message || String(error)) });
+  }
+};
+
+// Verify Payment (Driver or Admin Action)
+const verifyPayment = async (req, res) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const { id } = req.params; // booking_id
+    const { status } = req.body; // 'paid' or 'unpaid'
+
+    const targetStatus = status === 'paid' ? 'paid' : 'unpaid';
+
+    const bookingRes = await db.query(
+      `SELECT b.*, COALESCE(c.user_id, t.organizer_id) as driver_id
+       FROM bookings b
+       JOIN trips t ON b.trip_id = t.trip_id
+       LEFT JOIN cars c ON t.license_plate = c.license_plate
+       WHERE b.booking_id = $1`,
+      [id]
+    );
+
+    if (!bookingRes.rows || bookingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรายการคำขอจองนี้' });
+    }
+
+    const booking = bookingRes.rows[0];
+
+    // Only trip driver or admin can verify payment
+    if (booking.driver_id !== userId && !req.user.is_admin && req.user.email !== 'admin@ikoshare.com') {
+      return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์ในการยืนยันยอดเงินนี้' });
+    }
+
+    const updated = await db.query(
+      `UPDATE bookings
+       SET payment_status = $1
+       WHERE booking_id = $2
+       RETURNING *`,
+      [targetStatus, id]
+    );
+
+    res.json({
+      success: true,
+      message: targetStatus === 'paid' ? 'ยืนยันการรับเงินเรียบร้อยแล้ว!' : 'เปลี่ยนสถานะเป็นยังไม่ชำระเงินเรียบร้อยแล้ว',
+      booking: updated.rows[0],
+    });
+  } catch (error) {
+    console.error('Verify payment error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการยืนยันการรับเงิน: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   createBooking,
   approveBooking,
   rejectBooking,
   cancelBooking,
+  submitPaymentSlip,
+  verifyPayment,
 };

@@ -55,6 +55,9 @@ CREATE TABLE IF NOT EXISTS bookings (
   trip_id INT REFERENCES trips(trip_id) ON DELETE CASCADE,
   booking_status VARCHAR(20) NOT NULL DEFAULT 'รอการอนุมัติ' CHECK (booking_status IN ('รอการอนุมัติ', 'จองแล้ว', 'ปฏิเสธ', 'ยกเลิกแล้ว', 'ถูกนำออกจากตี้')),
   location VARCHAR(255),
+  payment_status VARCHAR(30) NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'pending_verification', 'paid')),
+  payment_slip_url TEXT,
+  payment_time TIMESTAMP WITH TIME ZONE,
   booking_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
