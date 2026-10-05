@@ -1,7 +1,7 @@
 -- ============================================================
--- Iko Share — Neon PostgreSQL patch
+-- Iko Share — Supabase PostgreSQL patch
 -- Fixes: column t.custom_event_name does not exist
--- Safe to run repeatedly (idempotent). Run in Neon SQL Editor.
+-- Safe to run repeatedly (idempotent). Run in Supabase SQL Editor.
 -- ============================================================
 
 -- 1) The missing column on trips (the actual cause of the bug)

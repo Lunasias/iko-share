@@ -1,6 +1,6 @@
 const db = require('./db');
 
-// Safe, idempotent schema synchronisation for Neon PostgreSQL.
+// Safe, idempotent schema synchronisation for Supabase PostgreSQL.
 // Every statement uses IF NOT EXISTS / ADD COLUMN IF NOT EXISTS so it can run
 // on every server start (including Vercel cold starts) without destroying data.
 const STATEMENTS = [

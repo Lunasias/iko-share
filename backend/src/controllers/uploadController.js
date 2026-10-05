@@ -95,7 +95,7 @@ const uploadImage = async (req, res) => {
       }
     }
 
-    // Save to Database `uploaded_images` table (works seamlessly on Vercel Serverless + Neon)
+    // Save to Database `uploaded_images` table (works seamlessly on Vercel Serverless + Supabase)
     try {
       await db.query(
         `INSERT INTO uploaded_images (image_id, filename, mime_type, data, size_bytes, created_by)
@@ -165,7 +165,7 @@ const getUploadedImage = async (req, res) => {
       return res.status(304).end();
     }
 
-    // 1. First check Neon PostgreSQL table
+    // 1. First check Supabase PostgreSQL table
     const result = await db.query(
       'SELECT mime_type, data, size_bytes FROM uploaded_images WHERE image_id = $1',
       [id]

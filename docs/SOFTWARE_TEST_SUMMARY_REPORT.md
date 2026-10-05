@@ -39,7 +39,7 @@
 
 ### 2.2 ประเภทการทดสอบ (Testing Types)
 * **Functional Testing:** ตรวจสอบความถูกต้องของฟังก์ชันและการไหลของกระบวนการตาม Requirements
-* **Integration Testing:** ทดสอบการทำงานร่วมกันระหว่าง Frontend (React/Vite), Backend (Node.js/Express) และ Database (PostgreSQL/Neon)
+* **Integration Testing:** ทดสอบการทำงานร่วมกันระหว่าง Frontend (React/Vite), Backend (Node.js/Express) และ Database (PostgreSQL/Supabase)
 * **Performance & Load Testing:** ทดสอบการรองรับโหลดพร้อมกัน (Concurrent Users) และเวลาตอบสนอง (Response Time)
 * **Security & Moderation Testing:** ทดสอบการป้องกัน JWT Token, Password Hashing, และระบบคัดกรองคำหยาบ/ความปลอดภัย
 * **User Acceptance Testing (UAT):** ทดสอบการใช้งานจริงโดยกลุ่มตัวอย่างนิสิต/นักศึกษาและผู้ขับขี่
@@ -57,7 +57,7 @@
 | หมวดหมู่ | รายละเอียดสเปกที่ใช้ทดสอบ |
 | :--- | :--- |
 | **Cloud Hosting & Server** | Vercel Serverless Hosting / Node.js Runtime v20.x |
-| **ฐานข้อมูล (Database)** | Neon Serverless PostgreSQL 16 (Multi-region Replication) |
+| **ฐานข้อมูล (Database)** | Supabase Cloud PostgreSQL 16 (Serverless with Connection Pooler) |
 | **เว็บเบราว์เซอร์ (Web Browsers)** | Google Chrome 128+, Safari 17+, Microsoft Edge 128+, Mozilla Firefox 130+ |
 | **ระบบปฏิบัติการคอมพิวเตอร์** | Windows 11 (23H2), macOS Sonoma 14.5 |
 | **ระบบปฏิบัติการอุปกรณ์เคลื่อนที่** | iOS 17.5 / iOS 18.0 (iPhone 13, iPhone 15), Android 14 (Samsung Galaxy, Google Pixel) |
@@ -84,7 +84,7 @@
 | **รวมทั้งหมด (Total)** | **150** | **144** | **4** | **2** | **96.0%** |
 
 ### 4.2 การวิเคราะห์ผลการทดสอบ
-* การทดสอบแบบ **Integration Test** ทำผลงานได้สมบูรณ์แบบ 100% สามารถเชื่อมต่อฐานข้อมูล Neon PostgreSQL และประมวลผลคำสั่ง API ระหว่าง Frontend-Backend ได้เสถียร
+* การทดสอบแบบ **Integration Test** ทำผลงานได้สมบูรณ์แบบ 100% สามารถเชื่อมต่อฐานข้อมูล Supabase PostgreSQL และประมวลผลคำสั่ง API ระหว่าง Frontend-Backend ได้เสถียร
 * การทดสอบแบบ **Functional Test** บรรลุผลสำเร็จ 95% เคสที่ไม่ผ่าน (3 เคส) เกี่ยวข้องกับกรณีขอบเขตข้อมูลพิเศษ (Edge Cases) เช่น การกรอกชื่ออีเวนต์ที่มีสัญลักษณ์พิเศษยาวเกินกำหนด และปัญหาการหน่วงเวลาเมื่อกดยืนยันซ้ำ
 * การทดสอบเคสที่ถูกข้าม (2 เคส) คือ การทดสอบระบบแจ้งเตือนผ่าน SMS Gateway ภายนอกซึ่งกำหนดไว้สำหรับรอบเฟส 2
 

@@ -22,7 +22,7 @@ export default function Home() {
 
   useEffect(() => {
     // Smart Background Warm-up & Prefetch:
-    // Wakes up Neon PostgreSQL & Serverless Function while user is looking at the Home page,
+    // Wakes up Supabase PostgreSQL & Serverless Function while user is looking at the Home page,
     // and caches latest trips so /trips renders in 0 ms!
     const warmUpTimer = setTimeout(() => {
       API.get('/trips').then((res) => {

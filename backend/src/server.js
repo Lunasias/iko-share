@@ -94,7 +94,7 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Explicit endpoint to create / repair tables in Neon PostgreSQL.
+// Explicit endpoint to create / repair tables in Supabase PostgreSQL.
 // Protect it with a separate deployment secret; it must never be public.
 app.post('/api/migrate', async (req, res) => {
   const migrationSecret = process.env.MIGRATION_SECRET;
@@ -135,7 +135,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
-  // Ensure the Neon schema exists before accepting traffic, then start listening.
+  // Ensure the Supabase schema exists before accepting traffic, then start listening.
   ensureSchema().finally(() => {
     app.listen(PORT, () => {
       console.log(`Iko Share Backend Server running on port ${PORT}`);

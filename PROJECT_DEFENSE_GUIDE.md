@@ -68,9 +68,9 @@ flowchart TD
         end
     end
 
-    subgraph DataTier ["Data Tier (PostgreSQL / Neon Serverless)"]
+    subgraph DataTier ["Data Tier (PostgreSQL / Supabase Cloud)"]
         AutoMigrate["Auto-Migration Engine (Idempotent DDL)"]
-        PostgresDB[("Neon PostgreSQL Database")]
+        PostgresDB[("Supabase PostgreSQL Database")]
     end
 
     UI --> Axios
@@ -92,9 +92,9 @@ flowchart TD
 | **Frontend Framework** | **React 18 + Vite** | คอมโพเนนต์เป็นอิสระ (Component-based), มี Virtual DOM และรองรับ Code Splitting (`lazy`/`Suspense`) ทำให้โหลดหน้าเว็บได้รวดเร็ว | ดีกว่า Create React App (CRA) ที่ช้าและ deprecated ไปแล้ว และเบากว่า Next.js เมื่อต้องการทำ Client-side SPA คล่องตัว |
 | **CSS Framework** | **Tailwind CSS** | Utility-first styling ทำให้ขนาด bundle เล็ก (Purge unused CSS), ปรับเปลี่ยน Theme และ Responsive Design ได้รวดเร็ว | ไม่เลือก Bootstrap หรือ UI Library สำเร็จรูปหนาเทอะทะ เพราะปรับแต่ง Interaction และ Modern Glassmorphism ได้ยากกว่า |
 | **Backend Runtime** | **Node.js + Express** | สถาปัตยกรรม Non-blocking I/O Event-driven เหมาะอย่างยิ่งกับ Web API ที่มีงาน I/O หนัก เช่น SSE Stream และฐานข้อมูล | ทรัพยากรเบากว่า Java/Spring Boot และเขียนโค้ดได้รวดเร็วกว่าในสเกลโปรเจกต์ระดับนี้ |
-| **Database** | **PostgreSQL (Neon)** | มีความเสถียร รองรับความสัมพันธ์ตารางซับซ้อน (Relational Data Integrity), รองรับ ACID Transaction, มี Constraint ตรวจสอบความถูกต้อง | ดีกว่า NoSQL (MongoDB) เพราะข้อมูลเที่ยวรถ การจอง และสิทธิ์ มีโครงสร้างสัมพันธ์กันอย่างเคร่งครัด (Foreign Key Integrity) |
+| **Database** | **PostgreSQL (Supabase)** | มีความเสถียร รองรับความสัมพันธ์ตารางซับซ้อน (Relational Data Integrity), รองรับ ACID Transaction, มี Constraint ตรวจสอบความถูกต้อง พร้อม Connection Pooler (Supavisor) ในตัว | ดีกว่า NoSQL (MongoDB) เพราะข้อมูลเที่ยวรถ การจอง และสิทธิ์ มีโครงสร้างสัมพันธ์กันอย่างเคร่งครัด (Foreign Key Integrity) |
 | **Real-time Protocol** | **Server-Sent Events (SSE)** | ใช้ HTTP มาตรฐาน, รองรับ HTTP/2 Multiplexing, ฝั่ง Browser มี Auto-reconnect ในตัว, ประหยัด overhead กว่า WebSocket | WebSocket ต้องใช้ Connection แบบ Full-Duplex และมีปัญหาเรื่อง State บน Serverless Lambda ขณะที่แชทในทริปต้องการเพียง Server-to-Client Push ข้อความใหม่ |
-| **Cloud Hosting** | **Vercel + Neon** | Serverless Architecture จ่ายตามการใช้งานจริง (Zero-idle cost), มี Global CDN ในตัว และ Deploy อัตโนมัติจาก GitHub | ประหยัดค่าใช้จ่ายและเวลาดูแลเซิร์ฟเวอร์ (Zero-ops) เมื่อเทียบกับการเช่า VM แบบดั้งเดิม |
+| **Cloud Hosting & DB** | **Vercel + Supabase** | Serverless Architecture จ่ายตามการใช้งานจริง (Zero-idle cost), มี Global CDN ในตัว, มี Dashboard & Table Editor จัดการข้อมูลง่าย และ Deploy อัตโนมัติจาก GitHub | ประหยัดค่าใช้จ่ายและเวลาดูแลเซิร์ฟเวอร์ (Zero-ops) เมื่อเทียบกับการเช่า VM แบบดั้งเดิม |
 
 ---
 
@@ -233,7 +233,7 @@ $$\text{Total Cost} = (\text{Distance} \times \text{Fuel Rate}) + (\text{Distanc
   * ข้อบกพร่องระดับวิกฤต (Critical / Blocker): **แก้ไขครบถ้วน 100% (0 คงค้าง)**
 * **ขอบเขตการทดสอบที่ดำเนินการ:**
   1. **Functional Testing:** ทดสอบ Flow การลงทะเบียน, การสร้างทริป, การจอง, การแชท และการรีวิว
-  2. **Integration Testing:** ทดสอบการเชื่อมต่อระหว่าง React Frontend, Express API, และ Neon PostgreSQL
+  2. **Integration Testing:** ทดสอบการเชื่อมต่อระหว่าง React Frontend, Express API, และ Supabase PostgreSQL
   3. **Security Testing:** ทดสอบการป้องกัน JWT Token, Password Bcyrpt Hashing, Rate Limiting และ Role Authorization
   4. **User Acceptance Testing (UAT):** ทดสอบความพึงพอใจและประสบการณ์ใช้งานจากกลุ่มตัวอย่างผู้ใช้จริง
 
@@ -303,7 +303,7 @@ $$\text{Total Cost} = (\text{Distance} \times \text{Fuel Rate}) + (\text{Distanc
    * เชื่อมต่อ WebSocket หรือ WebRTC เพื่อแสดงตำแหน่งรถของคนขับแบบสดบนแผนที่ Leaflet / Mapbox ในวันเดินทาง เพื่อให้ผู้โดยสารรู้เวลาถึงจุดนัดพบที่แน่นอน
 3. **การจัดการ Connection Pool และ Real-time ข้ามเซิร์ฟเวอร์ในสเกลใหญ่:**
    * ใช้งาน **Redis Pub/Sub** เพื่อกระจายข้อความแชทข้าม Serverless / Container Instances เมื่อมีผู้ใช้งานหลักแสนคน
-   * เปิดใช้งาน **Neon Connection Pooling (PgBouncer)** อย่างเต็มรูปแบบ
+   * เปิดใช้งาน **Supabase Connection Pooling (Supavisor / Transaction Mode บนพอร์ต 6543)** อย่างเต็มรูปแบบ และขยายไปใช้งาน **Supabase Storage** สำหรับจัดเก็บไฟล์เอกสาร KYC และรูปภาพในทริปแทนการเก็บในตารางฐานข้อมูล
 
 ---
 

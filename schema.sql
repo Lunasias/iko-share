@@ -1,4 +1,4 @@
--- ER Diagram Aligned Schema for Iko Share (Neon PostgreSQL) with Travel Enhancements
+-- ER Diagram Aligned Schema for Iko Share (Supabase PostgreSQL) with Travel Enhancements
 
 CREATE TABLE IF NOT EXISTS users (
   user_id SERIAL PRIMARY KEY,
