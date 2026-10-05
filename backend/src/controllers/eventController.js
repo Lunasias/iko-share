@@ -26,7 +26,7 @@ const getEvents = async (req, res) => {
     `).catch(() => {});
 
     const eventsRes = await db.query('SELECT * FROM events ORDER BY event_date ASC');
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     res.json({ success: true, events: eventsRes.rows || [] });
   } catch (error) {
     console.error('Get events error:', error);

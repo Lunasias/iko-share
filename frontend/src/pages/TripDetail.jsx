@@ -650,7 +650,7 @@ export default function TripDetail() {
             title={isTh ? "คลิกเพื่อดูโปรไฟล์คนขับรถ" : "Click to view driver profile"}
           >
             {trip.driver_avatar ? (
-              <img src={trip.driver_avatar} alt={trip.driver_name} className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-sm" />
+              <img src={trip.driver_avatar} alt={trip.driver_name} loading="lazy" decoding="async" className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-sm" />
             ) : (
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 border-2 border-emerald-500 flex items-center justify-center font-black text-lg shadow-sm">
                 {trip.driver_name?.charAt(0)}
@@ -756,6 +756,8 @@ export default function TripDetail() {
                     <img
                       src={getPromptPayQrUrl(trip.driver_phone, trip.price_seat, 220)}
                       alt="PromptPay QR Code"
+                      loading="lazy"
+                      decoding="async"
                       className="w-48 h-48 object-contain rounded-lg"
                     />
                   ) : (
@@ -872,7 +874,7 @@ export default function TripDetail() {
                         title={isTh ? "คลิกเพื่อดูโปรไฟล์ผู้โดยสาร" : "Click to view passenger profile"}
                       >
                         {p.passenger_avatar ? (
-                          <img src={p.passenger_avatar} alt={p.passenger_name} className="w-9 h-9 rounded-full object-cover border border-slate-300" />
+                          <img src={p.passenger_avatar} alt={p.passenger_name} loading="lazy" decoding="async" className="w-9 h-9 rounded-full object-cover border border-slate-300" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
                             {p.passenger_name?.charAt(0)}
@@ -1145,7 +1147,7 @@ export default function TripDetail() {
             </div>
             {memoryPhoto && (
               <div className="pt-2">
-                <img src={memoryPhoto} alt="Preview" className="w-32 h-24 object-cover rounded-xl border-2 border-emerald-500 shadow-sm" />
+                <img src={memoryPhoto} alt="Preview" loading="lazy" decoding="async" className="w-32 h-24 object-cover rounded-xl border-2 border-emerald-500 shadow-sm" />
               </div>
             )}
           </form>
@@ -1160,7 +1162,7 @@ export default function TripDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {memories.map((m) => (
               <div key={m.memory_id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs space-y-2">
-                <img src={m.photo_url} alt={m.caption || 'Trip Photo'} className="w-full h-44 object-cover" />
+                <img src={m.photo_url} alt={m.caption || 'Trip Photo'} loading="lazy" decoding="async" className="w-full h-44 object-cover" />
                 <div className="p-3 space-y-1">
                   <div className="flex items-center gap-2 text-[11px] font-bold text-slate-700">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px]">
@@ -1240,6 +1242,8 @@ export default function TripDetail() {
               <img
                 src={viewingSlipUrl}
                 alt="Payment Slip"
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-[55vh] object-contain rounded-xl shadow-xs"
               />
             </div>

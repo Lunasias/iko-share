@@ -70,7 +70,10 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3 lg:gap-5">
           <Link
             to="/trips"
-            onMouseEnter={prefetchTrips}
+            onMouseEnter={() => {
+              prefetchTrips();
+              import('../pages/Trips');
+            }}
             className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors px-3 py-2 rounded-xl hover:bg-slate-50"
           >
             <Compass className="w-4 h-4 text-emerald-600" />
@@ -81,6 +84,7 @@ export default function Navbar() {
             <>
               <Link
                 to="/create-trip"
+                onMouseEnter={() => import('../pages/CreateTrip')}
                 className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)] bg-[var(--muted)] hover:bg-[var(--card)] border border-[var(--border)] px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
               >
                 <PlusCircle className="w-4 h-4" />
@@ -90,6 +94,7 @@ export default function Navbar() {
               {(user.role === 'Driver' || user.role === 'Both') && (
                 <Link
                   to="/cars"
+                  onMouseEnter={() => import('../pages/Cars')}
                   className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   <Car className="w-4 h-4 text-teal-600" />
@@ -99,6 +104,7 @@ export default function Navbar() {
 
               <Link
                 to="/my-trips"
+                onMouseEnter={() => import('../pages/MyTrips')}
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 <Calendar className="w-4 h-4 text-indigo-600" />
@@ -107,6 +113,7 @@ export default function Navbar() {
 
               <Link
                 to="/profile"
+                onMouseEnter={() => import('../pages/Profile')}
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 <User className="w-4 h-4 text-emerald-600" />
@@ -116,6 +123,7 @@ export default function Navbar() {
               {isAdmin && (
                 <Link
                   to="/admin"
+                  onMouseEnter={() => import('../pages/Admin')}
                   className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100"
                 >
                   <Shield className="w-4 h-4" />
@@ -141,12 +149,14 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link
                 to="/login"
+                onMouseEnter={() => import('../pages/Login')}
                 className="text-xs font-bold text-slate-700 hover:text-emerald-700 px-4 py-2 rounded-xl hover:bg-slate-50"
               >
                 {t('login')}
               </Link>
               <Link
                 to="/register"
+                onMouseEnter={() => import('../pages/Register')}
                 className="inline-flex items-center justify-center text-xs font-bold travel-btn-primary px-5 py-2 leading-none"
               >
                 {t('register')}
