@@ -518,6 +518,99 @@ const estimateTripRoute = async (req, res) => {
   }
 };
 
+// Scan Google Maps screenshot or text snippet via OCR
+const scanMapScreenshot = async (req, res) => {
+  try {
+    const { image, text, seats = 4, is_round_trip = false } = req.body;
+    let extractedText = text || '';
+
+    if (image && typeof image === 'string') {
+      const { createWorker } = require('tesseract.js');
+      const worker = await createWorker(['eng', 'tha']);
+      try {
+        const ret = await worker.recognize(image);
+        extractedText += '\n' + (ret.data?.text || '');
+      } finally {
+        await worker.terminate();
+      }
+    }
+
+    if (!extractedText.trim()) {
+      return res.status(400).json({ success: false, message: 'ไม่พบข้อความหรือรูปภาพที่สามารถอ่านได้' });
+    }
+
+    let distanceKm = null;
+    let durationText = null;
+
+    // 1. First, search line-by-line and adjacent lines for Google Maps route badges where distance and duration appear together (e.g. "2 hr 20 min" \n "180 km")
+    const lines = extractedText.split('\n').map((l) => l.trim()).filter(Boolean);
+    for (let i = 0; i < lines.length; i++) {
+      const combined = lines.slice(Math.max(0, i - 1), i + 2).join(' ');
+      const distM = combined.match(/(\d+(?:\.\d+)?)\s*(?:km|กม\.?|กิโลเมตร)/i);
+      const durM = combined.match(/(\d+)\s*(?:hr|hrs|h|ชม\.?|ชั่วโมง)\s*[\.\s]*(\d+)?\s*(?:min|mins|m|นาที)?/i);
+      if (distM && durM) {
+        const dVal = parseFloat(distM[1]);
+        if (dVal > 0 && dVal < 5000) {
+          distanceKm = dVal;
+          const h = parseInt(durM[1]);
+          const m = durM[2] ? parseInt(durM[2]) : 0;
+          durationText = m > 0 ? `${h} ชม. ${m} นาที` : `${h} ชม.`;
+          break;
+        }
+      }
+    }
+
+    // 2. Fallback: Search independently if not found together in adjacent lines
+    if (!distanceKm) {
+      const distMatches = [...extractedText.matchAll(/(\d+(?:\.\d+)?)\s*(?:km|กม\.?|กิโลเมตร)/gi)];
+      for (const m of distMatches) {
+        const d = parseFloat(m[1]);
+        if (d > 0 && d < 5000) {
+          distanceKm = d;
+          break;
+        }
+      }
+    }
+
+    if (!durationText) {
+      const hrMinMatch = extractedText.match(/(\d+)\s*(?:hr|hrs|h|ชม\.?|ชั่วโมง)\s*[\.\s]*(\d+)?\s*(?:min|mins|m|นาที)?/i);
+      if (hrMinMatch) {
+        const hours = parseInt(hrMinMatch[1]);
+        const mins = hrMinMatch[2] ? parseInt(hrMinMatch[2]) : 0;
+        durationText = mins > 0 ? `${hours} ชม. ${mins} นาที` : `${hours} ชม.`;
+      } else {
+        const minMatch = extractedText.match(/(\d+)\s*(?:min|mins|m|นาที)/i);
+        if (minMatch) {
+          durationText = `${minMatch[1]} นาที`;
+        }
+      }
+    }
+
+    if (!distanceKm && !durationText) {
+      return res.status(422).json({
+        success: false,
+        message: 'ไม่พบตัวเลขระยะทาง (กม.) หรือเวลาเดินทางในภาพ กรุณาตรวจสอบว่าภาพมีข้อความบอกระยะทาง เช่น "180 km" หรือ "2 hr 20 min"',
+        rawText: extractedText.slice(0, 300),
+      });
+    }
+
+    const costBreakdown = distanceKm
+      ? calculateOperatingCost(distanceKm, parseInt(seats) || 4, Boolean(is_round_trip))
+      : null;
+
+    res.json({
+      success: true,
+      distanceKm,
+      durationText,
+      costBreakdown,
+      rawText: extractedText.slice(0, 300),
+    });
+  } catch (error) {
+    console.error('Scan map screenshot error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการสแกนภาพ: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getTrips,
   getTripById,
@@ -527,4 +620,6 @@ module.exports = {
   kickPassenger,
   getUserTrips,
   estimateTripRoute,
+  scanMapScreenshot,
 };
+
