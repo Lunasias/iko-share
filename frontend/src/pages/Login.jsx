@@ -75,7 +75,7 @@ export default function Login() {
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800">{isTh ? 'รหัสผ่าน' : 'Password'}</label>
               <Link to="/forgot-password" className="text-[11px] text-emerald-700 hover:underline font-bold">
-                {isTh ? 'ลืมรหัสผ่าน? แจ้งแอดมิน' : 'Forgot Password? Contact Admin'}
+                {isTh ? 'ลืมรหัสผ่าน?' : 'Forgot Password?'}
               </Link>
             </div>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">

@@ -263,14 +263,14 @@ export default function VerificationModal({ isOpen, onClose, onSubmitted, curren
               <div className="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2 text-xs">
                 <div className="flex items-center gap-1.5 font-black text-amber-900">
                   <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>ข้อกำหนดความยินยอมและข้อจำกัดความรับผิดชอบ (Liability Disclaimer)</span>
+                  <span>ข้อกำหนดความยินยอมและขอบเขตการให้บริการ (Terms & Service Scope)</span>
                 </div>
                 <div className="text-[11px] text-amber-950/90 leading-relaxed space-y-1 bg-white/80 p-2.5 rounded-xl border border-amber-100 max-h-28 overflow-y-auto font-medium">
                   <p>
                     1. <strong>ความยินยอมส่งมอบข้อมูล:</strong> ข้าพเจ้ายินยอมส่งมอบภาพถ่ายเอกสารหลักฐานและข้อมูลส่วนบุคคลเพื่อการตรวจสอบความน่าเชื่อถือเบื้องต้นด้วยความสมัครใจ ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)
                   </p>
                   <p>
-                    2. <strong>สละสิทธิ์เอาผิดเจ้าของเว็บไซต์ (Liability Waiver):</strong> ข้าพเจ้ารับทราบและยินยอมว่า แพลตฟอร์ม Iko Share และเจ้าของเว็บไซต์/ผู้ดูแลระบบ ทำหน้าที่เป็นเพียงสื่อกลางอำนวยความสะดวกในการตรวจสอบเอกสารเบื้องต้นเท่านั้น มิได้รับประกันหรือรับรองพฤติกรรมส่วนบุคคลของผู้ใช้งาน และจะไม่รับผิดชอบต่อความสูญเสีย ความเสียหาย การรั่วไหล อุบัติเหตุ ข้อพิพาท หรือเหตุสุดวิสัยใดๆ ทั้งสิ้นที่เกิดขึ้น ข้าพเจ้าตกลงสละสิทธิ์ในการดำเนินคดี ฟ้องร้อง หรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี
+                    2. <strong>ขอบเขตบทบาทของแพลตฟอร์ม (Service Scope & Intermediary Role):</strong> ข้าพเจ้ารับทราบว่า Iko Share เป็นแพลตฟอร์มสื่อกลางทางเทคโนโลยีเพื่ออำนวยความสะดวกในการตรวจสอบยืนยันเอกสารเบื้องต้นของผู้ใช้งาน โดยมิได้มีสถานะเป็นผู้ให้บริการขนส่งสาธารณะหรือผู้แทนส่วนบุคคลของผู้ใช้งานแต่ละท่าน และคู่กรณีในการเดินทางตกลงร่วมกันปฏิบัติตามกฎหมายและดูแลความปลอดภัยซึ่งกันและกัน
                   </p>
                 </div>
                 <label className="flex items-start gap-2.5 cursor-pointer pt-1 select-none">
@@ -282,7 +282,7 @@ export default function VerificationModal({ isOpen, onClose, onSubmitted, curren
                     className="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-amber-300 cursor-pointer shrink-0"
                   />
                   <span className="text-[11px] font-bold text-amber-950 leading-tight">
-                    ข้าพเจ้าได้อ่าน เข้าใจ และยอมรับข้อกำหนดการยินยอมส่งข้อมูลและข้อจำกัดความรับผิดชอบข้างต้นทุกประการ (ตกลงสละสิทธิ์เอาผิดเจ้าของเว็บไซต์และผู้ดูแลระบบ)
+                    ข้าพเจ้าได้อ่าน เข้าใจ และยอมรับข้อกำหนดการยินยอมส่งข้อมูลและขอบเขตการให้บริการของแพลตฟอร์มข้างต้นทุกประการ
                   </span>
                 </label>
               </div>
