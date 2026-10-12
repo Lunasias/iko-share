@@ -107,17 +107,24 @@ export default function CreateTrip() {
     }
   };
 
-const computeCostBreakdown = (distKm, seatCount) => {
+const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
   const FUEL_RATE = 2.20;
   const DEPR_RATE = 1.30;
-  const dist = parseFloat(distKm) || 0;
+  const oneWayDist = parseFloat(distKm) || 0;
+  const isRound = Boolean(roundTrip);
+  const multiplier = isRound ? 2 : 1;
+  const totalDist = Math.round(oneWayDist * multiplier * 10) / 10;
   const count = Math.max(1, parseInt(seatCount) || 1);
-  const fuelCost = Math.round(dist * FUEL_RATE);
-  const depreciationCost = Math.round(dist * DEPR_RATE);
+  const fuelCost = Math.round(totalDist * FUEL_RATE);
+  const depreciationCost = Math.round(totalDist * DEPR_RATE);
   const totalCost = fuelCost + depreciationCost;
-  const recommendedSeatPrice = Math.max(25, Math.round((totalCost / count) / 10) * 10);
-  const reasonableMinPrice = Math.max(20, Math.round(recommendedSeatPrice * 0.4));
+  const recommendedSeatPrice = Math.max(isRound ? 50 : 25, Math.round((totalCost / count) / 10) * 10);
+  const reasonableMinPrice = Math.max(isRound ? 40 : 20, Math.round(recommendedSeatPrice * 0.4));
   return {
+    oneWayDist,
+    totalDist,
+    isRoundTrip: isRound,
+    multiplier,
     fuel_rate_per_km: FUEL_RATE,
     depreciation_rate_per_km: DEPR_RATE,
     estimated_fuel_cost: fuelCost,
@@ -133,13 +140,32 @@ const computeCostBreakdown = (distKm, seatCount) => {
   };
 };
 
+  const handleToggleRoundTrip = (round) => {
+    setIsRoundTrip(round);
+    if (distanceKm) {
+      const recalculated = computeCostBreakdown(distanceKm, seats, round);
+      setCostBreakdown(recalculated);
+      setPrice(recalculated.recommendedSeatPrice);
+    }
+  };
+
+  const handleDistanceChange = (newVal) => {
+    const newDist = parseFloat(newVal) || 0;
+    setDistanceKm(newDist);
+    if (newDist > 0) {
+      const recalculated = computeCostBreakdown(newDist, seats, isRoundTrip);
+      setCostBreakdown(recalculated);
+      setPrice(recalculated.recommendedSeatPrice);
+    }
+  };
+
   const handleCarChange = (plate) => {
     setLicensePlate(plate);
     const selected = cars.find((c) => c.license_plate === plate);
     if (selected) {
       setSeats(selected.capacity);
       if (distanceKm) {
-        const recalculated = computeCostBreakdown(distanceKm, selected.capacity);
+        const recalculated = computeCostBreakdown(distanceKm, selected.capacity, isRoundTrip);
         setCostBreakdown(recalculated);
         setPrice(recalculated.recommendedSeatPrice);
       }
@@ -150,7 +176,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
     setSeats(newSeatsVal);
     const count = parseInt(newSeatsVal) || 1;
     if (distanceKm) {
-      const recalculated = computeCostBreakdown(distanceKm, count);
+      const recalculated = computeCostBreakdown(distanceKm, count, isRoundTrip);
       setCostBreakdown(recalculated);
       setPrice(recalculated.recommendedSeatPrice);
     }
@@ -182,12 +208,14 @@ const computeCostBreakdown = (distKm, seatCount) => {
         origin: origin.trim(),
         destination: destination.trim(),
         available_seats: seats || 4,
+        is_round_trip: isRoundTrip,
       });
       if (res.data.success) {
         setDistanceKm(res.data.distanceKm);
         setDurationText(res.data.durationText);
-        setCostBreakdown(res.data.costBreakdown);
-        setPrice(res.data.costBreakdown.recommendedSeatPrice);
+        const breakdown = computeCostBreakdown(res.data.distanceKm, seats || 4, isRoundTrip);
+        setCostBreakdown(breakdown);
+        setPrice(breakdown.recommendedSeatPrice);
       }
     } catch (err) {
       console.warn('Calculate route estimate error:', err);
@@ -458,6 +486,45 @@ const computeCostBreakdown = (distKm, seatCount) => {
             </div>
           </div>
 
+          {/* Trip Direction: One-way vs Round-trip */}
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Navigation className="w-4 h-4 text-emerald-600" />
+                <span>{isTh ? 'รูปแบบการเดินทาง' : 'Trip Direction'}</span>
+              </label>
+              {isRoundTrip && (
+                <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {isTh ? '🔄 ระบบไป-กลับ: คูณ 2 ค่าน้ำมันและค่าโดยสาร' : '🔄 Round-Trip: 2x Fuel & Fare'}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleToggleRoundTrip(false)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                  !isRoundTrip
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span>➡️ {isTh ? 'เที่ยวเดียว (One-Way)' : 'One-Way'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleRoundTrip(true)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                  isRoundTrip
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span>🔄 {isTh ? 'ไป-กลับ (Round-Trip)' : 'Round-Trip'}</span>
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -510,10 +577,10 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 type="button"
                 onClick={handleCalculateRoute}
                 disabled={calculatingRoute || !origin.trim() || !destination.trim()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
               >
                 <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{calculatingRoute ? (isTh ? 'กำลังดึงระยะทาง...' : 'Calculating...') : (isTh ? '🗺️ ดึงระยะทาง Google Maps & คำนวณค่าเสื่อมรถ' : '🗺️ Estimate Google Maps Distance & Depreciation')}</span>
+                <span>{calculatingRoute ? (isTh ? 'กำลังดึงระยะทาง...' : 'Calculating...') : (isTh ? '🗺️ ดึงระยะทาง Google Maps & คำนวณค่าเดินทาง' : '🗺️ Estimate Google Maps Distance & Costs')}</span>
               </button>
             </div>
           </div>
@@ -524,53 +591,91 @@ const computeCostBreakdown = (distKm, seatCount) => {
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className="font-bold text-emerald-950 flex items-center gap-1.5">
                   <Gauge className="w-4 h-4 text-emerald-600" />
-                  <span>{isTh ? 'ข้อมูลเส้นทาง & การคำนวณค่าเสื่อมรถสำหรับเจ้าของรถ' : 'Route & Depreciation Calculation for Vehicle Owners'}</span>
+                  <span>
+                    {isTh
+                      ? `ข้อมูลเส้นทาง & การคำนวณค่าเดินทาง${isRoundTrip ? ' (ระบบไป-กลับ ×2)' : ''}`
+                      : `Route & Cost Calculation${isRoundTrip ? ' (Round-Trip ×2)' : ''}`}
+                  </span>
                 </span>
-                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
-                  <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'ระยะทาง:' : 'Distance:'}</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    value={distanceKm}
-                    onChange={(e) => {
-                      const newDist = parseFloat(e.target.value) || 0;
-                      setDistanceKm(newDist);
-                      const recalculated = computeCostBreakdown(newDist, seats);
-                      setCostBreakdown(recalculated);
-                      setPrice(recalculated.recommendedSeatPrice);
-                    }}
-                    className="w-16 text-center font-black text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
-                    title={isTh ? 'คลิกเพื่อแก้ไขระยะทางได้' : 'Click to adjust distance'}
-                  />
-                  <span className="font-bold text-emerald-800">{isTh ? 'กม.' : 'km'}</span>
-                  {durationText && (
-                    <span className="text-slate-400 font-normal ml-0.5">({durationText})</span>
-                  )}
+
+                {/* Editable Distance & Duration to match Google Maps iframe */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
+                    <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'ระยะทางขาเดียว:' : 'One-way:'}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={distanceKm ?? ''}
+                      onChange={(e) => handleDistanceChange(e.target.value)}
+                      className="w-16 text-center font-black text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
+                      title={isTh ? 'แก้ไขระยะทางให้ตรงกับ Google Maps ได้ทันที' : 'Adjust distance to match Google Maps'}
+                    />
+                    <span className="font-bold text-emerald-800">{isTh ? 'กม.' : 'km'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
+                    <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'เวลาเดินทาง:' : 'Duration:'}</span>
+                    <input
+                      type="text"
+                      value={durationText || ''}
+                      onChange={(e) => setDurationText(e.target.value)}
+                      placeholder={isTh ? "เช่น 11 นาที" : "e.g. 11 min"}
+                      className="w-20 text-center font-bold text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
+                      title={isTh ? 'แก้ไขเวลาเดินทางให้ตรงกับ Google Maps ได้ทันที' : 'Adjust duration to match Google Maps'}
+                    />
+                  </div>
                 </div>
               </div>
 
+              {isRoundTrip && (
+                <div className="p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl text-xs flex items-center justify-between text-emerald-950 font-bold">
+                  <span className="flex items-center gap-1.5">
+                    🔄 <span>{isTh ? `คำนวณแบบไป-กลับ (ระยะทางรวม ${costBreakdown.totalDist} กม. = ${costBreakdown.oneWayDist} กม. × 2 ขา)` : `Round-Trip calculation (Total ${costBreakdown.totalDist} km = ${costBreakdown.oneWayDist} km × 2 legs)`}</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-800 text-white px-2 py-0.5 rounded-full font-bold">คูณ 2 อัตโนมัติ</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ค่าน้ำมันโดยประมาณ (~2.20 บ./กม.)' : 'Est. Fuel (~฿2.20/km)'}</div>
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    {isTh ? `ค่าน้ำมันโดยประมาณ${isRoundTrip ? ' (ไป-กลับ)' : ''}` : `Est. Fuel${isRoundTrip ? ' (Round-trip)' : ''}`}
+                  </div>
                   <div className="font-extrabold text-slate-800 text-sm mt-0.5">฿{costBreakdown.fuelCost?.toLocaleString()}</div>
+                  <div className="text-[9px] text-slate-400">~2.20 บ./กม.{isRoundTrip ? ' × 2 ขา' : ''}</div>
                 </div>
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ค่าเสื่อม/ซ่อมบำรุง (~1.30 บ./กม.)' : 'Depreciation (~฿1.30/km)'}</div>
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    {isTh ? `ค่าเสื่อมรถ${isRoundTrip ? ' (ไป-กลับ)' : ''}` : `Depreciation${isRoundTrip ? ' (Round-trip)' : ''}`}
+                  </div>
                   <div className="font-extrabold text-emerald-700 text-sm mt-0.5">+฿{costBreakdown.depreciationCost?.toLocaleString()}</div>
+                  <div className="text-[9px] text-slate-400">~1.30 บ./กม.{isRoundTrip ? ' × 2 ขา' : ''}</div>
                 </div>
                 <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                  <div className="text-[10px] text-slate-500 font-medium">{isTh ? 'ต้นทุนรถรวม' : 'Total Vehicle Cost'}</div>
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    {isTh ? `ต้นทุนรวม${isRoundTrip ? ' (ไป-กลับ)' : ''}` : `Total Cost${isRoundTrip ? ' (Round-trip)' : ''}`}
+                  </div>
                   <div className="font-extrabold text-slate-900 text-sm mt-0.5">฿{costBreakdown.totalCost?.toLocaleString()}</div>
+                  <div className="text-[9px] text-slate-400">{isRoundTrip ? 'รวม 2 ขา (ไป-กลับ)' : 'เที่ยวเดียว'}</div>
                 </div>
                 <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs flex flex-col justify-center">
-                  <div className="text-[10px] text-emerald-100 font-medium">{isTh ? `ราคาหารเฉลี่ย (${seats} ที่นั่ง)` : `Shared Fare (${seats} seats)`}</div>
+                  <div className="text-[10px] text-emerald-100 font-medium">
+                    {isTh ? `ราคาแนะนำ${isRoundTrip ? ' (ไป-กลับ)' : ''} (${seats} ที่นั่ง)` : `Rec. Fare${isRoundTrip ? ' (Round-trip)' : ''} (${seats} seats)`}
+                  </div>
                   <div className="font-black text-base mt-0.5">฿{costBreakdown.recommendedSeatPrice}</div>
+                  {isRoundTrip && (
+                    <div className="text-[9px] text-emerald-200">เฉลี่ยขาละ ฿{Math.round(costBreakdown.recommendedSeatPrice / 2)}</div>
+                  )}
                 </div>
               </div>
 
               {/* Live Interactive Google Maps Embed Preview */}
               <div className="rounded-2xl overflow-hidden border border-emerald-200 shadow-xs mt-2 bg-slate-100">
+                <div className="p-2 bg-slate-100 border-b border-emerald-200 flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-bold gap-1">
+                  <span>🗺️ แผนที่ Google Maps ({origin} ➔ {destination})</span>
+                  <span className="text-[10px] text-emerald-700 font-normal">💡 ดูระยะทาง/เวลาในแผนที่ด้านล่าง แล้วพิมพ์ปรับที่ช่องด้านบนได้ทันที</span>
+                </div>
                 <iframe
                   title="Google Maps Route Preview"
                   width="100%"
@@ -585,8 +690,8 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 <div className="space-y-0.5">
                   <p className="text-[11px] text-slate-600">
                     {isTh
-                      ? `💡 ต้นทุนรวม ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} ที่นั่ง = แนะนำ ฿${costBreakdown.recommendedSeatPrice} ต่อคน (รวมค่าน้ำมันและค่าเสื่อมสึกหรอตามระยะทางจริง)`
-                      : `💡 Total cost ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} seats = Recommended ฿${costBreakdown.recommendedSeatPrice} / seat (includes actual fuel and vehicle wear & tear)`}
+                      ? `💡 ต้นทุนรวม ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} ที่นั่ง = แนะนำ ฿${costBreakdown.recommendedSeatPrice} ต่อคน${isRoundTrip ? ' (ราคารวมไป-กลับ)' : ''}`
+                      : `💡 Total cost ฿${costBreakdown.totalCost?.toLocaleString()} ÷ ${seats} seats = Recommended ฿${costBreakdown.recommendedSeatPrice} / seat${isRoundTrip ? ' (round-trip total)' : ''}`}
                   </p>
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`}
@@ -601,47 +706,13 @@ const computeCostBreakdown = (distKm, seatCount) => {
                 <button
                   type="button"
                   onClick={() => setPrice(costBreakdown.recommendedSeatPrice)}
-                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs shrink-0 self-start sm:self-auto"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
                 >
-                  {isTh ? `ใช้ราคาแนะนำนี้ (฿${costBreakdown.recommendedSeatPrice})` : `Use recommended fare (฿${costBreakdown.recommendedSeatPrice})`}
+                  {isTh ? `ใช้ราคาแนะนำนี้ (฿${costBreakdown.recommendedSeatPrice}${isRoundTrip ? ' รวมไป-กลับ' : ''})` : `Use recommended fare (฿${costBreakdown.recommendedSeatPrice})`}
                 </button>
               </div>
             </div>
           )}
-
-          {/* Trip Direction: One-way vs Round-trip */}
-          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <Navigation className="w-4 h-4 text-emerald-600" />
-                <span>{isTh ? 'รูปแบบการเดินทาง' : 'Trip Direction'}</span>
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setIsRoundTrip(false)}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
-                  !isRoundTrip
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                <span>➡️ {isTh ? 'เที่ยวเดียว (One-Way)' : 'One-Way'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsRoundTrip(true)}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
-                  isRoundTrip
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                <span>🔄 {isTh ? 'ไป-กลับ (Round-Trip)' : 'Round-Trip'}</span>
-              </button>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -783,6 +854,13 @@ const computeCostBreakdown = (distKm, seatCount) => {
                   className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-bold"
                 />
               </div>
+              {isRoundTrip && (
+                <p className="text-[10px] text-emerald-700 font-semibold mt-1">
+                  {isTh
+                    ? `🔄 ราคานี้เป็นราคารวมไป-กลับ (หากเปิดแยกขากลับ ระบบจะบันทึกขาละ ฿${Math.round((parseFloat(price) || 0) / 2)} ต่อที่นั่ง)`
+                    : `🔄 Round-trip total fare (if paired return is generated, each leg is ฿${Math.round((parseFloat(price) || 0) / 2)} / seat)`}
+                </p>
+              )}
             </div>
           </div>
 

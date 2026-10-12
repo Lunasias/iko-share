@@ -177,16 +177,22 @@ const createTrip = async (req, res) => {
 
     const parsedPrice = parseFloat(price_seat);
     const parsedDistance = distance_km ? parseFloat(distance_km) : null;
+    const isRoundTripBool = is_round_trip === true || is_round_trip === 'true';
+    const createPairedBool = isRoundTripBool && (create_paired_return === true || create_paired_return === 'true');
+
+    // When creating paired return trips, the input price represents the total round-trip fare.
+    // Each separate leg trip in the database stores price_seat = Math.round(parsedPrice / 2).
+    const legPrice = createPairedBool ? Math.round(parsedPrice / 2) : parsedPrice;
 
     // Validate reasonable minimum fare:
     // If price == 0, it's a generous free ride (allowed).
     // If price > 0 and distance is significant (>= 40 km), enforce reasonable floor to prevent unrealistic pricing.
     if (parsedPrice > 0 && parsedDistance && parsedDistance >= 40) {
-      const costEst = calculateOperatingCost(parsedDistance, seatsToOffer);
+      const costEst = calculateOperatingCost(parsedDistance, seatsToOffer, isRoundTripBool);
       if (parsedPrice < costEst.reasonableMinPrice) {
         return res.status(400).json({
           success: false,
-          message: `สำหรับระยะทางประมาณ ${Math.round(parsedDistance)} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costEst.reasonableMinPrice} ต่อที่นั่ง (หรือตั้งเป็น ฿0 หากตั้งใจให้เดินทางฟรี)`
+          message: `สำหรับระยะทางประมาณ ${Math.round(parsedDistance)}${isRoundTripBool ? ' (ไป-กลับ)' : ''} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costEst.reasonableMinPrice} ต่อที่นั่ง (หรือตั้งเป็น ฿0 หากตั้งใจให้เดินทางฟรี)`
         });
       }
     }
@@ -249,7 +255,7 @@ const createTrip = async (req, res) => {
         destination.trim(),
         departureInstant.toISOString(),
         seatsToOffer,
-        parsedPrice,
+        legPrice,
         driver_personality ? driver_personality.trim() : null,
         passenger_requirements ? passenger_requirements.trim() : null,
         parsedDistance,
@@ -284,7 +290,7 @@ const createTrip = async (req, res) => {
             origin.trim(),
             returnDepartureIso,
             seatsToOffer,
-            parsedPrice,
+            legPrice,
             driver_personality ? driver_personality.trim() : null,
             passenger_requirements ? passenger_requirements.trim() : null,
             parsedDistance,
@@ -496,12 +502,13 @@ const getUserTrips = async (req, res) => {
 // Route & Distance Matrix Estimation (Google Maps Distance Matrix or Fallback)
 const estimateTripRoute = async (req, res) => {
   try {
-    const { origin, destination, available_seats = 3 } = req.body;
+    const { origin, destination, available_seats = 3, is_round_trip = false } = req.body;
     if (!origin || !destination) {
       return res.status(400).json({ success: false, message: 'กรุณาระบุจุดเริ่มต้นและปลายทางเพื่อคำนวณเส้นทาง' });
     }
 
-    const estimate = await estimateRoute(origin, destination, parseInt(available_seats) || 3);
+    const isRound = is_round_trip === true || is_round_trip === 'true';
+    const estimate = await estimateRoute(origin, destination, parseInt(available_seats) || 3, isRound);
     res.json({
       success: true,
       ...estimate,

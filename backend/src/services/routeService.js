@@ -549,19 +549,26 @@ function fetchGoogleMapsDistance(origin, destination, apiKey, originCoords = nul
 /**
  * Estimate road distance, duration, and calculate vehicle depreciation breakdown
  */
-function calculateOperatingCost(distanceKm, seats = 4) {
+function calculateOperatingCost(distanceKm, seats = 4, isRoundTrip = false) {
   const FUEL_RATE_PER_KM = 2.20;
   const DEPRECIATION_RATE_PER_KM = 1.30;
-  const dist = parseFloat(distanceKm) || 0;
+  const baseDist = parseFloat(distanceKm) || 0;
+  const isRound = Boolean(isRoundTrip);
+  const multiplier = isRound ? 2 : 1;
+  const totalDist = Math.round(baseDist * multiplier * 10) / 10;
   const seatCount = Math.max(1, parseInt(seats) || 4);
 
-  const estimatedFuelCost = Math.round(dist * FUEL_RATE_PER_KM);
-  const estimatedDepreciationCost = Math.round(dist * DEPRECIATION_RATE_PER_KM);
+  const estimatedFuelCost = Math.round(totalDist * FUEL_RATE_PER_KM);
+  const estimatedDepreciationCost = Math.round(totalDist * DEPRECIATION_RATE_PER_KM);
   const totalOperatingCost = estimatedFuelCost + estimatedDepreciationCost;
-  const recommendedPricePerSeat = Math.max(25, Math.round((totalOperatingCost / seatCount) / 10) * 10);
-  const minReasonablePrice = Math.max(20, Math.round(recommendedPricePerSeat * 0.4));
+  const recommendedPricePerSeat = Math.max(isRound ? 50 : 25, Math.round((totalOperatingCost / seatCount) / 10) * 10);
+  const minReasonablePrice = Math.max(isRound ? 40 : 20, Math.round(recommendedPricePerSeat * 0.4));
 
   return {
+    is_round_trip: isRound,
+    multiplier,
+    base_dist_km: baseDist,
+    total_dist_km: totalDist,
     fuel_rate_per_km: FUEL_RATE_PER_KM,
     depreciation_rate_per_km: DEPRECIATION_RATE_PER_KM,
     estimated_fuel_cost: estimatedFuelCost,
@@ -578,7 +585,7 @@ function calculateOperatingCost(distanceKm, seats = 4) {
   };
 }
 
-async function estimateRoute(origin, destination, seats = 4) {
+async function estimateRoute(origin, destination, seats = 4, isRoundTrip = false) {
   if (!origin || !destination) {
     throw new Error('กรุณาระบุต้นทางและปลายทาง');
   }
@@ -626,10 +633,15 @@ async function estimateRoute(origin, destination, seats = 4) {
     let durationMinutes = 20;
 
     if (crowDistance !== null) {
-      distanceKm = expectedRoadDistance;
-      // Speed estimate: 40 km/h for local roads, 72 km/h for highways
-      const speedKmh = distanceKm < 25 ? 40 : 72;
-      durationMinutes = Math.max(5, Math.round((distanceKm / speedKmh) * 60));
+      // For short local trips (< 15km), Google Maps displays rounded integer km (e.g., 8 km instead of 8.4 km)
+      if (expectedRoadDistance < 15 && Math.abs(expectedRoadDistance - Math.round(expectedRoadDistance)) <= 0.45) {
+        distanceKm = Math.round(expectedRoadDistance);
+      } else {
+        distanceKm = expectedRoadDistance;
+      }
+      // Speed estimate: 44 km/h for local roads matches Google Maps navigation (8km in 11min)
+      const speedKmh = distanceKm < 20 ? 44 : (distanceKm < 50 ? 55 : 72);
+      durationMinutes = Math.max(3, Math.round((distanceKm / speedKmh) * 60));
     }
 
     routeResult = {
@@ -641,7 +653,7 @@ async function estimateRoute(origin, destination, seats = 4) {
   }
 
   const distanceKm = routeResult.distance_km;
-  const cost = calculateOperatingCost(distanceKm, seats);
+  const cost = calculateOperatingCost(distanceKm, seats, isRoundTrip);
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
   const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`;
 
