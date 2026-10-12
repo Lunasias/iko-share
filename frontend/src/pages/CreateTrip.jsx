@@ -536,7 +536,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                   <input
                     type="text"
                     required
-                    placeholder={isTh ? "เช่น อนุสาวรีย์ชัยฯ, เซ็นทรัลพระราม 9" : "e.g. Victory Monument, Central Rama 9"}
+                    list="thailand-locations"
+                    placeholder={isTh ? "เช่น สจล.ชุมพร, ตลาดปะทิว, บขส.ชุมพร" : "e.g. KMITL Chumphon, Pathio, Chumphon Bus Terminal"}
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
                     onBlur={() => {
@@ -558,7 +559,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                   <input
                     type="text"
                     required
-                    placeholder={isTh ? "เช่น พัทยา, เขาใหญ่, เชียงใหม่" : "e.g. Pattaya, Khao Yai, Chiang Mai"}
+                    list="thailand-locations"
+                    placeholder={isTh ? "เช่น เขาทุ่งชาง, ปั๊มบางขัน, ทุ่งสง, หาดใหญ่, กรุงเทพ" : "e.g. Khao Thung Chang, PTT Bang Khan, Hat Yai, Bangkok"}
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     onBlur={() => {
@@ -570,6 +572,104 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                   />
                 </div>
               </div>
+
+              {/* Datalist for fast autocomplete across Southern Thailand and nationwide */}
+              <datalist id="thailand-locations">
+                {/* ชุมพร & รอบ ม.สจล. */}
+                <option value="สจล.ชุมพร (KMITL)" />
+                <option value="เขาทุ่งชาง" />
+                <option value="หาดทุ่งวัวแล่น" />
+                <option value="สถานีรถไฟปะทิว" />
+                <option value="ตลาดปะทิว" />
+                <option value="สี่แยกปฐมพร" />
+                <option value="ปั๊มปตท.เขาโพธิ์" />
+                <option value="บขส.ชุมพร" />
+                <option value="สถานีรถไฟชุมพร" />
+                <option value="หาดทรายรี (ชุมพร)" />
+                <option value="ท่าแซะ" />
+                <option value="สวี" />
+                <option value="หลังสวน" />
+                <option value="ละแม" />
+                <option value="ท่าเรือลมพระยา (ไปเกาะเต่า)" />
+
+                {/* นครศรีธรรมราช & ปั๊มน้ำมัน */}
+                <option value="ปั๊มบางขัน" />
+                <option value="ปตท.บางขัน" />
+                <option value="ทุ่งสง" />
+                <option value="สิชล" />
+                <option value="ขนอม" />
+                <option value="ลานสกา" />
+                <option value="คีรีวง" />
+                <option value="ท่าศาลา" />
+                <option value="ม.วลัยลักษณ์" />
+                <option value="เมืองนครศรีธรรมราช" />
+                <option value="ชะอวด" />
+                <option value="ร่อนพิบูลย์" />
+                <option value="หัวไทร" />
+                <option value="ฉวาง" />
+
+                {/* สุราษฎร์ธานี */}
+                <option value="เมืองสุราษฎร์ธานี" />
+                <option value="เซ็นทรัลสุราษฎร์ธานี" />
+                <option value="สนามบินสุราษฎร์ธานี" />
+                <option value="พุนพิน" />
+                <option value="ท่าเรือดอนสัก (ไปเกาะสมุย)" />
+                <option value="เกาะสมุย" />
+                <option value="เกาะพะงัน" />
+                <option value="เกาะเต่า" />
+                <option value="ไชยา" />
+                <option value="เวียงสระ" />
+                <option value="เขาสก" />
+                <option value="เขื่อนเชี่ยวหลาน" />
+
+                {/* สงขลา & หาดใหญ่ */}
+                <option value="หาดใหญ่" />
+                <option value="เซ็นทรัลหาดใหญ่" />
+                <option value="สนามบินหาดใหญ่" />
+                <option value="ม.อ.หาดใหญ่" />
+                <option value="เมืองสงขลา" />
+                <option value="สี่แยกคูหา" />
+                <option value="สะเดา (ด่านนอก)" />
+
+                {/* ภูเก็ต & พังงา & กระบี่ */}
+                <option value="เมืองภูเก็ต" />
+                <option value="สนามบินภูเก็ต" />
+                <option value="ป่าตอง" />
+                <option value="ถลาง" />
+                <option value="กระบี่" />
+                <option value="อ่าวนาง" />
+                <option value="เกาะพีพี" />
+                <option value="เกาะลันตา" />
+                <option value="เขาหลัก (พังงา)" />
+                <option value="ตะกั่วป่า" />
+                <option value="โคกกลอย" />
+
+                {/* ตรัง & พัทลุง & ระนอง & สตูล */}
+                <option value="เมืองตรัง" />
+                <option value="ห้วยยอด" />
+                <option value="กันตัง" />
+                <option value="เมืองพัทลุง" />
+                <option value="ควนขนุน" />
+                <option value="ทะเลน้อย" />
+                <option value="เมืองระนอง" />
+                <option value="เกาะพยาม" />
+                <option value="สตูล (ปากบารา/หลีเป๊ะ)" />
+
+                {/* ประจวบฯ & เพชรบุรี & กทม. */}
+                <option value="บางสะพาน" />
+                <option value="ทับสะแก" />
+                <option value="กุยบุรี" />
+                <option value="เมืองประจวบคีรีขันธ์" />
+                <option value="ปราณบุรี" />
+                <option value="หัวหิน" />
+                <option value="ชะอำ" />
+                <option value="เพชรบุรี" />
+                <option value="ปั๊มปตท.วังมะนาว" />
+                <option value="กรุงเทพ (สายใต้ใหม่)" />
+                <option value="กรุงเทพ (หมอชิต)" />
+                <option value="สนามบินสุวรรณภูมิ" />
+                <option value="สนามบินดอนเมือง" />
+              </datalist>
             </div>
 
             <div className="flex justify-end">
