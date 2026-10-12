@@ -650,127 +650,273 @@
     <h2 id="section-2">2. ภาพรวมของระบบ 3-Tier Architecture ที่ได้ออกแบบเสร็จสมบูรณ์</h2>
 
     <p>
-      ระบบ <strong>Iko-Share</strong> ได้รับการออกแบบโครงสร้างสถาปัตยกรรมซอฟต์แวร์แบบ <strong>3-Tier Architecture (Three-Tier Architecture)</strong> ซึ่งแยกส่วนการทำงานออกเป็น 3 ระดับอย่างอิสระตามหลักการ Separation of Concerns ช่วยให้ระบบมีความยืดหยุ่น ปลอดภัย บำรุงรักษาง่าย และสามารถขยายตัว (Scalability) ได้อย่างไร้รอยต่อ
+      ระบบ <strong>Iko-Share</strong> ได้รับการออกแบบโครงสร้างสถาปัตยกรรมแบบ <strong>3-Tier Architecture (Components + Tools + 3rd-Party)</strong> ฉบับสมบูรณ์ (Final Production Version) โดยได้รับการปรับปรุงและเติมเต็มจากโครงร่างเริ่มต้นให้ครอบคลุมเครื่องมือ ไลบรารี และบริการภายนอกที่ใช้งานจริงในระบบทั้งหมดอย่างครบถ้วน:
     </p>
 
-    <!-- SVG 3-Tier Architecture Diagram -->
+    <!-- Detailed Comparison & Modification Table -->
+    <div class="callout avoid-break" style="margin-bottom: 20px;">
+      <div class="callout-title">ตารางแจกแจงจุดที่เพิ่ม แก้ไข และลบออกจากโครงร่างสถาปัตยกรรมเดิม (Architecture Alignment Matrix)</div>
+      <p style="font-size: 13px; margin-bottom: 8px;">เปรียบเทียบระหว่างภาพร่างเริ่มต้น (Draft Diagram) กับสถาปัตยกรรมที่พัฒนาเสร็จสมบูรณ์และใช้งานจริงบนเว็บ Iko-Share (Completed Version):</p>
+      <table style="font-size: 12.5px; margin: 8px 0 0 0;">
+        <thead>
+          <tr>
+            <th style="width: 22%;">ส่วนประกอบ (Component)</th>
+            <th style="width: 38%;">สิ่งที่อยู่ในภาพร่างเดิม (Original Draft)</th>
+            <th style="width: 40%;">สิ่งที่ปรับปรุง เพิ่มเติม หรือลบออก (Final Updates & Additions)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. ระดับ Client (Client Tier)</strong></td>
+            <td>ระบุ <code>Web Application</code>, <code>Web Browser</code>, และ <code>Admin Web server</code></td>
+            <td><strong style="color: #dc2626;">[❌ ลบออก / แก้ไข]</strong> ลบคำว่า <em>Admin Web server</em> ออก เพราะ Web Server อยู่ใน Backend Tier ส่วนแอดมินคือผู้ใช้งาน (Actor) ที่เปิดผ่าน <strong>Web Browser</strong> เช่นเดียวกับผู้ใช้ทั่วไป พร้อมระบุ 3 กลุ่มผู้ใช้งาน (Passenger, Driver, Admin)</td>
+          </tr>
+          <tr>
+            <td><strong>2. ส่วน App Tier (UI & Runtime)</strong></td>
+            <td>มี React, Vite, Admin Dashboard, Node.js, Express.js</td>
+            <td><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> เพิ่ม <strong>Tailwind CSS (120 FPS GPU Motion)</strong>, <strong>In-Flight Request Deduplication</strong>, <strong>EventSource (SSE Client)</strong> สำหรับห้องแชทเรียลไทม์ และ <strong>Interactive Google Maps UI Component</strong></td>
+          </tr>
+          <tr>
+            <td><strong>3. ส่วน Service TIER (API / Logic)</strong></td>
+            <td>มีเฉพาะ <code>Authentication</code>, <code>Calculation</code>, <code>UI Service</code> (หรือ CAL)</td>
+            <td><strong style="color: #dc2626;">[❌ ลบออก]</strong> ลบคำว่า <em>UI Service</em> ใน Backend ออก<br><strong style="color: #16a34a;">[➕ เพิ่มให้ครบ 10 โมดูล]</strong> เพิ่ม <strong>Booking State Machine</strong>, <strong>Car Plate Verification & PDPA Consent</strong>, <strong>In-Trip SSE Chat Engine</strong>, <strong>PromptPay EMVCo QR & Slip</strong>, <strong>Mutual Peer Review</strong>, <strong>In-App Notification Dispatcher</strong>, และ <strong>Eco $CO_2$ Offset Engine</strong></td>
+          </tr>
+          <tr>
+            <td><strong>4. บริการภายนอก (3rd-Party)</strong></td>
+            <td>มีเพียงโลโก้ <strong>Google</strong> อันเดียว</td>
+            <td><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> ระบุเป็น <strong>Google Maps Embed & Directions API</strong> และเพิ่ม <strong>PromptPay BOT EMVCo Standard</strong>, <strong>Vercel Serverless Platform</strong>, <strong>Cloud Storage (Supabase/Cloudinary)</strong> และ <strong>Web Share API (LINE, FB, X)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>5. ส่วน DATA TIER (Storage)</strong></td>
+            <td>มีคำผิด <code>DATA storange</code>, Neon PostgreSQL, Environment Variables, Replication, Backup</td>
+            <td><strong style="color: #2563eb;">[✏️ แก้คำผิด]</strong> แก้เป็น <strong>DATA Storage</strong><br><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> เพิ่ม <strong>14 Relational Tables (3NF Schema)</strong>, <strong>Connection Pooler (pg.Pool)</strong>, <strong>B-Tree Indexes Optimization</strong>, <strong>Protected File Storage (uploaded_images Bytea)</strong> และ <strong>Self-Healing Auto-Migration Engine</strong></td>
+          </tr>
+          <tr>
+            <td><strong>6. แถบข้าง (Management & Governance)</strong></td>
+            <td>Vercel + Admin Dashboard, PostgreSQL Schema / Constraints, Security (JWT, Bcrypt, Helmet, CORS, Rate Limit)</td>
+            <td><strong style="color: #16a34a;">[➕ เสริมความสมบูรณ์]</strong> เพิ่ม <strong>Foreign Key Cascades</strong>, <strong>PDPA Data Compliance</strong>, <strong>Parameterized SQL Queries 100%</strong> ป้องกัน SQL Injection และ <strong>Role-Based Access Control (RBAC Middleware)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Complete Aligned SVG Diagram -->
     <div class="diagram-container avoid-break">
-      <svg viewBox="0 0 880 480" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 440px;">
-        <!-- Background Grids -->
+      <svg viewBox="0 0 980 660" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 620px;">
+        <!-- Defs & Filters -->
         <defs>
-          <linearGradient id="gradClient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#0284c7" stop-opacity="0.1"/>
-            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05"/>
-          </linearGradient>
-          <linearGradient id="gradApp" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#0f766e" stop-opacity="0.1"/>
-            <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.05"/>
-          </linearGradient>
-          <linearGradient id="gradData" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.1"/>
-            <stop offset="100%" stop-color="#a855f7" stop-opacity="0.05"/>
-          </linearGradient>
-          <filter id="shadowBox" x="-5%" y="-5%" width="110%" height="110%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.1"/>
+          <filter id="boxShadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
           </filter>
         </defs>
 
-        <!-- Tier 1: Presentation Tier -->
-        <rect x="20" y="20" width="840" height="120" rx="12" fill="url(#gradClient)" stroke="#0284c7" stroke-width="1.5"/>
-        <text x="40" y="45" font-family="'Prompt', sans-serif" font-size="15" font-weight="700" fill="#0369a1">TIER 1: PRESENTATION TIER (Client Tier - React 18 Single Page Application)</text>
+        <!-- Diagram Header -->
+        <text x="30" y="32" font-family="'Prompt', sans-serif" font-size="22" font-weight="800" fill="#0f172a">Components + Tools + 3rd-Party</text>
+        <text x="560" y="32" font-family="'Prompt', sans-serif" font-size="24" font-weight="800" fill="#0f766e">Iko Share</text>
+
+        <!-- Top Client Row -->
+        <text x="175" y="66" font-family="'Prompt', sans-serif" font-size="14" font-weight="700" fill="#334155">Client</text>
         
-        <!-- Tier 1 Components -->
-        <g transform="translate(40, 58)">
-          <rect x="0" y="0" width="140" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="70" y="28" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">React 18 & Vite SPA</text>
-          <text x="70" y="48" font-size="10.5" fill="#64748b" text-anchor="middle">Component-Driven</text>
+        <rect x="235" y="48" width="155" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="312" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Web Application (SPA)</text>
 
-          <rect x="155" y="0" width="140" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="225" y="28" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Tailwind CSS (120 FPS)</text>
-          <text x="225" y="48" font-size="10.5" fill="#64748b" text-anchor="middle">GPU Accelerated</text>
+        <rect x="400" y="48" width="165" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="482" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Web Browser (User / Driver)</text>
 
-          <rect x="310" y="0" width="150" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="385" y="28" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Request Deduplication</text>
-          <text x="385" y="48" font-size="10.5" fill="#64748b" text-anchor="middle">In-Flight GET Sharing</text>
+        <rect x="575" y="48" width="155" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="652" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Admin Dashboard (UI)</text>
 
-          <rect x="475" y="0" width="150" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="550" y="28" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Interactive Map & UI</text>
-          <text x="550" y="48" font-size="10.5" fill="#64748b" text-anchor="middle">Google Maps + Modals</text>
+        <rect x="740" y="48" width="215" height="28" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="3,2"/>
+        <text x="847" y="66" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" text-anchor="middle" fill="#b91c1c">❌ ลบ 'Admin Web server' ออก</text>
 
-          <rect x="640" y="0" width="150" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="715" y="28" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">SSE Client & Context</text>
-          <text x="715" y="48" font-size="10.5" fill="#64748b" text-anchor="middle">Realtime EventSource</text>
+        <!-- 3rd Party Box (Left) -->
+        <rect x="25" y="100" width="170" height="535" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+        <rect x="35" y="112" width="150" height="28" rx="6" fill="#16a34a"/>
+        <text x="110" y="131" font-family="'Prompt', sans-serif" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3rd-Party Services</text>
+
+        <!-- Google Maps -->
+        <g transform="translate(40, 155)">
+          <rect x="0" y="0" width="140" height="95" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <circle cx="70" cy="30" r="18" fill="#f8fafc" stroke="#ea4335" stroke-width="2"/>
+          <text x="70" y="37" font-family="'Prompt', sans-serif" font-size="20" font-weight="800" fill="#4285f4" text-anchor="middle">G</text>
+          <text x="70" y="65" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Google Maps Platform</text>
+          <text x="70" y="80" font-size="9" fill="#64748b" text-anchor="middle">Embed & Directions API</text>
         </g>
 
-        <!-- Connecting Arrows 1 to 2 -->
-        <g stroke="#0f766e" stroke-width="2" fill="none">
-          <path d="M 240 140 L 240 170"/>
-          <path d="M 440 140 L 440 170"/>
-          <path d="M 640 140 L 640 170"/>
-        </g>
-        <text x="440" y="158" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">REST API (HTTPS/JSON) + Server-Sent Events (SSE Stream)</text>
-
-        <!-- Tier 2: Application Tier -->
-        <rect x="20" y="170" width="840" height="150" rx="12" fill="url(#gradApp)" stroke="#0f766e" stroke-width="1.5"/>
-        <text x="40" y="195" font-family="'Prompt', sans-serif" font-size="15" font-weight="700" fill="#0f766e">TIER 2: APPLICATION TIER (Business Logic & Gateway - Node.js & Express)</text>
-
-        <!-- Tier 2 Components -->
-        <g transform="translate(40, 208)">
-          <!-- Gateway / Security -->
-          <rect x="0" y="0" width="185" height="95" rx="8" fill="#ffffff" stroke="#0f766e" stroke-dasharray="2,2"/>
-          <text x="92" y="24" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f766e">Security & Gateway Layer</text>
-          <text x="92" y="44" font-size="10.5" fill="#334155" text-anchor="middle">• Vercel Serverless Runtime</text>
-          <text x="92" y="62" font-size="10.5" fill="#334155" text-anchor="middle">• Helmet CSP / Rate Limiter</text>
-          <text x="92" y="80" font-size="10.5" fill="#334155" text-anchor="middle">• JWT & RBAC Middleware</text>
-
-          <!-- Core Logic Engines -->
-          <rect x="200" y="0" width="190" height="95" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="295" y="24" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Trip & Route Controller</text>
-          <text x="295" y="44" font-size="10.5" fill="#475569" text-anchor="middle">• Smart Fair Price Calculator</text>
-          <text x="295" y="62" font-size="10.5" fill="#475569" text-anchor="middle">• Haversine + Google Directions</text>
-          <text x="295" y="80" font-size="10.5" fill="#475569" text-anchor="middle">• Waypoint Timeline Builder</text>
-
-          <rect x="405" y="0" width="190" height="95" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="500" y="24" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Booking & Chat Engine</text>
-          <text x="500" y="44" font-size="10.5" fill="#475569" text-anchor="middle">• Booking State Machine</text>
-          <text x="500" y="62" font-size="10.5" fill="#475569" text-anchor="middle">• In-Trip SSE Stream Hub</text>
-          <text x="500" y="80" font-size="10.5" fill="#475569" text-anchor="middle">• EMVCo PromptPay QR Code</text>
-
-          <rect x="610" y="0" width="180" height="95" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="700" y="24" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Trust, Safety & PDPA</text>
-          <text x="700" y="44" font-size="10.5" fill="#475569" text-anchor="middle">• Car Plate Verification</text>
-          <text x="700" y="62" font-size="10.5" fill="#475569" text-anchor="middle">• Identity KYC Moderation</text>
-          <text x="700" y="80" font-size="10.5" fill="#475569" text-anchor="middle">• PDPA Rights / Consent Engine</text>
+        <!-- PromptPay -->
+        <g transform="translate(40, 260)">
+          <rect x="0" y="0" width="140" height="85" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <rect x="20" y="10" width="100" height="24" rx="4" fill="#003764"/>
+          <text x="70" y="26" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">พร้อมเพย์ PromptPay</text>
+          <text x="70" y="52" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">BOT EMVCo QR</text>
+          <text x="70" y="68" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Thai QR Payment</text>
         </g>
 
-        <!-- Connecting Arrows 2 to 3 -->
-        <g stroke="#6366f1" stroke-width="2" fill="none">
-          <path d="M 240 320 L 240 350"/>
-          <path d="M 440 320 L 440 350"/>
-          <path d="M 640 320 L 640 350"/>
+        <!-- Vercel Serverless -->
+        <g transform="translate(40, 355)">
+          <rect x="0" y="0" width="140" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <polygon points="70,12 85,36 55,36" fill="#000000"/>
+          <text x="70" y="52" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Vercel Cloud</text>
+          <text x="70" y="68" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Edge Serverless</text>
         </g>
-        <text x="440" y="338" font-size="11" font-weight="600" fill="#6366f1" text-anchor="middle">Connection Pooler (pg.Pool) + S3-Compatible Signed URLs</text>
 
-        <!-- Tier 3: Data Tier -->
-        <rect x="20" y="350" width="840" height="110" rx="12" fill="url(#gradData)" stroke="#6366f1" stroke-width="1.5"/>
-        <text x="40" y="375" font-family="'Prompt', sans-serif" font-size="15" font-weight="700" fill="#4f46e5">TIER 3: DATA TIER (PostgreSQL Database & Cloud Storage - Supabase)</text>
+        <!-- Cloud Storage & Share -->
+        <g transform="translate(40, 445)">
+          <rect x="0" y="0" width="140" height="85" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="70" y="24" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Cloud Storage (S3)</text>
+          <text x="70" y="40" font-size="9" fill="#64748b" text-anchor="middle">Supabase / Cloudinary</text>
+          <text x="70" y="58" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Web Share API</text>
+          <text x="70" y="74" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: LINE / FB / X Share</text>
+        </g>
 
-        <!-- Tier 3 Components -->
-        <g transform="translate(40, 388)">
-          <rect x="0" y="0" width="250" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="125" y="25" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">PostgreSQL 16 (Relational DB)</text>
-          <text x="125" y="45" font-size="10.5" fill="#64748b" text-anchor="middle">14 Tables (3NF) + ACID Integrity</text>
+        <!-- Big Arrow From Core to 3rd-Party -->
+        <polygon points="215,225 215,195 198,210" fill="#0f172a"/>
 
-          <rect x="270" y="0" width="250" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="395" y="25" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Performance Indexes & Constraints</text>
-          <text x="395" y="45" font-size="10.5" fill="#64748b" text-anchor="middle">B-Tree Indexes + Foreign Key Cascades</text>
+        <!-- Main Blue Container (App, Service, Data Tier) -->
+        <rect x="225" y="100" width="730" height="535" rx="10" fill="#dbeafe" fill-opacity="0.5" stroke="#93c5fd" stroke-width="1.5"/>
 
-          <rect x="540" y="0" width="250" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#shadowBox)"/>
-          <text x="665" y="25" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Supabase Cloud Object Storage</text>
-          <text x="665" y="45" font-size="10.5" fill="#64748b" text-anchor="middle">Car Plates, KYC & Payment Slips</text>
+        <!-- 1. App Tier (Top Row inside Blue Box) -->
+        <text x="245" y="140" font-family="'Prompt', sans-serif" font-size="15" font-weight="800" fill="#0f172a">App<br/>Tier</text>
+        
+        <!-- App Tier: UI -->
+        <g transform="translate(295, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">UI (Web Application)</text>
+          <rect x="12" y="28" width="60" height="24" rx="4" fill="#38bdf8"/>
+          <text x="42" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">React 18</text>
+          <rect x="85" y="28" width="60" height="24" rx="4" fill="#818cf8"/>
+          <text x="115" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Vite SPA</text>
+          <text x="80" y="68" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 Tailwind CSS (120 FPS)</text>
+          <text x="80" y="80" font-size="9" fill="#16a34a" text-anchor="middle">🟢 In-flight Deduplication & SSE</text>
+        </g>
+
+        <!-- App Tier: Admin UI -->
+        <g transform="translate(465, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Admin UI</text>
+          <rect x="15" y="28" width="130" height="24" rx="4" fill="#3b82f6"/>
+          <text x="80" y="44" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">Admin Dashboard</text>
+          <text x="80" y="68" font-size="9.5" fill="#334155" text-anchor="middle">• ตรวจสอบและอนุมัติ KYC</text>
+          <text x="80" y="80" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 ตรวจสอบภาพป้ายทะเบียน</text>
+        </g>
+
+        <!-- App Tier: Web Service -->
+        <g transform="translate(635, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Web Service</text>
+          <rect x="12" y="28" width="60" height="24" rx="4" fill="#22c55e"/>
+          <text x="42" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Node.js</text>
+          <rect x="85" y="28" width="60" height="24" rx="4" fill="#0f172a"/>
+          <text x="115" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Express</text>
+          <text x="80" y="68" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 Vercel Serverless Gateway</text>
+          <text x="80" y="80" font-size="9" fill="#16a34a" text-anchor="middle">🟢 Gzip Compression (75-85%)</text>
+        </g>
+
+        <!-- 2. Service Tier (Middle Row inside Blue Box) -->
+        <text x="235" y="270" font-family="'Prompt', sans-serif" font-size="14" font-weight="800" fill="#0f172a">Service<br/>TIER</text>
+
+        <g transform="translate(295, 215)">
+          <rect x="0" y="0" width="500" height="150" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="250" y="22" font-family="'Prompt', sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#0f172a">Services / API Endpoints & Business Logic Engines</text>
+          
+          <!-- Original blocks -->
+          <rect x="15" y="32" width="145" height="26" rx="4" fill="#3b82f6"/>
+          <text x="87" y="49" font-family="'Prompt', sans-serif" font-size="10" font-weight="600" fill="#ffffff" text-anchor="middle">Authentication & RBAC</text>
+
+          <rect x="175" y="32" width="150" height="26" rx="4" fill="#3b82f6"/>
+          <text x="250" y="49" font-family="'Prompt', sans-serif" font-size="10" font-weight="600" fill="#ffffff" text-anchor="middle">Calculation (Fair Price)</text>
+
+          <rect x="340" y="32" width="145" height="26" rx="4" fill="#fee2e2" stroke="#dc2626"/>
+          <text x="412" y="49" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">❌ ลบ 'UI Service' ออก</text>
+
+          <!-- Added Services -->
+          <g transform="translate(15, 66)">
+            <rect x="0" y="0" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="15" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Booking Lifecycle State Machine</text>
+
+            <rect x="240" y="0" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="15" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Car Plate Verification & PDPA Service</text>
+
+            <rect x="0" y="28" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="43" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 In-Trip SSE Real-time Chat Hub</text>
+
+            <rect x="240" y="28" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="43" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 PromptPay EMVCo QR & Slip Service</text>
+
+            <rect x="0" y="56" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="71" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Mutual Peer Review & Rating Engine</text>
+
+            <rect x="240" y="56" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="71" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 PDPA Rights & Eco ESG ($CO2 Offset)</text>
+          </g>
+        </g>
+
+        <!-- 3. Data Tier (Bottom Row inside Blue Box) -->
+        <text x="245" y="460" font-family="'Prompt', sans-serif" font-size="14" font-weight="800" fill="#0f172a">DATA<br/>TIER</text>
+
+        <!-- Data Storage Box -->
+        <g transform="translate(295, 375)">
+          <rect x="0" y="0" width="500" height="135" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="250" y="22" font-family="'Prompt', sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#0f172a">DATA Storage (✏️ แก้ไขคำสะกดผิดจาก 'storange')</text>
+          
+          <rect x="20" y="32" width="220" height="30" rx="4" fill="#0284c7"/>
+          <text x="130" y="51" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">PostgreSQL 16 (Neon / Supabase)</text>
+
+          <rect x="260" y="32" width="220" height="30" rx="4" fill="#0284c7"/>
+          <text x="370" y="51" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">Environment Variables (.env)</text>
+
+          <text x="250" y="80" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: 14 Relational Tables (3NF) + Connection Pooling (pg.Pool)</text>
+          <text x="250" y="96" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: B-Tree Indexes Optimization (idx_trips, idx_cars, idx_bookings)</text>
+          <text x="250" y="112" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: Protected File Storage (uploaded_images Bytea for Plates & Slips)</text>
+        </g>
+
+        <!-- Replication & Backup Sub-boxes -->
+        <g transform="translate(295, 520)">
+          <rect x="0" y="0" width="240" height="95" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="120" y="22" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Replication</text>
+          <rect x="25" y="32" width="190" height="26" rx="4" fill="#3b82f6"/>
+          <text x="120" y="49" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Neon / Cloud Managed</text>
+          <text x="120" y="74" font-size="9.5" fill="#334155" text-anchor="middle">• Multi-AZ High Availability</text>
+          <text x="120" y="88" font-size="9.5" fill="#334155" text-anchor="middle">• Read Replica Routing</text>
+
+          <rect x="260" y="0" width="240" height="95" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="380" y="22" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Backup & Migration</text>
+          <rect x="285" y="32" width="190" height="26" rx="4" fill="#3b82f6"/>
+          <text x="380" y="49" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Neon / Cloud Managed</text>
+          <text x="380" y="74" font-size="9.5" fill="#334155" text-anchor="middle">• Point-in-Time Recovery (PITR)</text>
+          <text x="380" y="88" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Self-Healing Auto-Migration</text>
+        </g>
+
+        <!-- Right Sidebars (Management, Data Governance, Security) -->
+        <!-- Management -->
+        <g transform="translate(805, 115)">
+          <rect x="0" y="0" width="65" height="350" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="32" y="28" font-family="'Prompt', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle" transform="rotate(-90 32,28)" letter-spacing="1">MANAGEMENT</text>
+          <rect x="10" y="110" width="45" height="225" rx="4" fill="#0284c7"/>
+          <text x="32" y="220" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#ffffff" text-anchor="middle" transform="rotate(-90 32,220)">Vercel + Admin Dashboard + DB</text>
+        </g>
+
+        <!-- Data Governance -->
+        <g transform="translate(880, 115)">
+          <rect x="0" y="0" width="65" height="350" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="32" y="28" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="800" fill="#0f172a" text-anchor="middle" transform="rotate(-90 32,28)" letter-spacing="0.5">DATA GOVERNANCE</text>
+          <rect x="10" y="110" width="45" height="225" rx="4" fill="#0284c7"/>
+          <text x="32" y="220" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#ffffff" text-anchor="middle" transform="rotate(-90 32,220)">PostgreSQL 3NF Schema & PDPA</text>
+        </g>
+
+        <!-- Security (Bottom Right) -->
+        <g transform="translate(805, 480)">
+          <rect x="0" y="0" width="140" height="135" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="70" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="800" fill="#0f172a" text-anchor="middle">SECURITY</text>
+          <rect x="10" y="28" width="120" height="95" rx="4" fill="#0f172a"/>
+          <text x="70" y="46" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#38bdf8" text-anchor="middle">JWT Stateless Auth</text>
+          <text x="70" y="62" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#4ade80" text-anchor="middle">Bcryptjs Password Hash</text>
+          <text x="70" y="78" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#facc15" text-anchor="middle">Helmet CSP + CORS</text>
+          <text x="70" y="94" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#f87171" text-anchor="middle">Rate Limiter (Anti-DDoS)</text>
+          <text x="70" y="110" font-family="'Prompt', sans-serif" font-size="8.5" font-weight="700" fill="#38bdf8" text-anchor="middle">🟢 Parameterized SQL 100%</text>
         </g>
       </svg>
-      <div class="diagram-caption">ภาพที่ 2.1: แผนภาพสถาปัตยกรรมระบบ 3-Tier Architecture ฉบับสมบูรณ์ของ Iko-Share (Release 2.3.0)</div>
+      <div class="diagram-caption">ภาพที่ 2.1: แผนผังสถาปัตยกรรม 3-Tier Architecture ฉบับสมบูรณ์ที่ปรับปรุงตามระบบจริง (Components + Tools + 3rd-Party Final Version)</div>
     </div>
 
     <h3>2.1 รายละเอียดการทำงานของแต่ละ Tier</h3>

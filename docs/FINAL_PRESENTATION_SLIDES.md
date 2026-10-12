@@ -57,20 +57,27 @@
 
 ## Slide 5: 3-Tier Architecture Overview
 ### 2. ภาพรวมของระบบ 3-Tier Architecture ที่ออกแบบเสร็จสมบูรณ์
-* **Tier 1: Presentation Tier (Client Layer):**
-  * React 18 Single Page Application + Vite
-  * Tailwind CSS (Morning Forest Design) + Hardware GPU Acceleration (120 FPS)
-  * In-Flight API Request Deduplication Engine & Dynamic Route Prefetching
-  * SSE EventSource Client สำหรับแชท และ Interactive Google Maps
-* **Tier 2: Application Tier (Logic & Gateway Layer):**
-  * Node.js + Express.js API บน Vercel Serverless Functions
-  * Security Stack: Helmet CSP, CORS Whitelist, express-rate-limit, JWT Stateless Auth
-  * Core Engines: Route & Fair Price Engine, Booking State Machine, In-Trip SSE Hub, Vehicle Plate Verification & PDPA Rights Engine
-* **Tier 3: Data Tier (Persistence & Storage Layer):**
-  * PostgreSQL 16 บน Supabase Cloud (14 Tables in 3NF)
-  * Connection Pooler (pg.Pool) รองรับโหลดพร้อมกันสูง
-  * B-Tree Indexes Optimization & Referential Foreign Key Cascades
-  * Supabase Cloud Object Storage (S3-Compatible) เก็บภาพป้ายทะเบียน สลิป และ KYC
+* **Components + Tools + 3rd-Party Diagram (Final Aligned Version):**
+  * **Client Tier:** Web Browser (Passenger, Driver, Admin) เข้าสู่ React 18 SPA (ตัด Admin Web server ออก)
+  * **App Tier (UI & Runtime):** React 18, Vite, Tailwind CSS (120 FPS), Admin Dashboard, Node.js + Express.js API Gateway บน Vercel
+  * **Service TIER (Core Engines):** Auth RBAC, Smart Route & Fair Price Calculator, Booking State Machine, Plate Verification & PDPA, In-Trip SSE Chat, PromptPay EMVCo QR, Reviews, Notifications, Eco $CO_2$ Engine (ตัด UI Service ออก)
+  * **DATA TIER (Storage):** PostgreSQL 16 (Neon / Supabase), 14 Tables (3NF), Connection Pooler, B-Tree Indexes, Protected File Storage (Bytea), Multi-AZ Replication, Auto-Migration
+  * **3rd-Party Integrations:** Google Maps Platform, PromptPay BOT EMVCo QR, Vercel Serverless, Cloud Storage, Web Share API
+  * **Sidebars:** Management (Vercel + Admin), Data Governance (3NF + PDPA), Security (JWT, Bcrypt, Helmet, CORS, Rate Limit, Parameterized SQL 100%)
+
+---
+
+## Slide 5B: Architecture Gap Analysis (สิ่งที่เพิ่ม/แก้ไข/ลบออก)
+### 2. ตารางสรุปจุดที่เพิ่ม แก้ไข และลบออกจากภาพร่างเดิมให้ตรงกับเว็บจริง
+| ส่วนประกอบ | ภาพร่างเดิม (Draft Layout) | สิ่งที่แก้ไข ลบออก หรือเพิ่มให้ตรงกับระบบจริง (Final Version) |
+| :--- | :--- | :--- |
+| **Client Tier** | Web App, Web Browser, Admin Web server | **[❌ ลบออก]** ลบ Admin Web server (แอดมินเป็น User ผ่าน Browser ไม่ใช่ Server)<br>**[🟢 เพิ่ม]** ระบุ 3 กลุ่มผู้ใช้: Passenger, Driver, Admin |
+| **App Tier** | React, Vite, Admin Dashboard, Node, Express | **[🟢 เพิ่ม]** Tailwind CSS (120 FPS GPU), In-Flight Request Deduplication, EventSource (SSE Client), Google Maps UI Component |
+| **Service TIER** | Authentication, Calculation, UI Service (CAL) | **[❌ ลบออก]** ลบ UI Service ใน Backend ออก<br>**[🟢 เพิ่มครบ 10 โมดูล]** Booking State Machine, Car Plate Verify (PDPA), In-Trip SSE Chat, PromptPay QR & Slip, Mutual Review, Notifications, Eco $CO_2$ |
+| **3rd-Party** | มีเพียง Google logo อย่างเดียว | **[🟢 เพิ่มให้ครบ]** Google Maps Embed & Directions, PromptPay BOT EMVCo QR, Vercel Serverless Platform, Cloud Storage, Web Share API |
+| **DATA TIER** | สะกดผิดว่า `DATA storange`, Neon DB, Env | **[✏️ แก้คำผิด]** DATA Storage<br>**[🟢 เพิ่ม]** 14 ตาราง (3NF), Connection Pooler, B-Tree Indexes, Protected File Storage, Auto-Migration |
+| **Sidebars** | Management, Governance, Security | **[🟢 เสริมความสมบูรณ์]** Foreign Key Cascades, PDPA Data Compliance, Parameterized SQL 100% ป้องกัน SQL Injection, RBAC Middleware |
+
 
 ---
 

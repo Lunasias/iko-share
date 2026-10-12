@@ -44,53 +44,80 @@ Iko-Share ถูกออกแบบให้เป็น **True Carpooling Pla
 
 ## 2. ภาพรวมของระบบ 3-Tier Architecture ที่ได้ออกแบบเสร็จสมบูรณ์
 
-ระบบแบ่งการทำงานออกเป็น 3 ระดับ (Three-Tier Architecture) ชัดเจน:
+ระบบได้รับการออกแบบโครงสร้างสถาปัตยกรรมแบบ **3-Tier Architecture (Components + Tools + 3rd-Party)** โดยปรับปรุงจากโครงร่างเดิมให้ตรงกับฟังก์ชันการทำงานจริงบนเว็บ Iko-Share 100%:
+
+### ตารางแจกแจงจุดที่เพิ่ม แก้ไข และลบออกจากโครงร่างเดิม (Architecture Alignment Matrix)
+| ส่วนประกอบ (Component) | สิ่งที่อยู่ในภาพร่างเดิม (Original Draft) | สิ่งที่ปรับปรุง เพิ่มเติม หรือลบออกให้ตรงกับเว็บจริง (Final Version) |
+| :--- | :--- | :--- |
+| **1. ระดับ Client (Client Tier)** | มี `Web Application`, `Web Browser`, และ `Admin Web server` | **[❌ ลบออก / แก้ไข]** ลบ `Admin Web server` ออก เพราะ Web Server อยู่ใน Backend ส่วน Admin เป็นผู้ใช้ที่เปิดผ่าน Web Browser เหมือนกัน พร้อมระบุ 3 กลุ่มผู้ใช้งาน (Passenger, Driver, Admin) |
+| **2. ส่วน App Tier (UI & Runtime)** | มี React, Vite, Admin Dashboard, Node.js, Express.js | **[➕ เพิ่มตามเว็บจริง]** เพิ่ม **Tailwind CSS (120 FPS GPU Motion)**, **In-Flight Request Deduplication**, **EventSource (SSE Client)** สำหรับ Real-time Chat และ **Interactive Google Maps Component** |
+| **3. ส่วน Service TIER (API / Logic)** | มีเฉพาะ `Authentication`, `Calculation`, `UI Service` (หรือ CAL) | **[❌ ลบออก]** ลบ `UI Service` ใน Backend ออก<br>**[➕ เพิ่มครบ 10 โมดูล]** เพิ่ม **Booking State Machine**, **Car Plate Verification (PDPA)**, **In-Trip SSE Chat Hub**, **PromptPay QR & Slip Verification**, **Mutual Review**, **In-App Notifications**, และ **Eco $CO_2$ Offset Engine** |
+| **4. บริการภายนอก (3rd-Party)** | มีเพียงโลโก้ **Google** | **[➕ เพิ่มตามเว็บจริง]** ระบุเป็น **Google Maps Embed & Directions API** และเพิ่ม **PromptPay BOT EMVCo Standard**, **Vercel Serverless Platform**, **Cloud Storage (S3)**, และ **Web Share API** |
+| **5. ส่วน DATA TIER (Storage)** | สะกดผิดว่า `DATA storange`, Neon DB, Environment Variables | **[✏️ แก้คำผิด]** แก้ไขเป็น **DATA Storage**<br>**[➕ เพิ่มตามเว็บจริง]** เพิ่ม **14 Relational Tables (3NF Schema)**, **Connection Pooler (pg.Pool)**, **B-Tree Indexes**, **Protected File Storage (uploaded_images Bytea)**, และ **Auto-Migration Engine** |
+| **6. แถบข้าง (Management & Governance)** | Management (Vercel), Data Governance (Schema), Security (JWT, Bcrypt, Helmet, CORS, Rate Limit) | **[➕ เสริมความสมบูรณ์]** เพิ่ม **Foreign Key Cascades**, **PDPA Data Compliance & Encryption**, **Parameterized SQL 100%** ป้องกัน SQL Injection และ **Role-Based Access Control (RBAC Middleware)** |
 
 ```mermaid
 flowchart TD
-    subgraph ClientTier ["1. Presentation Tier (Client Layer)"]
-        UI["React 18 Single Page Application (Vite)"]
-        Tailwind["Tailwind CSS (Morning Forest Theme)"]
-        GPU["Hardware GPU Acceleration (120 FPS Motion)"]
+    subgraph ClientTier ["Client Tier (Web Browser: Desktop & Mobile)"]
+        Users["Actors: Passenger | Driver | Admin"]
+        UI["React 18 SPA + Vite"]
+        Tailwind["Tailwind CSS + 120 FPS Motion Layer"]
         Dedupe["In-flight API Request Deduplication"]
         MapClient["Interactive Google Maps & Timeline"]
-        SSEClient["EventSource Real-time SSE Client"]
+        SSEClient["Browser EventSource (SSE Client)"]
+        Users --> UI
     end
 
-    subgraph AppTier ["2. Application Tier (Logic & Gateway Layer)"]
-        VercelGateway["Vercel Serverless Gateway (api/index.js)"]
-        ExpressServer["Node.js + Express.js Engine"]
-        Security["Security: Helmet CSP + Rate Limit + CORS"]
-        AuthRBAC["JWT Stateless Auth + Role-Based Access Control"]
-        
-        subgraph LogicServices ["Core Business Engines"]
-            RouteEngine["Smart Hybrid Route & Fair Price Engine"]
-            BookingSM["Booking Lifecycle State Machine"]
-            ChatSSEHub["SSE Real-time Messaging Manager"]
-            CarPlateVerify["Car Registration & Plate Verification"]
-            PDPAService["PDPA Rights & Consent Manager"]
-            NotifEngine["In-App Notification Dispatcher"]
-        end
+    subgraph ThirdParty ["3rd-Party Services & Cloud Platform"]
+        GMaps["Google Maps Embed & Directions API"]
+        PromptPay["PromptPay BOT EMVCo Thai QR Payment"]
+        VercelEdge["Vercel Cloud (Edge CDN & Serverless)"]
+        S3Storage["Supabase / Cloudinary Cloud Object Storage"]
+        WebShare["Web Share API (LINE, Facebook, X)"]
     end
 
-    subgraph DataTier ["3. Data Tier (Persistence & Storage Layer)"]
-        PostgresDB[("Supabase PostgreSQL 16 (14 Tables in 3NF)")]
-        ConnectionPool["Database Connection Pooling (pg.Pool)"]
-        BTreeIndex["B-Tree Indexes Optimization"]
-        CloudStorage["Supabase S3-Compatible Cloud Storage"]
+    subgraph AppTier ["App Tier & Runtime (Node.js & Express.js)"]
+        Gateway["api/index.js (Vercel Serverless Gateway)"]
+        Compression["HTTP Compression (Gzip / Deflate 75-85%)"]
+        SecurityMW["Security: Helmet CSP + Rate Limiter + CORS"]
+        AuthMW["JWT Stateless Auth + Role RBAC Middleware"]
     end
 
-    UI --> Dedupe --> VercelGateway --> ExpressServer
-    ExpressServer --> Security --> AuthRBAC --> LogicServices
-    LogicServices --> ConnectionPool --> PostgresDB
-    LogicServices -.-> CloudStorage
-    ChatSSEHub -.-> SSEClient
+    subgraph ServiceTier ["Service TIER (Core Business Engines & APIs)"]
+        AuthSvc["1. Authentication & Role RBAC"]
+        RouteSvc["2. Smart Route & Fair Price Calculator"]
+        BookingSvc["3. Booking Lifecycle State Machine"]
+        CarSvc["4. Car Plate Verification & PDPA Consent"]
+        ChatSvc["5. In-Trip SSE Real-time Messaging Hub"]
+        PaySvc["6. PromptPay QR & Slip Verification"]
+        ReviewSvc["7. Mutual Peer Review Engine"]
+        PDPASvc["8. PDPA Rights & Data Export Service"]
+        NotifSvc["9. In-App Notification Dispatcher"]
+        EcoSvc["10. Eco Impact ($CO2 Offset & Trees Saved)"]
+    end
+
+    subgraph DataTier ["DATA TIER (Storage & Persistence)"]
+        PostgresDB[("Managed PostgreSQL 16 (Neon / Supabase)")]
+        Tables["14 Relational Tables (3NF Schema)"]
+        ConnPool["Database Connection Pooling (pg.Pool)"]
+        BTreeIdx["B-Tree Indexes Optimization"]
+        FileTable["Protected File Storage (uploaded_images Bytea)"]
+        Replication["Automated Multi-AZ Replication (Managed)"]
+        Backup["Point-in-Time Recovery & Auto-Migration Engine"]
+    end
+
+    UI --> Dedupe --> Gateway --> Compression --> SecurityMW --> AuthMW
+    AuthMW --> ServiceTier
+    ServiceTier --> ConnPool --> PostgresDB
+    PostgresDB --- Tables --- BTreeIdx --- FileTable
+    ServiceTier <--> ThirdParty
+    ChatSvc -.-> SSEClient
 ```
 
 ### รายละเอียดเทคโนโลยีในแต่ละ Tier:
 1. **Presentation Tier (Client):** React 18, Vite, Tailwind CSS, React Router DOM v6, Axios พร้อม Request Deduplication, Lucide React และ SSE Client
 2. **Application Tier (Logic):** Node.js, Express.js บน Vercel Serverless Functions, Helmet, CORS, express-rate-limit, jsonwebtoken, bcryptjs, multer, compression (บีบอัด Gzip 70-85%)
-3. **Data Tier (Storage):** PostgreSQL 16 บน Supabase Cloud, pg.Pool Connection Manager, 14 Tables (3NF), B-Tree Indexes และ Supabase S3 Object Storage
+3. **Data Tier (Storage):** PostgreSQL 16 บน Supabase/Neon Cloud, pg.Pool Connection Manager, 14 Tables (3NF), B-Tree Indexes และ Protected Object/Bytea Storage
 
 ---
 
