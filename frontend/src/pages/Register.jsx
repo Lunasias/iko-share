@@ -35,10 +35,16 @@ export default function Register() {
       if (res.success) {
         navigate('/trips');
       } else {
-        setError(String(res.message || (isTh ? 'ลงทะเบียนไม่สำเร็จ' : 'Registration failed')));
+        const msg = typeof res.message === 'string' && res.message.trim() && res.message !== '[object Object]'
+          ? res.message
+          : (isTh ? 'ลงทะเบียนไม่สำเร็จ' : 'Registration failed');
+        setError(msg);
       }
     } catch (err) {
-      setError(String(err.message || (isTh ? 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ' : 'Unknown error occurred')));
+      const msg = typeof err.message === 'string' && err.message.trim() && err.message !== '[object Object]'
+        ? err.message
+        : (isTh ? 'เกิดข้อผิดพลาดในการลงทะเบียน' : 'Registration error');
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -89,15 +89,16 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'กรุณากรอกอีเมลและรหัสผ่าน' });
     }
 
-    const userRes = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const trimmedEmail = String(email).trim().toLowerCase();
+    const userRes = await db.query('SELECT * FROM users WHERE LOWER(TRIM(email)) = $1', [trimmedEmail]);
     if (!userRes.rows || userRes.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+      return res.status(401).json({ success: false, message: 'ไม่พบบัญชีผู้ใช้งานที่ใช้อีเมลนี้ หรือยังไม่ได้ลงทะเบียน' });
     }
 
     const user = userRes.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(String(password), user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+      return res.status(401).json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง' });
     }
 
     const token = jwt.sign({ id: user.user_id, user_id: user.user_id, email: user.email, role: user.role, is_admin: user.is_admin, name: user.name }, JWT_SECRET, { expiresIn: '7d' });

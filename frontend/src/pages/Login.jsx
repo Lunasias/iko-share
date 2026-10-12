@@ -24,10 +24,16 @@ export default function Login() {
       if (res.success) {
         navigate('/trips');
       } else {
-        setError(String(res.message || (isTh ? 'เข้าสู่ระบบไม่สำเร็จ' : 'Login failed')));
+        const msg = typeof res.message === 'string' && res.message.trim() && res.message !== '[object Object]'
+          ? res.message
+          : (isTh ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : 'Invalid email or password');
+        setError(msg);
       }
     } catch (err) {
-      setError(String(err.message || (isTh ? 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ' : 'Unknown error occurred')));
+      const msg = typeof err.message === 'string' && err.message.trim() && err.message !== '[object Object]'
+        ? err.message
+        : (isTh ? 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' : 'Login error');
+      setError(msg);
     } finally {
       setLoading(false);
     }
