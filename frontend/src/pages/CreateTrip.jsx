@@ -670,20 +670,70 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                 </div>
               </div>
 
-              {/* Live Interactive Google Maps Embed Preview */}
-              <div className="rounded-2xl overflow-hidden border border-emerald-200 shadow-xs mt-2 bg-slate-100">
-                <div className="p-2 bg-slate-100 border-b border-emerald-200 flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-bold gap-1">
-                  <span>🗺️ แผนที่ Google Maps ({origin} ➔ {destination})</span>
-                  <span className="text-[10px] text-emerald-700 font-normal">💡 ดูระยะทาง/เวลาในแผนที่ด้านล่าง แล้วพิมพ์ปรับที่ช่องด้านบนได้ทันที</span>
+              {/* Live Interactive Google Maps Embed Preview with Direct Sync Bar */}
+              <div className="rounded-2xl overflow-hidden border border-emerald-300 shadow-xs mt-2 bg-slate-100">
+                <div className="p-2.5 bg-slate-100 border-b border-emerald-200 flex flex-wrap items-center justify-between text-xs text-slate-800 font-bold gap-2">
+                  <span className="flex items-center gap-1.5 text-emerald-950 font-black">
+                    🗺️ <span>แผนที่ Google Maps ({origin} ➔ {destination})</span>
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-emerald-300 shadow-2xs">
+                    <span className="text-[11px] text-emerald-900 font-bold">📍 ระยะทางในแผนที่:</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={distanceKm ?? ''}
+                      onChange={(e) => handleDistanceChange(e.target.value)}
+                      className="w-16 text-center font-black text-emerald-950 bg-emerald-50 rounded border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
+                      title="ปรับระยะทางให้ตรงกับตัวเลขบนแผนที่ Google Maps ด้านล่างนี้ได้ทันที"
+                      placeholder="เช่น 8"
+                    />
+                    <span className="text-[11px] font-bold text-emerald-950">กม.</span>
+                    <input
+                      type="text"
+                      value={durationText || ''}
+                      onChange={(e) => setDurationText(e.target.value)}
+                      placeholder="เช่น 11 นาที"
+                      className="w-20 text-center font-bold text-emerald-950 bg-emerald-50 rounded border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
+                      title="ปรับเวลาเดินทางให้ตรงกับบนแผนที่"
+                    />
+                  </div>
                 </div>
+
                 <iframe
                   title="Google Maps Route Preview"
                   width="100%"
-                  height="220"
+                  height="230"
                   style={{ border: 0 }}
                   loading="lazy"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`}
                 />
+
+                <div className="px-3 py-2 bg-emerald-50/80 border-t border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span className="text-emerald-900 font-medium">
+                    ✨ เมื่อตัวเลขระยะทาง (กม.) เปลี่ยน ระบบจะคำนวณค่าน้ำมัน ค่าเสื่อม และราคาแนะนำด้านบนใหม่อัตโนมัติทันที
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500 font-medium">ระยะทางด่วน:</span>
+                    {[5, 8, 10, 15, 20, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          handleDistanceChange(d);
+                          setDurationText(d <= 10 ? `${Math.round(d * 1.4)} นาที` : `${Math.round(d * 1.2)} นาที`);
+                        }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
+                          Math.round(distanceKm) === d
+                            ? 'bg-emerald-700 text-white border-emerald-700'
+                            : 'bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {d} กม.
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
