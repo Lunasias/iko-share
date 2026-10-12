@@ -271,17 +271,18 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   })();
 
-  const handleCalculateRoute = async () => {
-    if (!origin.trim() || !destination.trim()) {
-      setError('กรุณากรอกทั้งจุดเริ่มต้นและจุดหมายปลายทางเพื่อคำนวณระยะทาง');
+  const handleCalculateRoute = async (customOrigin = origin, customDest = destination) => {
+    const o = (customOrigin || '').trim();
+    const d = (customDest || '').trim();
+    if (!o || !d) {
       return;
     }
     setCalculatingRoute(true);
     setError('');
     try {
       const res = await API.post('/trips/estimate-route', {
-        origin: origin.trim(),
-        destination: destination.trim(),
+        origin: o,
+        destination: d,
         available_seats: seats || 4,
         is_round_trip: isRoundTrip,
       });
@@ -294,11 +295,26 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
       }
     } catch (err) {
       console.warn('Calculate route estimate error:', err);
-      setError(String(err.response?.data?.message || err.message || 'ไม่สามารถคำนวณเส้นทางได้'));
+      // Only set error if called directly by user button
+      if (customOrigin === origin && customDest === destination) {
+        setError(String(err.response?.data?.message || err.message || 'ไม่สามารถคำนวณเส้นทางได้'));
+      }
     } finally {
       setCalculatingRoute(false);
     }
   };
+
+  // Auto-calculate exact highway road distance and cost breakdown automatically in real-time
+  useEffect(() => {
+    const o = origin.trim();
+    const d = destination.trim();
+    if (o && d && o.toLowerCase() !== d.toLowerCase()) {
+      const timer = setTimeout(() => {
+        handleCalculateRoute(o, d);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [origin, destination, seats, isRoundTrip]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -616,7 +632,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
                     onBlur={() => {
-                      if (origin.trim() && destination.trim() && !costBreakdown) {
+                      if (origin.trim() && destination.trim()) {
                         handleCalculateRoute();
                       }
                     }}
@@ -639,7 +655,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     onBlur={() => {
-                      if (origin.trim() && destination.trim() && !costBreakdown) {
+                      if (origin.trim() && destination.trim()) {
                         handleCalculateRoute();
                       }
                     }}
