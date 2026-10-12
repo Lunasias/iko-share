@@ -6,8 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import {
   PlusCircle, MapPin, Calendar, Clock, Users, Car, AlertCircle,
-  ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock, ExternalLink, Map,
-  Camera, Upload, CheckCircle2, Loader2
+  ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock, ExternalLink, Map
 } from 'lucide-react';
 
 function ThaiBahtIcon({ className = "w-5 h-5", strokeWidth = 2, ...props }) {
@@ -55,8 +54,6 @@ export default function CreateTrip() {
   const [durationText, setDurationText] = useState('');
   const [costBreakdown, setCostBreakdown] = useState(null);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
-  const [scanningScreenshot, setScanningScreenshot] = useState(false);
-  const [scanMessage, setScanMessage] = useState('');
 
   // Round-trip (ไป-กลับ) state
   const [isRoundTrip, setIsRoundTrip] = useState(false);
@@ -184,78 +181,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
       setPrice(recalculated.recommendedSeatPrice);
     }
   };
-
-  const handleProcessImage = async (fileOrBase64) => {
-    setScanningScreenshot(true);
-    setScanMessage(isTh ? 'กำลังอ่านรูปภาพและสแกนข้อความ Google Maps ด้วย OCR...' : 'Scanning Google Maps screenshot with OCR...');
-    setError('');
-    try {
-      let base64 = '';
-      if (typeof fileOrBase64 === 'string') {
-        base64 = fileOrBase64;
-      } else {
-        base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(fileOrBase64);
-        });
-      }
-
-      const res = await API.post('/trips/scan-map-screenshot', {
-        image: base64,
-        seats: seats || 4,
-        is_round_trip: isRoundTrip,
-      });
-
-      if (res.data.success) {
-        if (res.data.distanceKm) {
-          setDistanceKm(res.data.distanceKm);
-        }
-        if (res.data.durationText) {
-          setDurationText(res.data.durationText);
-        }
-        if (res.data.costBreakdown) {
-          setCostBreakdown(res.data.costBreakdown);
-          setPrice(res.data.costBreakdown.recommendedSeatPrice);
-        } else if (res.data.distanceKm) {
-          const recalculated = computeCostBreakdown(res.data.distanceKm, seats || 4, isRoundTrip);
-          setCostBreakdown(recalculated);
-          setPrice(recalculated.recommendedSeatPrice);
-        }
-        setScanMessage(
-          isTh
-            ? `✅ สแกนสำเร็จ: ${res.data.distanceKm || ''} กม. ${res.data.durationText ? `(${res.data.durationText})` : ''}`
-            : `✅ Scanned successfully: ${res.data.distanceKm || ''} km ${res.data.durationText ? `(${res.data.durationText})` : ''}`
-        );
-      } else {
-        setError(res.data.message || 'ไม่สามารถสแกนข้อมูลจากภาพได้');
-      }
-    } catch (err) {
-      console.warn('Scan screenshot error:', err);
-      setError(String(err.response?.data?.message || err.message || 'ไม่สามารถอ่านภาพได้'));
-    } finally {
-      setScanningScreenshot(false);
-    }
-  };
-
-  useEffect(() => {
-    const handlePaste = (e) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type && items[i].type.indexOf('image') !== -1) {
-          const file = items[i].getAsFile();
-          if (file) {
-            handleProcessImage(file);
-            break;
-          }
-        }
-      }
-    };
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
-  }, [seats, isRoundTrip, isTh]);
 
   // Today's date in the local (Thai) timezone — used as the min value of the date picker.
   const todayStr = (() => {
@@ -763,22 +688,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
               </datalist>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <label className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition cursor-pointer">
-                <Camera className="w-3.5 h-3.5 text-amber-600" />
-                <span>{scanningScreenshot ? (isTh ? 'กำลังสแกน OCR...' : 'Scanning...') : (isTh ? '📸 สแกนภาพแคป Google Maps (Ctrl+V)' : '📸 Scan Google Maps Screenshot (Ctrl+V)')}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={scanningScreenshot}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleProcessImage(file);
-                  }}
-                />
-              </label>
-
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={handleCalculateRoute}
@@ -786,7 +696,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-xs"
               >
                 <Navigation className="w-3.5 h-3.5 text-white" />
-                <span>{calculatingRoute ? (isTh ? 'กำลังดึงระยะทาง...' : 'Calculating...') : (isTh ? '🗺️ ดึงระยะทางอัตโนมัติ & คำนวณค่าเดินทาง' : '🗺️ Auto Calculate Distance & Costs')}</span>
+                <span>{calculatingRoute ? (isTh ? 'กำลังดึงระยะทาง...' : 'Calculating...') : (isTh ? '🗺️ คำนวณระยะทาง & ค่าเดินทาง' : '🗺️ Calculate Route & Costs')}</span>
               </button>
             </div>
           </div>
@@ -914,67 +824,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                   loading="lazy"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`}
                 />
-
-                {/* Google Maps Screenshot Scanner / Paste OCR Tool */}
-                <div className="p-3 bg-amber-50/70 border-t border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-950">
-                      <Camera className="w-4 h-4 text-amber-600" />
-                      <span>{isTh ? '📸 สแกนระยะทางจากภาพแคปหน้าจอ Google Maps (กด Ctrl+V วางภาพได้ทันที)' : '📸 Scan Distance from Google Maps Screenshot (Ctrl+V to Paste)'}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-600">
-                      {isTh
-                        ? 'แคปหน้าจอแผนที่แล้วกด Ctrl+V วางภาพได้ทันที หรือคลิกปุ่มเพื่อเลือกภาพ ระบบ OCR จะดึงระยะทางและเวลาเดินทางให้อัตโนมัติ'
-                        : 'Capture Google Maps and press Ctrl+V to paste, or click to upload. OCR extracts distance & duration automatically.'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <label className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 border shadow-2xs ${
-                      scanningScreenshot
-                        ? 'bg-amber-100 text-amber-800 border-amber-300'
-                        : 'bg-white hover:bg-amber-100 text-amber-900 border-amber-300'
-                    }`}>
-                      {scanningScreenshot ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                          <span>{isTh ? 'กำลังสแกน OCR...' : 'Scanning OCR...'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-3.5 h-3.5 text-amber-600" />
-                          <span>{isTh ? 'เลือกภาพแคป / วางภาพ' : 'Upload Screenshot'}</span>
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={scanningScreenshot}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleProcessImage(file);
-                        }}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {scanMessage && (
-                  <div className="px-3 py-1.5 bg-emerald-100 text-emerald-900 text-xs font-bold border-t border-emerald-300 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{scanMessage}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setScanMessage('')}
-                      className="text-emerald-700 hover:text-emerald-950 text-[10px] underline ml-2"
-                    >
-                      {isTh ? 'ปิด' : 'Dismiss'}
-                    </button>
-                  </div>
-                )}
 
                 <div className="px-3 py-2 bg-emerald-50/80 border-t border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                   <span className="text-emerald-900 font-medium">
