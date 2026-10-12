@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const bcrypt = require('bcryptjs');
 const { cleanupOrphanEvents } = require('./eventController');
 
 const getAdminStats = async (req, res) => {
@@ -526,6 +527,117 @@ const deleteAdminCar = async (req, res) => {
   }
 };
 
+// Admin resets user's password directly (by user_id)
+const resetUserPasswordByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params; // user_id
+    const { new_password, support_request_id } = req.body;
+
+    if (!new_password || String(new_password).trim().length < 6) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    const trimmedPassword = String(new_password).trim();
+    const userRes = await db.query('SELECT user_id, name, email FROM users WHERE user_id = $1', [id]);
+    if (!userRes.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+    }
+    const targetUser = userRes.rows[0];
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(trimmedPassword, salt);
+
+    await db.query('UPDATE users SET password = $1 WHERE user_id = $2', [hashedPassword, id]);
+
+    // If linked to a support request, update the support request to resolved
+    if (support_request_id) {
+      await db.query(
+        `UPDATE support_requests
+         SET status = 'ดำเนินการแล้ว',
+             resolved_at = NOW(),
+             admin_reply = $1
+         WHERE request_id = $2`,
+        [`แอดมินได้ทำการเปลี่ยนรหัสผ่านใหม่ให้เรียบร้อยแล้ว: ${trimmedPassword} (สามารถเข้าสู่ระบบและเปลี่ยนรหัสผ่านได้ในหน้าโปรไฟล์)`, support_request_id]
+      );
+    } else {
+      // Also check if any open support request matches this user's email
+      await db.query(
+        `UPDATE support_requests
+         SET status = 'ดำเนินการแล้ว',
+             resolved_at = NOW(),
+             admin_reply = $1
+         WHERE LOWER(email) = LOWER($2) AND status = 'รอดำเนินการ'`,
+        [`แอดมินได้ทำการเปลี่ยนรหัสผ่านใหม่ให้เรียบร้อยแล้ว: ${trimmedPassword}`, targetUser.email]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `เปลี่ยนรหัสผ่านให้ผู้ใช้ ${targetUser.name} (${targetUser.email}) เป็น "${trimmedPassword}" เรียบร้อยแล้ว`,
+      user: {
+        user_id: targetUser.user_id,
+        name: targetUser.name,
+        email: targetUser.email,
+      },
+      new_password: trimmedPassword,
+    });
+  } catch (error) {
+    console.error('Reset user password by admin error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: ' + (error.message || String(error)) });
+  }
+};
+
+// Admin resets password directly by support request
+const resetPasswordFromSupportRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // support_request_id
+    const { new_password } = req.body;
+
+    if (!new_password || String(new_password).trim().length < 6) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    const trimmedPassword = String(new_password).trim();
+    const reqRes = await db.query('SELECT * FROM support_requests WHERE request_id = $1', [id]);
+    if (!reqRes.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบคำขอความช่วยเหลือนี้' });
+    }
+    const ticket = reqRes.rows[0];
+
+    // Find user by email
+    const userRes = await db.query('SELECT user_id, name, email FROM users WHERE LOWER(email) = LOWER($1)', [ticket.email]);
+    if (!userRes.rows.length) {
+      return res.status(404).json({ success: false, message: `ไม่พบผู้ใช้งานที่ใช้อีเมล ${ticket.email} ในระบบ` });
+    }
+    const targetUser = userRes.rows[0];
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(trimmedPassword, salt);
+
+    await db.query('UPDATE users SET password = $1 WHERE user_id = $2', [hashedPassword, targetUser.user_id]);
+
+    const updatedTicket = await db.query(
+      `UPDATE support_requests
+       SET status = 'ดำเนินการแล้ว',
+           resolved_at = NOW(),
+           admin_reply = $1
+       WHERE request_id = $2
+       RETURNING *`,
+      [`แอดมินได้ทำการเปลี่ยนรหัสผ่านใหม่ให้เรียบร้อยแล้ว: ${trimmedPassword} (สามารถเข้าสู่ระบบและเปลี่ยนรหัสผ่านได้ในหน้าโปรไฟล์)`, id]
+    );
+
+    res.json({
+      success: true,
+      message: `เปลี่ยนรหัสผ่านให้ผู้ใช้ ${targetUser.name} (${targetUser.email}) เป็น "${trimmedPassword}" เรียบร้อยแล้ว`,
+      request: updatedTicket.rows[0],
+      new_password: trimmedPassword,
+    });
+  } catch (error) {
+    console.error('Reset password from support request error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getAllUsers,
@@ -549,4 +661,6 @@ module.exports = {
   getAdminCars,
   reviewCarRegistration,
   deleteAdminCar,
+  resetUserPasswordByAdmin,
+  resetPasswordFromSupportRequest,
 };

@@ -4,7 +4,8 @@ import API from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 import {
   Mail, Phone, Lock, KeyRound, Send, CheckCircle2,
-  AlertCircle, ArrowLeft, Shield, RefreshCw, MessageSquare
+  AlertCircle, ArrowLeft, Shield, RefreshCw, MessageSquare,
+  Eye, EyeOff
 } from 'lucide-react';
 
 export default function ForgotPasswordChat() {
@@ -18,6 +19,8 @@ export default function ForgotPasswordChat() {
   const [resetPhone, setResetPhone] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetError, setResetError] = useState('');
@@ -229,7 +232,7 @@ export default function ForgotPasswordChat() {
                   <div className="flex items-center gap-2 px-4 py-3 travel-input h-12">
                     <Lock className="w-5 h-5 text-slate-400 shrink-0" />
                     <input
-                      type="password"
+                      type={showNewPassword ? "text" : "password"}
                       required
                       minLength={6}
                       placeholder="••••••••"
@@ -237,6 +240,14 @@ export default function ForgotPasswordChat() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
+                      title={showNewPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -247,7 +258,7 @@ export default function ForgotPasswordChat() {
                   <div className="flex items-center gap-2 px-4 py-3 travel-input h-12">
                     <Lock className="w-5 h-5 text-slate-400 shrink-0" />
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       required
                       minLength={6}
                       placeholder="••••••••"
@@ -255,6 +266,14 @@ export default function ForgotPasswordChat() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
+                      title={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -306,11 +325,27 @@ export default function ForgotPasswordChat() {
                     </div>
                   )}
                   {ticket.status === 'ดำเนินการแล้ว' ? (
-                    <div className="p-3 bg-emerald-100 rounded-xl text-center space-y-2">
-                      <p className="font-bold text-emerald-900">{isTh ? 'แอดมินดำเนินการเรียบร้อยแล้ว!' : 'Admin has resolved this request!'}</p>
-                      <Link to="/register" className="inline-block px-4 py-2 travel-btn-primary text-xs font-bold">
-                        {isTh ? 'ไปที่หน้าสมัครสมาชิก' : 'Go to Register'}
-                      </Link>
+                    <div className="p-4 bg-emerald-100 rounded-2xl text-center space-y-3 border border-emerald-300">
+                      <p className="font-bold text-emerald-950 text-xs">
+                        {isTh ? '🎉 แอดมินได้ดำเนินการตามคำขอของคุณเรียบร้อยแล้ว!' : '🎉 Admin has resolved your request!'}
+                      </p>
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                        <Link
+                          to="/login"
+                          className="w-full sm:w-auto px-5 py-2.5 travel-btn-primary text-xs font-bold shadow-xs text-center inline-flex items-center justify-center gap-1.5"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>{isTh ? 'เข้าสู่ระบบด้วยรหัสผ่านใหม่' : 'Proceed to Login'}</span>
+                        </Link>
+                        {ticket.request_type === 'delete_account' && (
+                          <Link
+                            to="/register"
+                            className="w-full sm:w-auto px-4 py-2.5 bg-white text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-50 text-center"
+                          >
+                            {isTh ? 'สมัครสมาชิกใหม่' : 'Register New Account'}
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <p className="text-[11px] text-emerald-700 italic">
