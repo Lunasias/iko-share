@@ -55,6 +55,12 @@ export default function CreateTrip() {
   const [costBreakdown, setCostBreakdown] = useState(null);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
 
+  // Round-trip (ไป-กลับ) state
+  const [isRoundTrip, setIsRoundTrip] = useState(false);
+  const [returnDate, setReturnDate] = useState('');
+  const [returnTime, setReturnTime] = useState('');
+  const [createPairedReturn, setCreatePairedReturn] = useState(true);
+
   // New fields requested by user: Driver personality & passenger requirements
   const [driverPersonality, setDriverPersonality] = useState(isTh ? 'สายชิล ชอบฟังเพลง ขับนิ่มปลอดภัย' : 'Chill driver, loves music, safe drive');
   const [passengerRequirements, setPassengerRequirements] = useState(isTh ? 'ตรงต่อเวลา สัมภาระปานกลาง พูดคุยเป็นกันเอง' : 'Punctual, reasonable luggage, friendly');
@@ -222,6 +228,24 @@ const computeCostBreakdown = (distKm, seatCount) => {
       return;
     }
 
+    let returnDepartureTime = null;
+    if (isRoundTrip) {
+      if (!returnDate || !returnTime) {
+        setError(isTh ? 'กรุณาระบุวันและเวลาเดินทางขากลับสำหรับทริปไป-กลับ' : 'Please provide return departure date and time for round trip');
+        return;
+      }
+      const localReturn = new Date(`${returnDate}T${returnTime}:00`);
+      if (Number.isNaN(localReturn.getTime())) {
+        setError(isTh ? 'รูปแบบวันและเวลาขากลับไม่ถูกต้อง' : 'Invalid return date and time');
+        return;
+      }
+      if (localReturn.getTime() <= localDeparture.getTime()) {
+        setError(isTh ? 'วันและเวลาขากลับต้องเกิดขึ้นหลังจากเวลาขาไป' : 'Return departure time must be after outbound departure time');
+        return;
+      }
+      returnDepartureTime = localReturn.toISOString();
+    }
+
     setSubmitting(true);
 
     try {
@@ -240,6 +264,9 @@ const computeCostBreakdown = (distKm, seatCount) => {
         passenger_requirements: passengerRequirements,
         distance_km: distanceKm,
         duration_text: durationText,
+        is_round_trip: isRoundTrip,
+        return_departure_time: returnDepartureTime,
+        create_paired_return: isRoundTrip ? createPairedReturn : false,
       });
 
       if (res.data.success) {
@@ -582,10 +609,44 @@ const computeCostBreakdown = (distKm, seatCount) => {
             </div>
           )}
 
+          {/* Trip Direction: One-way vs Round-trip */}
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Navigation className="w-4 h-4 text-emerald-600" />
+                <span>{isTh ? 'รูปแบบการเดินทาง' : 'Trip Direction'}</span>
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setIsRoundTrip(false)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
+                  !isRoundTrip
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span>➡️ {isTh ? 'เที่ยวเดียว (One-Way)' : 'One-Way'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRoundTrip(true)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
+                  isRoundTrip
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span>🔄 {isTh ? 'ไป-กลับ (Round-Trip)' : 'Round-Trip'}</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">{isTh ? 'วันที่เดินทาง' : 'Departure Date'}</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? (isRoundTrip ? 'วันที่ออกเดินทาง (ขาไป)' : 'วันที่เดินทาง') : (isRoundTrip ? 'Outbound Departure Date' : 'Departure Date')}</label>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Calendar className="w-5 h-5 text-amber-500 shrink-0" />
@@ -602,7 +663,7 @@ const computeCostBreakdown = (distKm, seatCount) => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">{isTh ? 'เวลาออกเดินทาง' : 'Departure Time'}</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? (isRoundTrip ? 'เวลาออกเดินทาง (ขาไป)' : 'เวลาออกเดินทาง') : (isRoundTrip ? 'Outbound Departure Time' : 'Departure Time')}</label>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 travel-input h-12">
                 <Clock className="w-5 h-5 text-amber-500 shrink-0" />
@@ -617,6 +678,66 @@ const computeCostBreakdown = (distKm, seatCount) => {
               </div>
             </div>
           </div>
+
+          {/* Round-trip Return Schedule */}
+          {isRoundTrip && (
+            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-emerald-600" />
+                  <span>{isTh ? 'วันและเวลาเดินทางขากลับ' : 'Return Departure Date & Time'}</span>
+                </div>
+                <span className="text-[11px] text-emerald-800 font-medium">
+                  {isTh ? `ปลายทาง ➔ ต้นทาง` : `Return Trip`}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700">{isTh ? 'วันที่ขากลับ' : 'Return Date'}</label>
+                  <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white rounded-xl border border-emerald-200 h-11">
+                    <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <input
+                      type="date"
+                      required={isRoundTrip}
+                      min={date || todayStr}
+                      value={returnDate}
+                      onChange={(e) => setReturnDate(e.target.value)}
+                      className="bg-transparent border-none text-slate-900 text-xs focus:outline-none w-full font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700">{isTh ? 'เวลาขากลับ' : 'Return Time'}</label>
+                  <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white rounded-xl border border-emerald-200 h-11">
+                    <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <input
+                      type="time"
+                      required={isRoundTrip}
+                      value={returnTime}
+                      onChange={(e) => setReturnTime(e.target.value)}
+                      className="bg-transparent border-none text-slate-900 text-xs focus:outline-none w-full font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={createPairedReturn}
+                  onChange={(e) => setCreatePairedReturn(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300 cursor-pointer shrink-0"
+                />
+                <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  {isTh
+                    ? 'สร้างเที่ยวเดินทางขากลับให้อัตโนมัติ (ระบบจะเปิดอีก 1 ทริปสลับต้นทางและปลายทางตามเวลาขากลับทันที)'
+                    : 'Automatically generate a paired return trip (swapping origin and destination at the return time)'}
+                </span>
+              </label>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -714,9 +835,9 @@ const computeCostBreakdown = (distKm, seatCount) => {
               />
               <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
                 {isTh ? (
-                  <>ข้าพเจ้ายืนยันว่ายานพาหนะมีสภาพปลอดภัยและมีใบอนุญาตขับขี่/พ.ร.บ. ถูกต้องตามกฎหมาย และรับทราบว่า Iko Share เป็นเพียงสื่อกลางเชื่อมต่อผู้ร่วมเดินทางเพื่อแบ่งปันค่าน้ำมันเท่านั้น <strong>ไม่สามารถเรียกร้องค่าเสียหายหรือดำเนินคดีเอาผิดต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong></>
+                  <>ข้าพเจ้ายืนยันว่ายานพาหนะมีสภาพพร้อมใช้งานอย่างปลอดภัย มีใบอนุญาตขับขี่และ พ.ร.บ. คุ้มครองผู้ประสบภัยจากรถถูกต้องตามกฎหมาย และเข้าใจว่า Iko Share เป็นแพลตฟอร์มสื่อกลางทางเทคโนโลยีสำหรับประสานงานแบ่งปันค่าน้ำมัน โดยผู้ร่วมเดินทางตกลงร่วมกันปฏิบัติตามกฎจราจรและดูแลความปลอดภัยซึ่งกันและกันตามมาตรฐานการร่วมเดินทาง</>
                 ) : (
-                  <>I confirm that the vehicle is roadworthy and complies with driving license/insurance laws. I acknowledge that Iko Share is merely a communication platform to share travel costs and <strong>waive all rights to hold website owners or administrators legally liable under all circumstances</strong>.</>
+                  <>I confirm that the vehicle is safe, roadworthy, and complies with driving license and statutory insurance regulations. I understand that Iko Share serves as a technology platform connecting travelers to share fuel expenses, where participants mutually adhere to traffic laws and take joint responsibility for travel safety.</>
                 )}
               </span>
             </label>

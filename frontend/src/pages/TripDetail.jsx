@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import API, { uploadImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -421,6 +421,12 @@ export default function TripDetail() {
               <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full uppercase tracking-wider">
                 {trip.event_name ? (isTh ? `ทริปอีเวนต์: ${trip.event_name}` : `Event Trip: ${trip.event_name}`) : (isTh ? 'ทริปเดินทางท่องเที่ยว' : 'Travel Journey')}
               </span>
+              {trip.is_round_trip && (
+                <span className="text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-3 py-0.5 rounded-full flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 text-blue-600" />
+                  <span>{isTh ? '🔄 ทริปไป-กลับ' : '🔄 Round-Trip'}</span>
+                </span>
+              )}
               {trip.trip_status === 'completed' && (
                 <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-0.5 rounded-full">
                   {isTh ? '✓ จบทริปแล้ว' : '✓ Completed'}
@@ -538,6 +544,37 @@ export default function TripDetail() {
                 : (isTh ? 'ไม่ระบุทะเบียน' : 'No plate specified')}
             </div>
           </div>
+
+          {trip.is_round_trip && trip.return_departure_time && (
+            <div className="col-span-1 sm:col-span-2 md:col-span-4 p-4 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 rounded-2xl border border-blue-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <RefreshCw className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                    <span>{isTh ? '🔄 กำหนดการเดินทางขากลับ (Round-Trip Return)' : '🔄 Return Departure Schedule'}</span>
+                    <span className="text-[10px] bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded-full font-bold">
+                      {trip.destination} ➔ {trip.origin}
+                    </span>
+                  </div>
+                  <div className="text-xs font-extrabold text-blue-900 mt-0.5">
+                    {new Date(trip.return_departure_time).toLocaleDateString(isTh ? 'th-TH' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {' '}เวลา {new Date(trip.return_departure_time).toLocaleTimeString(isTh ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })} {isTh ? 'น.' : ''}
+                  </div>
+                </div>
+              </div>
+              {trip.paired_trip_id && (
+                <Link
+                  to={`/trips/${trip.paired_trip_id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs"
+                >
+                  <span>{isTh ? 'เปิดดูทริปขากลับ' : 'View Return Trip'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
+          )}
 
           {(trip.distance_km || trip.duration_text || (trip.origin && trip.destination)) && (
             <div className="col-span-1 sm:col-span-2 md:col-span-4">
@@ -1079,9 +1116,9 @@ export default function TripDetail() {
                 />
                 <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
                   {isTh ? (
-                    <>ข้าพเจ้ารับทราบว่าการร่วมเดินทางเป็นการแบ่งปันค่าใช้จ่ายด้วยความสมัครใจ แพลตฟอร์ม Iko Share และผู้ดูแลระบบเป็นเพียงสื่อกลางเชื่อมต่อ <strong>ไม่สามารถเอาผิดหรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี</strong></>
+                    <>ข้าพเจ้ายืนยันว่าเข้าใจรูปแบบการร่วมเดินทางที่เป็นการแบ่งปันค่าใช้จ่ายด้วยความสมัครใจ และยอมรับข้อกำหนดการใช้งาน Iko Share ในฐานะแพลตฟอร์มสื่อกลางทางเทคโนโลยี โดยตกลงปฏิบัติตามกฎกติกามารยาทและความปลอดภัยในการเดินทางร่วมกัน</>
                   ) : (
-                    <>I acknowledge that carpooling is a voluntary cost-sharing arrangement. Iko Share and its administrators are solely a communication platform and <strong>I waive all rights to claim damages or hold website owners/admins legally liable in any case</strong>.</>
+                    <>I acknowledge that this carpool is a voluntary expense-sharing arrangement. I accept Iko Share's Terms of Service as an intermediary technology platform and agree to uphold passenger etiquette and mutual safety standards.</>
                   )}
                 </span>
               </label>

@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS trips (
   duration_text VARCHAR(100),
   driver_personality VARCHAR(255),
   passenger_requirements VARCHAR(255),
+  is_round_trip BOOLEAN DEFAULT FALSE,
+  return_departure_time TIMESTAMP WITH TIME ZONE,
+  paired_trip_id INT REFERENCES trips(trip_id) ON DELETE SET NULL,
   trip_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (trip_status IN ('active', 'completed', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

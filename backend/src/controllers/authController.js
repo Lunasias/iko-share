@@ -102,8 +102,73 @@ const getMe = async (req, res) => {
   }
 };
 
+const resetPassword = async (req, res) => {
+  try {
+    const { email, phone, new_password } = req.body;
+
+    if (!email || !phone || !new_password) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณากรอกข้อมูลให้ครบถ้วน (อีเมล, เบอร์โทรศัพท์ที่ลงทะเบียน, รหัสผ่านใหม่)',
+      });
+    }
+
+    if (String(new_password).length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
+      });
+    }
+
+    const userRes = await db.query(
+      'SELECT user_id, name, email, phone FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
+      [email]
+    );
+
+    if (!userRes.rows || userRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบบัญชีผู้ใช้งานที่ใช้อีเมลนี้ในระบบ กรุณาตรวจสอบอีเมลอีกครั้ง',
+      });
+    }
+
+    const user = userRes.rows[0];
+
+    // Normalize phone numbers for comparison (match digits only)
+    const inputPhoneDigits = String(phone).replace(/\D/g, '');
+    const userPhoneDigits = String(user.phone || '').replace(/\D/g, '');
+
+    if (!userPhoneDigits || inputPhoneDigits !== userPhoneDigits) {
+      return res.status(400).json({
+        success: false,
+        message: 'เบอร์โทรศัพท์ไม่ตรงกับข้อมูลที่ลงทะเบียนไว้ในระบบ หากจำเบอร์โทรไม่ได้ กรุณาใช้ช่องทางติดต่อแอดมิน',
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(new_password, salt);
+
+    await db.query(
+      'UPDATE users SET password = $1 WHERE user_id = $2',
+      [hashedPassword, user.user_id]
+    );
+
+    res.json({
+      success: true,
+      message: 'รีเซ็ตรหัสผ่านใหม่สำเร็จเรียบร้อยแล้ว! สามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที',
+    });
+  } catch (error) {
+    console.error('ResetPassword error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน: ' + (error.message || String(error)),
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  resetPassword,
 };

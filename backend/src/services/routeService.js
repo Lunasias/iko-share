@@ -620,20 +620,7 @@ async function estimateRoute(origin, destination, seats = 4) {
   const windingFactor = (crowDistance && crowDistance < 20) ? 1.18 : 1.28;
   const expectedRoadDistance = crowDistance !== null ? Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10) : 15;
 
-  // Misroute guard:
-  // For local trips (< 25km), road winding should be within 1.25x of crow distance.
-  // If Google Routes API returns a distance that is > 1.25x crow distance (such as a 14.3km detour for an 8.4km route)
-  // or < 0.85x, Google API misrouted or snapped to a dead-end/loop. Fall back to calibrated local engine!
-  if (routeResult && crowDistance !== null) {
-    const maxAllowedRatio = crowDistance < 25 ? 1.25 : 1.38;
-    const minAllowedRatio = 0.85;
-    if (routeResult.distance_km > crowDistance * maxAllowedRatio || routeResult.distance_km < crowDistance * minAllowedRatio) {
-      console.warn(`[RouteService] Google API distance (${routeResult.distance_km}km) differs abnormally from direct distance (${crowDistance.toFixed(1)}km, expected ~${expectedRoadDistance}km). Falling back to calibrated local engine.`);
-      routeResult = null;
-    }
-  }
-
-  // 3. Dual-Layer Thai Coordinates Engine Fallback
+  // 3. Dual-Layer Thai Coordinates Engine Fallback (only used when Google Maps API is unavailable)
   if (!routeResult) {
     let distanceKm = 15;
     let durationMinutes = 20;
@@ -655,6 +642,8 @@ async function estimateRoute(origin, destination, seats = 4) {
 
   const distanceKm = routeResult.distance_km;
   const cost = calculateOperatingCost(distanceKm, seats);
+  const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+  const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`;
 
   return {
     success: true,
@@ -668,6 +657,10 @@ async function estimateRoute(origin, destination, seats = 4) {
     cost_breakdown: cost,
     costBreakdown: cost,
     source: routeResult.source,
+    google_maps_url: googleMapsDirectionsUrl,
+    googleMapsUrl: googleMapsDirectionsUrl,
+    google_maps_embed_url: googleMapsEmbedUrl,
+    googleMapsEmbedUrl: googleMapsEmbedUrl,
   };
 }
 

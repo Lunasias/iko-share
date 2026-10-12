@@ -189,7 +189,7 @@ export default function Register() {
                   >
                     นโยบายความเป็นส่วนตัว (PDPA)
                   </button>{' '}
-                  รวมถึงข้อจำกัดความรับผิดชอบ (ตกลงสละสิทธิ์เอาผิดเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี)
+                  รวมถึงข้อตกลงการใช้งานและขอบเขตความรับผิดชอบของแพลตฟอร์ม
                 </>
               ) : (
                 <>
@@ -209,7 +209,7 @@ export default function Register() {
                   >
                     Privacy Policy (PDPA)
                   </button>
-                  , including limitation of liability (waive all rights to claim against site owners and administrators).
+                  , including the platform terms and scope of liability.
                 </>
               )}
             </label>

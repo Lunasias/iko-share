@@ -119,7 +119,19 @@ const createTrip = async (req, res) => {
       passenger_requirements,
       distance_km,
       duration_text,
+      is_round_trip = false,
+      return_departure_time = null,
+      create_paired_return = false,
     } = req.body;
+
+    const isRoundTripBool = is_round_trip === true || is_round_trip === 'true';
+    let returnDepartureIso = null;
+    if (isRoundTripBool && return_departure_time) {
+      const returnDate = new Date(return_departure_time);
+      if (!Number.isNaN(returnDate.getTime())) {
+        returnDepartureIso = returnDate.toISOString();
+      }
+    }
 
     const allowedTripTypes = ['carpool', 'public_transport', 'find_driver'];
     if (!allowedTripTypes.includes(trip_type)) {
@@ -222,9 +234,10 @@ const createTrip = async (req, res) => {
       `INSERT INTO trips (
         license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
         departure_time, available_seats, price_seat, driver_personality,
-        passenger_requirements, trip_status, distance_km, duration_text, created_at
+        passenger_requirements, trip_status, distance_km, duration_text,
+        is_round_trip, return_departure_time, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, NOW())
        RETURNING *`,
       [
         license_plate || null,
@@ -241,13 +254,65 @@ const createTrip = async (req, res) => {
         passenger_requirements ? passenger_requirements.trim() : null,
         parsedDistance,
         duration_text ? duration_text.trim() : null,
+        isRoundTripBool,
+        returnDepartureIso,
       ]
     );
 
+    const createdTrip = newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null;
+
+    // If user requested an automatic paired return trip
+    let pairedTrip = null;
+    if (createdTrip && isRoundTripBool && returnDepartureIso && (create_paired_return === true || create_paired_return === 'true')) {
+      try {
+        const returnTripRes = await db.query(
+          `INSERT INTO trips (
+            license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
+            departure_time, available_seats, price_seat, driver_personality,
+            passenger_requirements, trip_status, distance_km, duration_text,
+            is_round_trip, return_departure_time, paired_trip_id, created_at
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, NOW())
+           RETURNING *`,
+          [
+            license_plate || null,
+            trip_type,
+            userId,
+            finalEventId,
+            trimmedCustomEvent ? `[ขากลับ] ${trimmedCustomEvent}` : null,
+            destination.trim(),
+            origin.trim(),
+            returnDepartureIso,
+            seatsToOffer,
+            parsedPrice,
+            driver_personality ? driver_personality.trim() : null,
+            passenger_requirements ? passenger_requirements.trim() : null,
+            parsedDistance,
+            duration_text ? duration_text.trim() : null,
+            true,
+            departureInstant.toISOString(),
+            createdTrip.trip_id,
+          ]
+        );
+
+        if (returnTripRes.rows && returnTripRes.rows[0]) {
+          pairedTrip = returnTripRes.rows[0];
+          await db.query(
+            'UPDATE trips SET paired_trip_id = $1 WHERE trip_id = $2',
+            [pairedTrip.trip_id, createdTrip.trip_id]
+          );
+          createdTrip.paired_trip_id = pairedTrip.trip_id;
+        }
+      } catch (pairedErr) {
+        console.warn('Paired return trip creation notice:', pairedErr.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
-      trip: newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null,
+      message: pairedTrip ? 'เปิดการเดินทางไป-กลับ (ทั้งขาไปและขากลับ) สำเร็จเรียบร้อยแล้ว' : 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
+      trip: createdTrip,
+      pairedTrip: pairedTrip,
     });
   } catch (error) {
     console.error('Create trip error:', error);

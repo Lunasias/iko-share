@@ -127,12 +127,12 @@ export default function TermsModal({ isOpen, onClose, initialTab = 'terms' }) {
 
               <div className="space-y-2">
                 <h4 className="font-black text-slate-900 text-sm">
-                  {isTh ? '4. ข้อจำกัดความรับผิดและสละสิทธิ์เอาผิดเจ้าของเว็บไซต์ (Limitation of Liability & Waiver)' : '4. Limitation of Liability & Waiver'}
+                  {isTh ? '4. ข้อจำกัดความรับผิดและขอบเขตการให้บริการ (Limitation of Liability & Service Scope)' : '4. Limitation of Liability & Service Scope'}
                 </h4>
                 <p>
                   {isTh
-                    ? 'Iko Share และเจ้าของเว็บไซต์/ผู้ดูแลระบบ ทำหน้าที่เป็นเพียงแพลตฟอร์มสื่อกลางทางเทคโนโลยีเพื่อเชื่อมต่อสมาชิกและอำนวยความสะดวกในการแชร์การเดินทางเท่านั้น ไม่ใช่ผู้ให้บริการขนส่งสาธารณะ ผู้ใช้บริการตกลงและรับทราบว่าการเดินทาง การตกลงนัดพบ และการส่งมอบข้อมูลใดๆ เป็นการตัดสินใจด้วยความสมัครใจของผู้ใช้เอง ผู้ให้บริการจะไม่รับผิดชอบต่อความเสียหาย อุบัติเหตุ การบาดเจ็บ การสูญเสียทรัพย์สิน หรือข้อพิพาทใดๆ ที่เกิดขึ้นทั้งทางตรงและทางอ้อม โดยผู้ใช้บริการตกลงสละสิทธิ์ในการฟ้องร้อง ดำเนินคดี หรือเรียกร้องค่าเสียหายใดๆ ต่อเจ้าของเว็บไซต์และผู้ดูแลระบบในทุกกรณี'
-                    : 'Iko Share and the site administrators act purely as an intermediary platform for peer-to-peer ride coordination. We are not a commercial transit provider and assume no liability for accidents, losses, damages, or disputes. Users agree to waive any and all claims against the platform owners and operators.'}
+                    ? 'Iko Share และผู้ให้บริการระบบ ทำหน้าที่เป็นแพลตฟอร์มสื่อกลางทางเทคโนโลยีเพื่ออำนวยความสะดวกในการประสานงานแบ่งปันการเดินทางระหว่างผู้ใช้งาน มิใช่ผู้ประกอบกิจการขนส่งสาธารณะ ผู้ใช้บริการรับทราบว่าการตัดสินใจร่วมเดินทางและการตกลงนัดพบเป็นการตัดสินใจโดยสมัครใจของผู้ใช้งานเอง ทั้งนี้ ผู้ร่วมเดินทางตกลงร่วมกันปฏิบัติตามกฎหมายและดูแลความปลอดภัยซึ่งกันและกัน โดยแพลตฟอร์มขอสงวนสิทธิ์ในการจำกัดความรับผิดตามขอบเขตสูงสุดที่กฎหมายอนุญาตสำหรับเหตุการณ์หรือข้อพิพาทส่วนบุคคลที่เกิดขึ้นนอกเหนือการควบคุมของระบบ'
+                    : 'Iko Share operates solely as a technological intermediary platform facilitating peer-to-peer ride coordination and fuel cost sharing, and does not operate as a commercial transportation carrier. Users acknowledge that participating in trips is voluntary, and participants mutually undertake to comply with applicable laws and maintain safety standards. To the fullest extent permitted by law, the platform limits its liability for personal disputes or incidents occurring beyond its operational control.'}
                 </p>
               </div>
             </div>
