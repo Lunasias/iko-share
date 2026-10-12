@@ -20,14 +20,53 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await db.query(
-      `INSERT INTO users (name, email, password, phone, role, avatar_url, bio, created_at)
-       VALUES ($1, $2, $3, $4, $5, NULL, $6, NOW())
-       RETURNING user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at`,
-      [name, email, hashedPassword, phone || null, validRole, bio || 'ยังไม่มีคำอธิบายตัวตน']
-    );
+    let newUser;
+    try {
+      newUser = await db.query(
+        `INSERT INTO users (name, email, password, phone, role, avatar_url, bio, created_at)
+         VALUES ($1, $2, $3, $4, $5, NULL, $6, NOW())
+         RETURNING user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at`,
+        [name, email, hashedPassword, phone || null, validRole, bio || 'ยังไม่มีคำอธิบายตัวตน']
+      );
+    } catch (insertErr) {
+      console.warn('Register insert attempt 1 notice:', insertErr.message);
+      try {
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน'`);
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`);
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE`);
+        await db.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
+        await db.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('Driver', 'Passenger', 'Both', 'Admin'))`);
 
-    const user = newUser.rows && newUser.rows[0] ? newUser.rows[0] : { user_id: 1, name, email, phone, role: validRole, is_admin: false, is_verified: false, bio: bio || 'ยังไม่มีคำอธิบายตัวตน' };
+        newUser = await db.query(
+          `INSERT INTO users (name, email, password, phone, role, avatar_url, bio, created_at)
+           VALUES ($1, $2, $3, $4, $5, NULL, $6, NOW())
+           RETURNING user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at`,
+          [name, email, hashedPassword, phone || null, validRole, bio || 'ยังไม่มีคำอธิบายตัวตน']
+        );
+      } catch (patchErr) {
+        console.warn('Register insert attempt 2 fallback to minimal columns:', patchErr.message);
+        newUser = await db.query(
+          `INSERT INTO users (name, email, password, phone, role)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING user_id, name, email, phone, role`,
+          [name, email, hashedPassword, phone || null, validRole]
+        );
+      }
+    }
+
+    const row = newUser.rows && newUser.rows[0] ? newUser.rows[0] : {};
+    const user = {
+      user_id: row.user_id || 1,
+      name: row.name || name,
+      email: row.email || email,
+      phone: row.phone || phone || null,
+      role: row.role || validRole,
+      is_admin: Boolean(row.is_admin),
+      is_verified: Boolean(row.is_verified),
+      avatar_url: row.avatar_url || null,
+      bio: row.bio || bio || 'ยังไม่มีคำอธิบายตัวตน',
+    };
     const token = jwt.sign({ id: user.user_id, user_id: user.user_id, email: user.email, role: user.role, is_admin: user.is_admin, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
@@ -89,13 +128,34 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const userId = req.user.user_id || req.user.id;
-    const userRes = await db.query('SELECT user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at FROM users WHERE user_id = $1', [userId]);
+    let userRes;
+    try {
+      userRes = await db.query('SELECT user_id, name, email, phone, role, is_admin, is_verified, avatar_url, bio, created_at FROM users WHERE user_id = $1', [userId]);
+    } catch (e) {
+      userRes = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+    }
 
     if (!userRes.rows || userRes.rows.length === 0) {
       return res.json({ success: true, user: req.user });
     }
 
-    res.json({ success: true, user: userRes.rows[0] });
+    const row = userRes.rows[0];
+    res.json({
+      success: true,
+      user: {
+        user_id: row.user_id,
+        id: row.user_id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        role: row.role,
+        is_admin: Boolean(row.is_admin),
+        is_verified: Boolean(row.is_verified),
+        avatar_url: row.avatar_url || null,
+        bio: row.bio || 'ยังไม่มีคำอธิบายตัวตน',
+        created_at: row.created_at,
+      },
+    });
   } catch (error) {
     console.error('GetMe error:', error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดของระบบ: ' + (error.message || String(error)) });

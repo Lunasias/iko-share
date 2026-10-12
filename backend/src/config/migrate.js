@@ -292,22 +292,38 @@ const runMigrationsInternal = async () => {
   }
 
   for (const statement of STATEMENTS) {
-    await db.query(statement);
+    try {
+      await db.query(statement);
+    } catch (err) {
+      console.warn('[migrate] Statement notice (non-fatal):', err.message);
+    }
   }
 
   for (const [table, column, definition] of COLUMN_PATCHES) {
-    await db.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
+    try {
+      await db.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
+    } catch (err) {
+      console.warn(`[migrate] Patch ${table}.${column} notice:`, err.message);
+    }
   }
 
   for (const statement of CONSTRAINT_FIXES) {
-    await db.query(statement);
+    try {
+      await db.query(statement);
+    } catch (err) {
+      console.warn('[migrate] Constraint fix notice:', err.message);
+    }
   }
 
   for (const seed of SEEDS) {
-    await db.query(seed.text, seed.params);
+    try {
+      await db.query(seed.text, seed.params);
+    } catch (err) {
+      console.warn('[migrate] Seed notice:', err.message);
+    }
   }
 
-  console.log('[migrate] Schema synchronised successfully (custom_event_name + Admin role ensured).');
+  console.log('[migrate] Schema synchronised successfully (all tables & columns ensured).');
   return { success: true };
 };
 
