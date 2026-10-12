@@ -3,6 +3,30 @@ import API from '../services/api';
 
 const AuthContext = createContext();
 
+const extractErrorMessage = (err, fallback) => {
+  if (!err) return fallback;
+  const data = err.response?.data;
+  if (data) {
+    if (typeof data.message === 'string' && data.message.trim()) return data.message;
+    if (typeof data.error === 'string' && data.error.trim()) return data.error;
+    if (data.error && typeof data.error.message === 'string' && data.error.message.trim()) {
+      return data.error.message;
+    }
+    if (typeof data.msg === 'string' && data.msg.trim()) return data.msg;
+    if (typeof data === 'string' && data.trim() && data.length < 300) return data;
+  }
+  if (typeof err.message === 'string' && err.message.trim()) {
+    if (err.message.includes('504') || err.message.toLowerCase().includes('timeout')) {
+      return 'การเชื่อมต่อเซิร์ฟเวอร์ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง';
+    }
+    if (err.message.includes('500')) {
+      return 'เกิดข้อผิดพลาดที่ระบบเซิร์ฟเวอร์ (500) กรุณาลองใหม่อีกครั้ง';
+    }
+    return err.message;
+  }
+  return fallback;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,11 +70,7 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: String(res.data.message || 'เข้าสู่ระบบไม่สำเร็จ') };
     } catch (err) {
-      const errMsg = err.response?.data?.message
-        || err.response?.data?.error
-        || (typeof err.response?.data === 'string' && err.response.data.length < 200 ? err.response.data : null)
-        || String(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
-      return { success: false, message: errMsg };
+      return { success: false, message: extractErrorMessage(err, 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลหรือรหัสผ่าน') };
     }
   };
 
@@ -64,11 +84,7 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: String(res.data.message || 'ลงทะเบียนไม่สำเร็จ') };
     } catch (err) {
-      const errMsg = err.response?.data?.message
-        || err.response?.data?.error
-        || (typeof err.response?.data === 'string' && err.response.data.length < 200 ? err.response.data : null)
-        || String(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
-      return { success: false, message: errMsg };
+      return { success: false, message: extractErrorMessage(err, 'เกิดข้อผิดพลาดในการลงทะเบียน') };
     }
   };
 

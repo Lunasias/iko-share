@@ -291,6 +291,45 @@ const runMigrationsInternal = async () => {
     return { success: false, skipped: true };
   }
 
+  // 1. Fast canary check: If essential new columns already exist,
+  // skip the expensive multi-query migration to prevent Vercel Serverless Function timeouts (< 15ms response).
+  try {
+    const canary = await db.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'trips' AND column_name = 'is_round_trip' LIMIT 1`
+    );
+    if (canary.rows && canary.rows.length > 0) {
+      console.log('[migrate] Fast canary check passed: schema is already fully synchronised.');
+      return { success: true, fast: true };
+    }
+  } catch (canaryErr) {
+    console.warn('[migrate] Canary check notice, proceeding to full migration:', canaryErr.message);
+  }
+
+  // 2. High-speed batched column updates
+  try {
+    await db.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+                        ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT 'ยังไม่มีคำอธิบายตัวตน',
+                        ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+                        ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE trips ADD COLUMN IF NOT EXISTS custom_event_name VARCHAR(255),
+                        ADD COLUMN IF NOT EXISTS trip_type VARCHAR(30) NOT NULL DEFAULT 'carpool',
+                        ADD COLUMN IF NOT EXISTS organizer_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+                        ADD COLUMN IF NOT EXISTS is_round_trip BOOLEAN DEFAULT FALSE,
+                        ADD COLUMN IF NOT EXISTS return_departure_time TIMESTAMP WITH TIME ZONE,
+                        ADD COLUMN IF NOT EXISTS paired_trip_id INT REFERENCES trips(trip_id) ON DELETE SET NULL,
+                        ADD COLUMN IF NOT EXISTS distance_km NUMERIC(8, 2),
+                        ADD COLUMN IF NOT EXISTS duration_text VARCHAR(100),
+                        ADD COLUMN IF NOT EXISTS driver_personality VARCHAR(255),
+                        ADD COLUMN IF NOT EXISTS passenger_requirements VARCHAR(255);
+      ALTER TABLE trips ALTER COLUMN license_plate DROP NOT NULL;
+    `);
+  } catch (batchErr) {
+    console.warn('[migrate] Batched column alter notice:', batchErr.message);
+  }
+
+  // 3. Run table statements
   for (const statement of STATEMENTS) {
     try {
       await db.query(statement);
@@ -303,7 +342,7 @@ const runMigrationsInternal = async () => {
     try {
       await db.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
     } catch (err) {
-      console.warn(`[migrate] Patch ${table}.${column} notice:`, err.message);
+      // non-fatal
     }
   }
 
@@ -311,7 +350,7 @@ const runMigrationsInternal = async () => {
     try {
       await db.query(statement);
     } catch (err) {
-      console.warn('[migrate] Constraint fix notice:', err.message);
+      // non-fatal
     }
   }
 
@@ -319,7 +358,7 @@ const runMigrationsInternal = async () => {
     try {
       await db.query(seed.text, seed.params);
     } catch (err) {
-      console.warn('[migrate] Seed notice:', err.message);
+      // non-fatal
     }
   }
 

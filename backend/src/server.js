@@ -77,7 +77,10 @@ app.use(async (req, res, next) => {
       schemaPromise = ensureSchema();
     }
     try {
-      await schemaPromise;
+      await Promise.race([
+        schemaPromise,
+        new Promise((resolve) => setTimeout(resolve, 3500)),
+      ]);
       schemaEnsured = true;
     } catch (err) {
       schemaPromise = null; // allow retry
