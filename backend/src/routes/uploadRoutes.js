@@ -1,22 +1,37 @@
 const express = require('express');
-const multer = require('multer');
+let multer;
+try {
+  multer = require('multer');
+} catch (e) {
+  try {
+    multer = require('../../backend/node_modules/multer');
+  } catch (err2) {
+    console.warn('Multer load notice:', e.message);
+  }
+}
 const router = express.Router();
 const { uploadImage, getUploadedImage } = require('../controllers/uploadController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-});
+let upload = null;
+if (multer) {
+  const storage = multer.memoryStorage();
+  upload = multer({
+    storage,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+  });
+}
 
 // Middleware to accept file from any field name ('file', 'image', 'photo', 'document')
 const handleImageUpload = (req, res, next) => {
+  if (!upload) {
+    return next();
+  }
   upload.any()(req, res, (err) => {
     if (err) {
-      if (err instanceof multer.MulterError) {
+      if (multer && err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({ success: false, message: 'ขนาดไฟล์ภาพต้องไม่เกิน 10 MB' });
         }
