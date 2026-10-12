@@ -47,8 +47,9 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: String(res.data.message || 'เข้าสู่ระบบไม่สำเร็จ') };
     } catch (err) {
       const errMsg = err.response?.data?.message
-        ? String(err.response.data.message)
-        : String(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        || err.response?.data?.error
+        || (typeof err.response?.data === 'string' && err.response.data.length < 200 ? err.response.data : null)
+        || String(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
       return { success: false, message: errMsg };
     }
   };
@@ -64,8 +65,9 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: String(res.data.message || 'ลงทะเบียนไม่สำเร็จ') };
     } catch (err) {
       const errMsg = err.response?.data?.message
-        ? String(err.response.data.message)
-        : String(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+        || err.response?.data?.error
+        || (typeof err.response?.data === 'string' && err.response.data.length < 200 ? err.response.data : null)
+        || String(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
       return { success: false, message: errMsg };
     }
   };
