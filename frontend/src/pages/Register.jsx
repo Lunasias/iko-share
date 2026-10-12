@@ -35,10 +35,16 @@ export default function Register() {
       if (res.success) {
         navigate('/trips');
       } else {
-        setError(String(res.message || (isTh ? 'ลงทะเบียนไม่สำเร็จ' : 'Registration failed')));
+        const msg = typeof res.message === 'string' && res.message.trim() && res.message !== '[object Object]'
+          ? res.message
+          : (isTh ? 'ลงทะเบียนไม่สำเร็จ' : 'Registration failed');
+        setError(msg);
       }
     } catch (err) {
-      setError(String(err.message || (isTh ? 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ' : 'Unknown error occurred')));
+      const msg = typeof err.message === 'string' && err.message.trim() && err.message !== '[object Object]'
+        ? err.message
+        : (isTh ? 'เกิดข้อผิดพลาดในการลงทะเบียน' : 'Registration error');
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -189,7 +195,7 @@ export default function Register() {
                   >
                     นโยบายความเป็นส่วนตัว (PDPA)
                   </button>{' '}
-                  รวมถึงข้อจำกัดความรับผิดชอบ (ตกลงสละสิทธิ์เอาผิดเจ้าของเว็บไซต์และผู้ดูแลระบบทุกกรณี)
+                  รวมถึงข้อตกลงการใช้งานและขอบเขตความรับผิดชอบของแพลตฟอร์ม
                 </>
               ) : (
                 <>
@@ -209,7 +215,7 @@ export default function Register() {
                   >
                     Privacy Policy (PDPA)
                   </button>
-                  , including limitation of liability (waive all rights to claim against site owners and administrators).
+                  , including the platform terms and scope of liability.
                 </>
               )}
             </label>

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 // Get current user profile & stats
 const getProfile = async (req, res) => {
@@ -133,8 +134,48 @@ const getPublicProfile = async (req, res) => {
   }
 };
 
+// Change password for logged-in user
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, message: 'กรุณากรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่' });
+    }
+
+    if (String(new_password).length < 6) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    const userRes = await db.query('SELECT password FROM users WHERE user_id = $1', [userId]);
+    if (!userRes.rows.length) {
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+    }
+
+    const isMatch = await bcrypt.compare(String(current_password), userRes.rows[0].password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(String(new_password), salt);
+
+    await db.query('UPDATE users SET password = $1 WHERE user_id = $2', [hashedPassword, userId]);
+
+    res.json({
+      success: true,
+      message: 'เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว',
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: ' + (error.message || String(error)) });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   getPublicProfile,
+  changePassword,
 };

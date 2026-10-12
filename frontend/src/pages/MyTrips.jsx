@@ -131,9 +131,16 @@ export default function MyTrips() {
                     <ArrowRight className="w-4 h-4 text-emerald-600" />
                     <span>{trip.destination}</span>
                   </div>
-                  <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-bold">
-                    {isTh ? 'เปิดบริการ' : 'Active'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {trip.is_round_trip && (
+                      <span className="text-xs bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-full font-bold">
+                        🔄 {isTh ? 'ไป-กลับ' : 'Round-trip'}
+                      </span>
+                    )}
+                    <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                      {isTh ? 'เปิดบริการ' : 'Active'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
@@ -199,13 +206,20 @@ export default function MyTrips() {
                       <ArrowRight className="w-4 h-4 text-emerald-600" />
                       <span>{booking.destination}</span>
                     </div>
-                    <span className={`text-xs px-3 py-1 rounded-full font-bold border ${
-                      booking.booking_status === 'จองแล้ว' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
-                      booking.booking_status === 'รอการอนุมัติ' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                      'bg-red-100 text-red-800 border-red-200'
-                    }`}>
-                      {statusDisplay}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {booking.is_round_trip && (
+                        <span className="text-xs bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-full font-bold">
+                          🔄 {isTh ? 'ไป-กลับ' : 'Round-trip'}
+                        </span>
+                      )}
+                      <span className={`text-xs px-3 py-1 rounded-full font-bold border ${
+                        booking.booking_status === 'จองแล้ว' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                        booking.booking_status === 'รอการอนุมัติ' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                        'bg-red-100 text-red-800 border-red-200'
+                      }`}>
+                        {statusDisplay}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 font-medium">

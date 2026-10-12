@@ -70,10 +70,22 @@ app.use(cookieParser());
 
 // Auto-ensure database schema on cold starts (e.g. Vercel Serverless)
 let schemaEnsured = false;
-app.use((req, res, next) => {
+let schemaPromise = null;
+app.use(async (req, res, next) => {
   if (!schemaEnsured) {
-    schemaEnsured = true;
-    ensureSchema().catch((err) => console.warn('Automatic ensureSchema notice:', err.message));
+    if (!schemaPromise) {
+      schemaPromise = ensureSchema();
+    }
+    try {
+      await Promise.race([
+        schemaPromise,
+        new Promise((resolve) => setTimeout(resolve, 3500)),
+      ]);
+      schemaEnsured = true;
+    } catch (err) {
+      schemaPromise = null; // allow retry
+      console.warn('Automatic ensureSchema notice:', err.message);
+    }
   }
   next();
 });

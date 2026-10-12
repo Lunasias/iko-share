@@ -24,10 +24,16 @@ export default function Login() {
       if (res.success) {
         navigate('/trips');
       } else {
-        setError(String(res.message || (isTh ? 'เข้าสู่ระบบไม่สำเร็จ' : 'Login failed')));
+        const msg = typeof res.message === 'string' && res.message.trim() && res.message !== '[object Object]'
+          ? res.message
+          : (isTh ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : 'Invalid email or password');
+        setError(msg);
       }
     } catch (err) {
-      setError(String(err.message || (isTh ? 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ' : 'Unknown error occurred')));
+      const msg = typeof err.message === 'string' && err.message.trim() && err.message !== '[object Object]'
+        ? err.message
+        : (isTh ? 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' : 'Login error');
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ export default function Login() {
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800">{isTh ? 'รหัสผ่าน' : 'Password'}</label>
               <Link to="/forgot-password" className="text-[11px] text-emerald-700 hover:underline font-bold">
-                {isTh ? 'ลืมรหัสผ่าน? แจ้งแอดมิน' : 'Forgot Password? Contact Admin'}
+                {isTh ? 'ลืมรหัสผ่าน?' : 'Forgot Password?'}
               </Link>
             </div>
             <div className="flex items-center gap-2 px-4 py-3 travel-input">

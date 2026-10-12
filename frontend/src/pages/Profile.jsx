@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
 import VerificationModal from '../components/VerificationModal';
-import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock, Leaf, Trees } from 'lucide-react';
+import { User, Phone, Car, Camera, Save, AlertCircle, ShieldAlert, CheckCircle, Star, Plus, Trash2, FileText, Upload, Sparkles, ShieldCheck, Clock, ChevronRight, Lock, Key, Eye, EyeOff } from 'lucide-react';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
@@ -47,6 +47,17 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Change password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -235,6 +246,48 @@ export default function Profile() {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!currentPassword) {
+      setPasswordError(isTh ? 'กรุณากรอกรหัสผ่านปัจจุบัน' : 'Please enter current password');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError(isTh ? 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' : 'New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError(isTh ? 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน' : 'New password and confirmation do not match');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await API.put('/profile/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+
+      if (res.data.success) {
+        setPasswordSuccess(String(res.data.message || (isTh ? 'เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว' : 'Password changed successfully')));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPasswordSuccess(''), 5000);
+      } else {
+        setPasswordError(String(res.data.message || (isTh ? 'ไม่สามารถเปลี่ยนรหัสผ่านได้' : 'Failed to change password')));
+      }
+    } catch (err) {
+      console.error('Change password error:', err);
+      setPasswordError(String(err.response?.data?.message || err.message || (isTh ? 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' : 'Error changing password')));
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   if (loading) {
     return <CarLoader text={isTh ? "กำลังโหลดโปรไฟล์นักเดินทางของคุณ..." : "Loading your traveler profile..."} />;
   }
@@ -309,94 +362,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
-      {/* Eco-Impact & Carbon Saved Badge Card */}
-      {(() => {
-        const totalTrips = (stats.tripsCreated || 0) + (stats.tripsJoined || 0);
-        const co2SavedKg = (totalTrips * 4.8).toFixed(1);
-        const treeDays = Math.round(co2SavedKg / 0.06);
-
-        let ecoLevel = {
-          badgeTh: '🌱 ผู้เริ่มต้นรักษ์โลก',
-          badgeEn: '🌱 Eco Beginner',
-          descTh: 'ร่วมเป็นส่วนหนึ่งของการเดินทางสีเขียว',
-          descEn: 'Starting your green travel journey'
-        };
-        if (totalTrips >= 15) {
-          ecoLevel = {
-            badgeTh: '🌍 ผู้พิทักษ์สิ่งแวดล้อม',
-            badgeEn: '🌍 Eco Champion',
-            descTh: 'ลดก๊าซเรือนกระจกได้อย่างมหาศาล ยอดเยี่ยมมาก!',
-            descEn: 'Exceptional carbon reduction for our planet!'
-          };
-        } else if (totalTrips >= 5) {
-          ecoLevel = {
-            badgeTh: '🌳 ฮีโร่เพื่อโลกสีเขียว',
-            badgeEn: '🌳 Planet Hero',
-            descTh: 'แชร์การเดินทางเป็นประจำ ช่วยลดมลพิษในชุมชน',
-            descEn: 'Frequent green commuter helping community emissions'
-          };
-        } else if (totalTrips >= 1) {
-          ecoLevel = {
-            badgeTh: '🌿 นักเดินทางรักษ์โลก',
-            badgeEn: '🌿 Green Commuter',
-            descTh: 'ลดการใช้รถยนต์ส่วนตัวผ่านการแชร์ทาง',
-            descEn: 'Reducing private car usage via carpooling'
-          };
-        }
-
-        return (
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-100/50 border border-emerald-200/90 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/60 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <Leaf className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-black text-emerald-950 flex items-center gap-2">
-                    <span>{isTh ? 'สถิติการอนุรักษ์สิ่งแวดล้อม (Eco Impact)' : 'Eco Impact & Sustainability'}</span>
-                    <span className="text-[11px] bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full font-black">
-                      {isTh ? ecoLevel.badgeTh : ecoLevel.badgeEn}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-emerald-800 font-medium">
-                    {isTh ? ecoLevel.descTh : ecoLevel.descEn}
-                  </p>
-                </div>
-              </div>
-              <div className="text-[11px] text-emerald-700 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 font-bold self-start sm:self-auto shadow-2xs">
-                {isTh ? `รวมการเดินทางสีเขียว: ${totalTrips} เที่ยว` : `Total green rides: ${totalTrips}`}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'CO₂ สะสมที่ลดได้' : 'Total CO₂ Avoided'}</div>
-                <div className="text-xl font-black text-emerald-700 mt-1">
-                  ~{co2SavedKg} <span className="text-xs font-bold text-slate-600">kg CO₂e</span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'จากการแชร์คาร์พูล' : 'from sharing rides'}</p>
-              </div>
-
-              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'เทียบเท่าการดูดซับ' : 'Tree Days Equivalent'}</div>
-                <div className="text-xl font-black text-teal-700 mt-1">
-                  ~{treeDays} <span className="text-xs font-bold text-slate-600">{isTh ? 'วันต้นไม้' : 'tree-days'}</span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'การดูดซับคาร์บอนตามธรรมชาติ' : 'natural carbon absorption'}</p>
-              </div>
-
-              <div className="p-3 bg-white/90 rounded-xl border border-emerald-200/70">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isTh ? 'ลดจำนวนรถยนต์บนถนน' : 'Cars Avoided on Road'}</div>
-                <div className="text-xl font-black text-indigo-700 mt-1">
-                  -{totalTrips} <span className="text-xs font-bold text-slate-600">{isTh ? 'คัน-เที่ยว' : 'car-trips'}</span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{isTh ? 'ช่วยลดมลพิษและการจราจร' : 'reduces pollution & congestion'}</p>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Trust Badge Status Banner & Action */}
       {verificationData?.is_verified ? (
@@ -633,6 +598,136 @@ export default function Profile() {
               <>
                 <Save className="w-5 h-5" />
                 <span>{isTh ? 'บันทึกการเปลี่ยนแปลงโปรไฟล์' : 'Save Profile Changes'}</span>
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* Change Password Card */}
+      <div className="travel-card p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
+          <Key className="w-5 h-5 text-emerald-600" />
+          <div>
+            <h3 className="text-lg font-black text-slate-900">
+              {isTh ? 'ความปลอดภัย & เปลี่ยนรหัสผ่าน (Change Password)' : 'Security & Change Password'}
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              {isTh
+                ? 'ตั้งรหัสผ่านใหม่เพื่อความปลอดภัยของบัญชีผู้ใช้งานของคุณ'
+                : 'Update your password to keep your account secure'}
+            </p>
+          </div>
+        </div>
+
+        {passwordSuccess && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center gap-3 shadow-xs">
+            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
+            <span>{passwordSuccess}</span>
+          </div>
+        )}
+
+        {passwordError && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-bold flex items-center gap-3 shadow-xs">
+            <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
+            <span>{passwordError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-800">
+              {isTh ? 'รหัสผ่านปัจจุบัน (Current Password)' : 'Current Password'}
+            </label>
+            <div className="flex items-center gap-2 px-4 py-3 travel-input">
+              <Lock className="w-5 h-5 text-slate-400 shrink-0" />
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                required
+                placeholder={isTh ? "กรอกรหัสผ่านปัจจุบันของคุณ" : "Enter your current password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
+                title={showCurrentPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+              >
+                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-800">
+                {isTh ? 'รหัสผ่านใหม่ (New Password อย่างน้อย 6 ตัวอักษร)' : 'New Password (min 6 chars)'}
+              </label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <Key className="w-5 h-5 text-slate-400 shrink-0" />
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  placeholder={isTh ? "อย่างน้อย 6 ตัวอักษร" : "At least 6 characters"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
+                  title={showNewPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-800">
+                {isTh ? 'ยืนยันรหัสผ่านใหม่ (Confirm New Password)' : 'Confirm New Password'}
+              </label>
+              <div className="flex items-center gap-2 px-4 py-3 travel-input">
+                <Key className="w-5 h-5 text-slate-400 shrink-0" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  placeholder={isTh ? "กรอกรหัสผ่านใหม่อีกครั้ง" : "Re-enter new password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
+                  title={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={passwordLoading}
+            className="w-full py-3.5 travel-btn-primary font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          >
+            {passwordLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>{isTh ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'Changing password...'}</span>
+              </>
+            ) : (
+              <>
+                <Key className="w-4 h-4" />
+                <span>{isTh ? 'อัปเดตรหัสผ่านใหม่' : 'Update Password'}</span>
               </>
             )}
           </button>

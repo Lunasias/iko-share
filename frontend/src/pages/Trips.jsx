@@ -558,37 +558,45 @@ export default function Trips() {
                 <div className="space-y-4">
                   {/* Status Badge & Event Tag - User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
                   <div className="flex items-center justify-between gap-2">
-                    {trip.event_name ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (trip.event_id) {
-                            setSelectedEventId(String(trip.event_id));
-                            const params = {};
-                            if (origin) params.origin = origin;
-                            if (destination) params.destination = destination;
-                            params.event_id = String(trip.event_id);
-                            setSearchParams(params);
-                          }
-                        }}
-                        className="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1 rounded-full font-bold border border-purple-200 truncate max-w-[170px] transition-colors cursor-pointer text-left"
-                        title={isTh ? `กรองเฉพาะอีเวนต์: ${trip.event_name}` : `Filter by event: ${trip.event_name}`}
-                      >
-                        {trip.event_name}
-                      </button>
-                    ) : (
-                      <span className="text-[11px] bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-bold border border-slate-200">
-                        {isTh ? 'เที่ยวทั่วไป' : 'General Trip'}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {trip.event_name ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (trip.event_id) {
+                              setSelectedEventId(String(trip.event_id));
+                              const params = {};
+                              if (origin) params.origin = origin;
+                              if (destination) params.destination = destination;
+                              params.event_id = String(trip.event_id);
+                              setSearchParams(params);
+                            }
+                          }}
+                          className="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1 rounded-full font-bold border border-purple-200 truncate max-w-[150px] transition-colors cursor-pointer text-left"
+                          title={isTh ? `กรองเฉพาะอีเวนต์: ${trip.event_name}` : `Filter by event: ${trip.event_name}`}
+                        >
+                          {trip.event_name}
+                        </button>
+                      ) : (
+                        <span className="text-[11px] bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-bold border border-slate-200">
+                          {isTh ? 'เที่ยวทั่วไป' : 'General Trip'}
+                        </span>
+                      )}
+
+                      {trip.is_round_trip && (
+                        <span className="text-[11px] bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-full font-black">
+                          🔄 {isTh ? 'ไป-กลับ' : 'Round-trip'}
+                        </span>
+                      )}
+                    </div>
 
                     {/* Clean badge without parentheses */}
                     {trip.available_seats > 0 ? (
-                      <span className="text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-black">
+                      <span className="text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-black shrink-0">
                         {isTh ? `มีที่ว่าง ${trip.available_seats} ที่` : `${trip.available_seats} seats left`}
                       </span>
                     ) : (
-                      <span className="text-[11px] bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-full font-black">
+                      <span className="text-[11px] bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-full font-black shrink-0">
                         {isTh ? 'เต็มแล้ว' : 'Full'}
                       </span>
                     )}

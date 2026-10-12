@@ -119,7 +119,19 @@ const createTrip = async (req, res) => {
       passenger_requirements,
       distance_km,
       duration_text,
+      is_round_trip = false,
+      return_departure_time = null,
+      create_paired_return = false,
     } = req.body;
+
+    const isRoundTripBool = is_round_trip === true || is_round_trip === 'true';
+    let returnDepartureIso = null;
+    if (isRoundTripBool && return_departure_time) {
+      const returnDate = new Date(return_departure_time);
+      if (!Number.isNaN(returnDate.getTime())) {
+        returnDepartureIso = returnDate.toISOString();
+      }
+    }
 
     const allowedTripTypes = ['carpool', 'public_transport', 'find_driver'];
     if (!allowedTripTypes.includes(trip_type)) {
@@ -165,16 +177,21 @@ const createTrip = async (req, res) => {
 
     const parsedPrice = parseFloat(price_seat);
     const parsedDistance = distance_km ? parseFloat(distance_km) : null;
+    const createPairedBool = isRoundTripBool && (create_paired_return === true || create_paired_return === 'true');
+
+    // When creating paired return trips, the input price represents the total round-trip fare.
+    // Each separate leg trip in the database stores price_seat = Math.round(parsedPrice / 2).
+    const legPrice = createPairedBool ? Math.round(parsedPrice / 2) : parsedPrice;
 
     // Validate reasonable minimum fare:
     // If price == 0, it's a generous free ride (allowed).
     // If price > 0 and distance is significant (>= 40 km), enforce reasonable floor to prevent unrealistic pricing.
     if (parsedPrice > 0 && parsedDistance && parsedDistance >= 40) {
-      const costEst = calculateOperatingCost(parsedDistance, seatsToOffer);
+      const costEst = calculateOperatingCost(parsedDistance, seatsToOffer, isRoundTripBool);
       if (parsedPrice < costEst.reasonableMinPrice) {
         return res.status(400).json({
           success: false,
-          message: `สำหรับระยะทางประมาณ ${Math.round(parsedDistance)} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costEst.reasonableMinPrice} ต่อที่นั่ง (หรือตั้งเป็น ฿0 หากตั้งใจให้เดินทางฟรี)`
+          message: `สำหรับระยะทางประมาณ ${Math.round(parsedDistance)}${isRoundTripBool ? ' (ไป-กลับ)' : ''} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costEst.reasonableMinPrice} ต่อที่นั่ง (หรือตั้งเป็น ฿0 หากตั้งใจให้เดินทางฟรี)`
         });
       }
     }
@@ -222,9 +239,10 @@ const createTrip = async (req, res) => {
       `INSERT INTO trips (
         license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
         departure_time, available_seats, price_seat, driver_personality,
-        passenger_requirements, trip_status, distance_km, duration_text, created_at
+        passenger_requirements, trip_status, distance_km, duration_text,
+        is_round_trip, return_departure_time, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, NOW())
        RETURNING *`,
       [
         license_plate || null,
@@ -236,18 +254,70 @@ const createTrip = async (req, res) => {
         destination.trim(),
         departureInstant.toISOString(),
         seatsToOffer,
-        parsedPrice,
+        legPrice,
         driver_personality ? driver_personality.trim() : null,
         passenger_requirements ? passenger_requirements.trim() : null,
         parsedDistance,
         duration_text ? duration_text.trim() : null,
+        isRoundTripBool,
+        returnDepartureIso,
       ]
     );
 
+    const createdTrip = newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null;
+
+    // If user requested an automatic paired return trip
+    let pairedTrip = null;
+    if (createdTrip && isRoundTripBool && returnDepartureIso && (create_paired_return === true || create_paired_return === 'true')) {
+      try {
+        const returnTripRes = await db.query(
+          `INSERT INTO trips (
+            license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
+            departure_time, available_seats, price_seat, driver_personality,
+            passenger_requirements, trip_status, distance_km, duration_text,
+            is_round_trip, return_departure_time, paired_trip_id, created_at
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, NOW())
+           RETURNING *`,
+          [
+            license_plate || null,
+            trip_type,
+            userId,
+            finalEventId,
+            trimmedCustomEvent ? `[ขากลับ] ${trimmedCustomEvent}` : null,
+            destination.trim(),
+            origin.trim(),
+            returnDepartureIso,
+            seatsToOffer,
+            legPrice,
+            driver_personality ? driver_personality.trim() : null,
+            passenger_requirements ? passenger_requirements.trim() : null,
+            parsedDistance,
+            duration_text ? duration_text.trim() : null,
+            true,
+            departureInstant.toISOString(),
+            createdTrip.trip_id,
+          ]
+        );
+
+        if (returnTripRes.rows && returnTripRes.rows[0]) {
+          pairedTrip = returnTripRes.rows[0];
+          await db.query(
+            'UPDATE trips SET paired_trip_id = $1 WHERE trip_id = $2',
+            [pairedTrip.trip_id, createdTrip.trip_id]
+          );
+          createdTrip.paired_trip_id = pairedTrip.trip_id;
+        }
+      } catch (pairedErr) {
+        console.warn('Paired return trip creation notice:', pairedErr.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
-      trip: newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null,
+      message: pairedTrip ? 'เปิดการเดินทางไป-กลับ (ทั้งขาไปและขากลับ) สำเร็จเรียบร้อยแล้ว' : 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
+      trip: createdTrip,
+      pairedTrip: pairedTrip,
     });
   } catch (error) {
     console.error('Create trip error:', error);
@@ -431,12 +501,13 @@ const getUserTrips = async (req, res) => {
 // Route & Distance Matrix Estimation (Google Maps Distance Matrix or Fallback)
 const estimateTripRoute = async (req, res) => {
   try {
-    const { origin, destination, available_seats = 3 } = req.body;
+    const { origin, destination, available_seats = 3, is_round_trip = false } = req.body;
     if (!origin || !destination) {
       return res.status(400).json({ success: false, message: 'กรุณาระบุจุดเริ่มต้นและปลายทางเพื่อคำนวณเส้นทาง' });
     }
 
-    const estimate = await estimateRoute(origin, destination, parseInt(available_seats) || 3);
+    const isRound = is_round_trip === true || is_round_trip === 'true';
+    const estimate = await estimateRoute(origin, destination, parseInt(available_seats) || 3, isRound);
     res.json({
       success: true,
       ...estimate,
@@ -457,3 +528,4 @@ module.exports = {
   getUserTrips,
   estimateTripRoute,
 };
+
