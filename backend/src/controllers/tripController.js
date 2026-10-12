@@ -177,7 +177,6 @@ const createTrip = async (req, res) => {
 
     const parsedPrice = parseFloat(price_seat);
     const parsedDistance = distance_km ? parseFloat(distance_km) : null;
-    const isRoundTripBool = is_round_trip === true || is_round_trip === 'true';
     const createPairedBool = isRoundTripBool && (create_paired_return === true || create_paired_return === 'true');
 
     // When creating paired return trips, the input price represents the total round-trip fare.
