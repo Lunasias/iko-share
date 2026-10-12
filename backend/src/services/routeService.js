@@ -826,6 +826,75 @@ function fetchGoogleMapsDistance(origin, destination, apiKey, originCoords = nul
   });
 }
 
+// Memory cache for OSRM routes
+const osrmCache = new Map();
+
+/**
+ * Fetch real driving road network distance & duration via OSRM (Open Source Routing Machine)
+ * Uses actual turn-by-turn road networks, Highway 41, etc. across Thailand without needing Google Maps API key.
+ */
+function fetchOSRMDistance(originCoords, destCoords) {
+  if (!originCoords?.lat || !originCoords?.lng || !destCoords?.lat || !destCoords?.lng) {
+    return Promise.resolve(null);
+  }
+
+  const cacheKey = `${originCoords.lng.toFixed(4)},${originCoords.lat.toFixed(4)};${destCoords.lng.toFixed(4)},${destCoords.lat.toFixed(4)}`;
+  if (osrmCache.has(cacheKey)) {
+    return Promise.resolve(osrmCache.get(cacheKey));
+  }
+
+  return new Promise((resolve) => {
+    // OSRM format: /route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=false
+    const url = `https://router.project-osrm.org/route/v1/driving/${originCoords.lng},${originCoords.lat};${destCoords.lng},${destCoords.lat}?overview=false`;
+
+    const req = https.get(
+      url,
+      {
+        headers: {
+          'User-Agent': 'IkoShareApp/1.0 (contact: info@ikoshare.com)',
+          'Accept': 'application/json',
+        },
+        timeout: 3500,
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            if (json.code === 'Ok' && Array.isArray(json.routes) && json.routes.length > 0) {
+              const bestRoute = json.routes[0];
+              const rawKm = bestRoute.distance / 1000;
+              let distanceKm = Math.round(rawKm * 10) / 10;
+              // If distance is long (e.g. 179.6 km) and within 0.45 km of integer, round to match Google Maps display (180 km)
+              if (distanceKm >= 40 && Math.abs(distanceKm - Math.round(distanceKm)) <= 0.45) {
+                distanceKm = Math.round(distanceKm);
+              }
+              const durationSec = bestRoute.duration || 0;
+              const durationMinutes = Math.max(2, Math.round(durationSec / 60));
+              const result = {
+                distance_km: distanceKm,
+                duration_text: formatDurationThai(durationMinutes),
+                duration_minutes: durationMinutes,
+                source: 'osrm_driving_engine',
+              };
+              osrmCache.set(cacheKey, result);
+              return resolve(result);
+            }
+          } catch (e) {}
+          resolve(null);
+        });
+      }
+    );
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(null);
+    });
+  });
+}
+
 /**
  * Estimate road distance, duration, and calculate vehicle depreciation breakdown
  */
@@ -903,11 +972,20 @@ async function estimateRoute(origin, destination, seats = 4, isRoundTrip = false
     }
   }
 
+  // 3. Try OSRM Real Road Driving Network (exact highway road routing across Thailand)
+  if (!routeResult && originCoords && destCoords) {
+    try {
+      routeResult = await fetchOSRMDistance(originCoords, destCoords);
+    } catch (osrmErr) {
+      console.warn('OSRM routing engine error:', osrmErr.message);
+    }
+  }
+
   // Calibrated direct road distance using regional winding coefficient (1.18 for local, 1.28 for highways)
   const windingFactor = (crowDistance && crowDistance < 20) ? 1.18 : 1.28;
   const expectedRoadDistance = crowDistance !== null ? Math.max(1, Math.round(crowDistance * windingFactor * 10) / 10) : 15;
 
-  // 3. Dual-Layer Thai Coordinates Engine Fallback (only used when Google Maps API is unavailable)
+  // 4. Dual-Layer Thai Coordinates Engine Fallback (only used when both Google Maps & OSRM are unreachable)
   if (!routeResult) {
     let distanceKm = 15;
     let durationMinutes = 20;
