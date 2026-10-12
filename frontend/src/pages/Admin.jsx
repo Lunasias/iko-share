@@ -6,7 +6,7 @@ import {
   Shield, Users, Car, Calendar, MapPin, Trash2, AlertCircle,
   Flag, MessageSquare, Check, X, UserX, ShieldCheck,
   FileCheck, ExternalLink, Image as ImageIcon, Lock, Eye,
-  CheckCircle2, XCircle, Clock, Camera, ShieldAlert
+  CheckCircle2, XCircle, Clock, Camera, ShieldAlert, Key
 } from 'lucide-react';
 
 export default function Admin() {
@@ -173,6 +173,69 @@ export default function Admin() {
       }
     } catch (err) {
       alert(String(err.response?.data?.message || err.message || 'ไม่สามารถลบบัญชีตามคำขอได้'));
+    }
+  };
+
+  const handleResetUserPassword = async (targetUser) => {
+    const userId = targetUser.user_id || targetUser.id;
+    const defaultPass = 'iko' + Math.floor(100000 + Math.random() * 900000);
+    const newPass = window.prompt(
+      `ระบุรหัสผ่านใหม่สำหรับผู้ใช้ "${targetUser.name}" (${targetUser.email}):\n(อย่างน้อย 6 ตัวอักษร)`,
+      defaultPass
+    );
+    if (!newPass) return;
+    if (newPass.trim().length < 6) {
+      alert('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    try {
+      const res = await API.put(`/admin/users/${userId}/reset-password`, {
+        new_password: newPass.trim(),
+      });
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 6000);
+        fetchAdminData();
+      } else {
+        alert(res.data.message || 'ไม่สามารถรีเซ็ตรหัสผ่านได้');
+      }
+    } catch (err) {
+      console.error('Reset password error:', err);
+      alert(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน'));
+    }
+  };
+
+  const handleResetPasswordFromSupport = async (ticket) => {
+    const defaultPass = 'iko' + Math.floor(100000 + Math.random() * 900000);
+    const newPass = window.prompt(
+      `ระบุรหัสผ่านใหม่สำหรับผู้ใช้ ${ticket.email} (Ticket #${ticket.request_id}):\n(ระบบจะเปลี่ยนรหัสผ่านและตอบกลับไปยังผู้ใช้อัตโนมัติ)`,
+      defaultPass
+    );
+    if (!newPass) return;
+    if (newPass.trim().length < 6) {
+      alert('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    try {
+      const res = await API.put(`/admin/support-requests/${ticket.request_id}/reset-password`, {
+        new_password: newPass.trim(),
+      });
+      if (res.data.success) {
+        setSuccessMsg(res.data.message);
+        setTimeout(() => setSuccessMsg(''), 6000);
+        if (res.data.request) {
+          setSupportRequests((prev) => prev.map((s) => s.request_id === ticket.request_id ? res.data.request : s));
+        } else {
+          fetchAdminData();
+        }
+      } else {
+        alert(res.data.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+      }
+    } catch (err) {
+      console.error('Reset password from support error:', err);
+      alert(String(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน'));
     }
   };
 
@@ -528,15 +591,25 @@ export default function Admin() {
                       </button>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {u.email !== 'admin@ikoshare.com' && (
+                      <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => handleDeleteUser(uid)}
-                          className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50"
-                          title="ลบสมาชิก"
+                          type="button"
+                          onClick={() => handleResetUserPassword(u)}
+                          className="p-1.5 rounded-lg text-amber-600 hover:text-amber-800 hover:bg-amber-50 cursor-pointer"
+                          title="เปลี่ยนรหัสผ่านให้ผู้ใช้"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Key className="w-4 h-4" />
                         </button>
-                      )}
+                        {u.email !== 'admin@ikoshare.com' && (
+                          <button
+                            onClick={() => handleDeleteUser(uid)}
+                            className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                            title="ลบสมาชิก"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -946,19 +1019,19 @@ export default function Admin() {
         )}
       </div>
 
-      {/* Forgot Password / Account Recreation Support Requests */}
+      {/* Forgot Password / Account Support Requests */}
       <div className="travel-card p-6 space-y-4 border border-slate-200 shadow-xs">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-amber-600" />
-            <span>คำขอลืมรหัสผ่าน / แชทขอลบบัญชีกับแอดมิน ({supportRequests.length} รายการ)</span>
+            <span>คำขอลืมรหัสผ่าน / ขอความช่วยเหลือจากแอดมิน ({supportRequests.length} รายการ)</span>
           </h3>
-          <span className="text-xs text-slate-500 font-medium">กดปุ่มเพื่อลบบัญชีเดิมและให้ผู้ใช้สมัครใหม่</span>
+          <span className="text-xs text-slate-500 font-medium">แอดมินสามารถเปลี่ยนรหัสผ่านใหม่ให้ผู้ใช้ได้ทันที หรือตอบกลับคำขอ</span>
         </div>
 
         {supportRequests.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
-            ไม่มีคำขอลืมรหัสผ่านหรือขอลบบัญชีที่รอดำเนินการ
+            ไม่มีคำขอลืมรหัสผ่านหรือขอความช่วยเหลือที่รอดำเนินการ
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -999,22 +1072,33 @@ export default function Admin() {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {s.status !== 'ดำเนินการแล้ว' && (
+                          <button
+                            type="button"
+                            onClick={() => handleResetPasswordFromSupport(s)}
+                            className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer"
+                            title="เปลี่ยนรหัสผ่านใหม่ให้ผู้ใช้และตอบกลับคำขอทันที"
+                          >
+                            <Key className="w-3 h-3" />
+                            <span>เปลี่ยนรหัสผ่าน</span>
+                          </button>
+                        )}
                         {s.email !== 'admin@ikoshare.com' && s.status !== 'ดำเนินการแล้ว' && (
                           <button
                             type="button"
                             onClick={() => handleResolveSupportAndDeleteUser(s.email, s.request_id)}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1"
+                            className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer"
                             title="ลบบัญชีเดิมเพื่อให้ผู้ใช้สมัครใหม่ด้วยอีเมลนี้"
                           >
                             <UserX className="w-3 h-3" />
-                            <span>ลบบัญชีเดิม</span>
+                            <span>ลบบัญชี</span>
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={() => handleUpdateSupportStatus(s.request_id, 'ดำเนินการแล้ว', s.admin_reply)}
-                          className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs"
+                          className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs cursor-pointer"
                           title="ตอบกลับหรือเปลี่ยนสถานะ"
                         >
                           ตอบกลับ
@@ -1022,7 +1106,7 @@ export default function Admin() {
                         <button
                           type="button"
                           onClick={() => handleDeleteSupportRequest(s.request_id)}
-                          className="p-1 text-slate-400 hover:text-red-600"
+                          className="p-1 text-slate-400 hover:text-red-600 cursor-pointer"
                           title="ลบคำขอ"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
