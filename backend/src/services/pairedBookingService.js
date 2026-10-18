@@ -76,8 +76,9 @@ function withPairedBooking(action, fallback) {
           client = null;
           return fallback(req, res);
         }
-        const bookingIds = active.map(b => b.booking_id);
+        const bookingIds = active.filter(b => action === 'verify' && req.body.status !== 'paid' || b.payment_status !== 'paid').map(b => b.booking_id);
         if (action === 'slip') {
+          if (!bookingIds.length) fail(400, 'ชำระเงินครบทั้งขาไปและขากลับแล้ว');
           if (!req.body.slip_url) fail(400, 'กรุณาแนบสลิปการชำระเงิน');
           await client.query(`UPDATE bookings SET payment_slip_url = $1, payment_status = 'pending_verification', payment_time = NOW()
             WHERE booking_id = ANY($2::int[])`, [req.body.slip_url, bookingIds]);

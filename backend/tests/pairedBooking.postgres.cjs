@@ -10,6 +10,11 @@ async function main() {
   const pool = db.pool;
   const client = await pool.connect();
   const originalQuery = db.query;
+  const rawQuery = client.query.bind(client);
+  const tables = ['trips', 'cars', 'users', 'events', 'bookings', 'notifications'];
+  const prefix = `roundtrip_test_${Date.now()}_`;
+  const rewrite = sql => sql.replace(/\b(trips|cars|users|events|bookings|notifications)\b/g, name => `pg_temp.${prefix}${name}`);
+  client.query = (sql, params) => rawQuery(rewrite(sql), params);
   try {
     await client.query('SET search_path TO pg_temp');
     await client.query(`
@@ -64,8 +69,22 @@ async function main() {
     assert.equal(res.code, 400);
     assert.equal((await client.query('SELECT available_seats FROM trips WHERE trip_id = 22')).rows[0].available_seats, 2);
     assert.equal((await client.query("SELECT COUNT(*)::int AS count FROM bookings WHERE booking_status = 'รอการอนุมัติ'")).rows[0].count, 2);
+    await client.query('UPDATE trips SET available_seats = 2 WHERE trip_id = 23');
+    await call(approveBooking, 1, {}, pending.booking_id);
+    await client.query("UPDATE bookings SET payment_status = 'paid', payment_slip_url = '/old-receipt.png' WHERE trip_id = 22 AND booking_status = 'จองแล้ว'");
+    detail = await call(getTripById, 2);
+    const partiallyPaid = detail.passengers.find(b => b.booking_status === 'จองแล้ว');
+    assert.equal(partiallyPaid.payment_due, 380);
+    await call(submitPaymentSlip, 2, { slip_url: '/remaining-receipt.png' }, partiallyPaid.booking_id);
+    assert.equal((await client.query("SELECT payment_slip_url FROM bookings WHERE trip_id = 22 AND booking_status = 'จองแล้ว'")).rows[0].payment_slip_url, '/old-receipt.png');
+    await call(verifyPayment, 1, { status: 'paid' }, partiallyPaid.booking_id);
+    detail = await call(getTripById, 2);
+    assert.equal(detail.passengers.find(b => b.booking_status === 'จองแล้ว').payment_due, 0);
     console.log('PostgreSQL integration passed: single booking action, both legs, total fare, one receipt, cancellation and atomic rollback.');
   } finally {
+    await rawQuery(`DROP TABLE IF EXISTS ${tables.map(name => `pg_temp.${prefix}${name}`).join(', ')}`).catch(() => {});
+    await rawQuery('RESET search_path').catch(() => {});
+    client.query = rawQuery;
     db.query = originalQuery;
     db.pool = pool;
     client.release(true);
