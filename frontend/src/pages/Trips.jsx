@@ -88,8 +88,9 @@ export default function Trips() {
     setSortBy('earliest');
   };
 
+  const groupedTrips = useMemo(() => groupRoundTrips(trips), [trips]);
   const filteredTrips = useMemo(() => {
-    let result = groupRoundTrips(trips);
+    let result = [...groupedTrips];
 
     // 1. Time of day filter
     if (timeFilter !== 'all') {
