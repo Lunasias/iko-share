@@ -117,8 +117,9 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
   const fuelCost = Math.round(totalDist * FUEL_RATE);
   const depreciationCost = Math.round(totalDist * DEPR_RATE);
   const totalCost = fuelCost + depreciationCost;
-  const recommendedSeatPrice = Math.max(isRound ? 50 : 25, Math.round((totalCost / count) / 10) * 10);
-  const reasonableMinPrice = Math.max(isRound ? 40 : 20, Math.round(recommendedSeatPrice * 0.4));
+  const oneWayCost = Math.round(oneWayDist * FUEL_RATE) + Math.round(oneWayDist * DEPR_RATE);
+  const recommendedSeatPrice = Math.max(25, Math.round((oneWayCost / count) / 10) * 10) * multiplier;
+  const reasonableMinPrice = Math.max(20, Math.round((recommendedSeatPrice / multiplier) * 0.4)) * multiplier;
   return {
     oneWayDist,
     totalDist,
@@ -144,7 +145,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     if (distanceKm) {
       const recalculated = computeCostBreakdown(distanceKm, seats, round);
       setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
     }
   };
 
@@ -154,7 +154,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     if (newDist > 0) {
       const recalculated = computeCostBreakdown(newDist, seats, isRoundTrip);
       setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
+      setPrice(recalculated.recommendedSeatPrice / (isRoundTrip ? 2 : 1));
     }
   };
 
@@ -166,7 +166,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
       if (distanceKm) {
         const recalculated = computeCostBreakdown(distanceKm, selected.capacity, isRoundTrip);
         setCostBreakdown(recalculated);
-        setPrice(recalculated.recommendedSeatPrice);
+        setPrice(recalculated.recommendedSeatPrice / (isRoundTrip ? 2 : 1));
       }
     }
   };
@@ -177,7 +177,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     if (distanceKm) {
       const recalculated = computeCostBreakdown(distanceKm, count, isRoundTrip);
       setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
+      setPrice(recalculated.recommendedSeatPrice / (isRoundTrip ? 2 : 1));
     }
   };
 
@@ -215,7 +215,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
         setDurationText(res.data.durationText);
         const breakdown = computeCostBreakdown(res.data.distanceKm, seats || 4, isRoundTrip);
         setCostBreakdown(breakdown);
-        setPrice(breakdown.recommendedSeatPrice);
+        setPrice(breakdown.recommendedSeatPrice / (isRoundTrip ? 2 : 1));
       }
     } catch (err) {
       console.warn('Calculate route estimate error:', err);
@@ -252,8 +252,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     // Enforce reasonable minimum fare lock if price > 0 and distance >= 40km
     const numPrice = parseFloat(price);
     if (numPrice > 0 && distanceKm && distanceKm >= 40 && costBreakdown?.reasonableMinPrice) {
-      if (numPrice < costBreakdown.reasonableMinPrice) {
-        setError(`สำหรับระยะทางประมาณ ${Math.round(distanceKm)} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costBreakdown.reasonableMinPrice} ต่อที่นั่ง เพื่อความสมเหตุสมผลตามต้นทุนจริง (หรือระบุ ฿0 หากต้องการให้เดินทางฟรี)`);
+      if (numPrice * (isRoundTrip ? 2 : 1) < costBreakdown.reasonableMinPrice) {
+        setError(`สำหรับระยะทางประมาณ ${Math.round(distanceKm)} กม. ค่าโดยสารขั้นต่ำควรไม่น้อยกว่า ฿${costBreakdown.reasonableMinPrice / (isRoundTrip ? 2 : 1)} ต่อที่นั่ง เพื่อความสมเหตุสมผลตามต้นทุนจริง (หรือระบุ ฿0 หากต้องการให้เดินทางฟรี)`);
         return;
       }
     }
@@ -302,7 +302,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
         destination: destination.trim(),
         departure_time: departureTime,
         available_seats: parseInt(seats),
-        price_seat: numPrice,
+        price_seat: numPrice * (isRoundTrip ? 2 : 1),
+        one_way_price_seat: numPrice,
         driver_personality: driverPersonality,
         passenger_requirements: passengerRequirements,
         distance_km: distanceKm,
@@ -869,7 +870,7 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPrice(costBreakdown.recommendedSeatPrice)}
+                  onClick={() => setPrice(costBreakdown.recommendedSeatPrice / (isRoundTrip ? 2 : 1))}
                   className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
                 >
                   {isTh ? `ใช้ราคาแนะนำนี้ (฿${costBreakdown.recommendedSeatPrice}${isRoundTrip ? ' รวมไป-กลับ' : ''})` : `Use recommended fare (฿${costBreakdown.recommendedSeatPrice})`}
@@ -988,10 +989,10 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between min-h-[20px]">
-                <label className="text-xs font-bold text-slate-800">{isTh ? 'ค่าโดยสารหารเฉลี่ย / ที่นั่ง (บาท)' : 'Shared Fare / Seat (THB)'}</label>
+                <label className="text-xs font-bold text-slate-800">{isTh ? 'ค่าโดยสารขาเดียว / ที่นั่ง (บาท)' : 'One-way fare / seat (THB)'}</label>
                 {costBreakdown?.reasonableMinPrice ? (
                   <span className="text-[11px] text-slate-500 font-medium">
-                    {isTh ? `ขั้นต่ำ ฿${costBreakdown.reasonableMinPrice} (หรือ ฿0)` : `Min ฿${costBreakdown.reasonableMinPrice} (or ฿0)`}
+                    {isTh ? `ขั้นต่ำ ฿${costBreakdown.reasonableMinPrice / (isRoundTrip ? 2 : 1)} (หรือ ฿0)` : `Min ฿${costBreakdown.reasonableMinPrice / (isRoundTrip ? 2 : 1)} (or ฿0)`}
                   </span>
                 ) : (
                   <span className="text-[11px] text-slate-400 font-medium">{isTh ? '฿0 หากฟรี' : '฿0 if free'}</span>
@@ -1011,8 +1012,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
               {isRoundTrip && (
                 <p className="text-[10px] text-emerald-700 font-semibold mt-1">
                   {isTh
-                    ? '🔄 ราคานี้เป็นราคารวมไป-กลับต่อที่นั่ง จองครั้งเดียวครบทั้งสองขา'
-                    : '🔄 Total round-trip fare per seat. One booking covers both journeys.'}
+                    ? `🔄 ขาเดียว ฿${Number(price) || 0} × 2 = ไป-กลับ ฿${(Number(price) || 0) * 2} ต่อที่นั่ง จองครั้งเดียวครบทั้งสองขา`
+                    : `🔄 One-way ฿${Number(price) || 0} × 2 = round-trip ฿${(Number(price) || 0) * 2} / seat. One booking covers both journeys.`}
                 </p>
               )}
             </div>
