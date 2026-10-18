@@ -1,3 +1,4 @@
+import RoundTripSchedule from '../components/RoundTripSchedule';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import API, { uploadImage } from '../services/api';
@@ -443,7 +444,7 @@ export default function TripDetail() {
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="text-right">
               {/* User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
-              <div className="text-[11px] font-bold text-slate-500">{isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat'}</div>
+              <div className="text-[11px] font-bold text-slate-500">{trip.is_round_trip && !trip.paired_trip_id ? (isTh ? 'ราคาไป-กลับ / ที่นั่ง' : 'Round-trip / seat') : (isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat')}</div>
               <div className="text-3xl font-black text-emerald-700">
                 {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
               </div>
@@ -544,36 +545,14 @@ export default function TripDetail() {
             </div>
           </div>
 
-          {trip.is_round_trip && trip.return_departure_time && (
-            <div className="col-span-1 sm:col-span-2 md:col-span-4 p-4 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 rounded-2xl border border-blue-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                  <RefreshCw className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-black text-blue-950 flex items-center gap-1.5">
-                    <span>{isTh ? '🔄 กำหนดการเดินทางขากลับ (Round-Trip Return)' : '🔄 Return Departure Schedule'}</span>
-                    <span className="text-[10px] bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded-full font-bold">
-                      {trip.destination} ➔ {trip.origin}
-                    </span>
-                  </div>
-                  <div className="text-xs font-extrabold text-blue-900 mt-0.5">
-                    {new Date(trip.return_departure_time).toLocaleDateString(isTh ? 'th-TH' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    {' '}เวลา {new Date(trip.return_departure_time).toLocaleTimeString(isTh ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })} {isTh ? 'น.' : ''}
-                  </div>
-                </div>
-              </div>
-              {trip.paired_trip_id && (
-                <Link
-                  to={`/trips/${trip.paired_trip_id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs"
-                >
-                  <span>{isTh ? 'เปิดดูทริปขากลับ' : 'View Return Trip'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-          )}
+          <div className="col-span-1 sm:col-span-2 md:col-span-4">
+            <RoundTripSchedule trip={trip} isTh={isTh} />
+            {trip.paired_trip_id && (
+              <Link to={`/trips/${trip.paired_trip_id}`} className="block mt-2 text-xs font-bold text-blue-800 underline">
+                {isTh ? 'ดูการจองเดิมของอีกขา' : 'Manage existing bookings for the other journey'}
+              </Link>
+            )}
+          </div>
 
           {(trip.distance_km || trip.duration_text || (trip.origin && trip.destination)) && (
             <div className="col-span-1 sm:col-span-2 md:col-span-4">

@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานโครงงานฉบับสมบูรณ์: Iko-Share (Final Project Report)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --primary-light: #f0fdf4;
+      --secondary: #0284c7;
+      --accent: #10b981;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --warning: #d97706;
+      --warning-bg: #fef3c7;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+      background-color: var(--bg-page);
+      padding: 24px 12px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .no-print-toolbar {
+      max-width: 960px;
+      margin: 0 auto 20px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+
+    .toolbar-title {
+      font-family: 'Prompt', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-action {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .report-container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      padding: 50px 65px;
+      border-radius: 12px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+    }
+
+    /* Cover Page */
+    .cover-page {
+      text-align: center;
+      padding: 40px 20px 60px 20px;
+      border-bottom: 2px solid var(--border-light);
+      margin-bottom: 45px;
+      page-break-after: always;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    .cover-title {
+      font-family: 'Prompt', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-bottom: 35px;
+      font-weight: 400;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 680px;
+      margin: 0 auto 35px auto;
+      text-align: left;
+      background: #f8fafc;
+      padding: 24px;
+      border-radius: 10px;
+      border: 1px solid var(--border-light);
+    }
+
+    .cover-meta-item strong {
+      display: block;
+      color: var(--primary-dark);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-item span {
+      font-size: 14.5px;
+      color: var(--text);
+    }
+
+    .cover-status-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: var(--success-bg);
+      border: 1px solid #86efac;
+      border-radius: 30px;
+      color: var(--success);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4 {
+      font-family: 'Prompt', sans-serif;
+      color: #0f172a;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      border-bottom: 2px solid #ccfbf1;
+      padding-bottom: 8px;
+      margin-top: 40px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 22px;
+      background-color: var(--primary);
+      border-radius: 3px;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+
+    h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    /* Table of contents */
+    .toc-card {
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 24px 30px;
+      margin-bottom: 35px;
+      border: 1px solid var(--border-light);
+    }
+
+    .toc-title {
+      font-family: 'Prompt', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .toc-list li {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dotted #94a3b8;
+      padding-bottom: 4px;
+    }
+
+    .toc-list a {
+      color: #0369a1;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .toc-list a:hover {
+      text-decoration: underline;
+    }
+
+    /* Callout & Cards */
+    .callout {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 18px 0;
+      border-left: 4px solid var(--primary);
+      background: #f0fdfa;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    .callout-warning {
+      border-left-color: var(--warning);
+      background: var(--warning-bg);
+      color: #92400e;
+    }
+
+    .callout-warning .callout-title {
+      color: #b45309;
+    }
+
+    .callout-success {
+      border-left-color: var(--success);
+      background: var(--success-bg);
+      color: #14532d;
+    }
+
+    .callout-success .callout-title {
+      color: #15803d;
+    }
+
+    /* Grid & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin: 18px 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .info-card {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .info-card h4 {
+      margin-top: 0;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14.5px;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Prompt', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0 24px 0;
+      font-size: 13.5px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .badge-pass { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-high { background: #fee2e2; color: #dc2626; font-weight: 700; }
+    .badge-medium { background: #fef3c7; color: #b45309; }
+    .badge-low { background: #e0f2fe; color: #0369a1; }
+    .badge-tag { background: #e2e8f0; color: #334155; }
+
+    /* Diagram wrapper */
+    .diagram-container {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    .diagram-caption {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    /* Code & Lists */
+    code {
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      color: #0969da;
+    }
+
+    ul, ol {
+      margin-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .no-print-toolbar {
+        display: none !important;
+      }
+
+      .report-container {
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+      }
+
+      .page-break {
+        page-break-after: always;
+      }
+
+      .avoid-break {
+        page-break-inside: avoid;
+      }
+
+      h2 {
+        margin-top: 25px;
+        font-size: 18px;
+        page-break-after: avoid;
+      }
+
+      h3 {
+        margin-top: 18px;
+        font-size: 15px;
+        page-break-after: avoid;
+      }
+
+      table {
+        page-break-inside: avoid;
+      }
+
+      .diagram-container {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toolbar for Browser Preview -->
+  <div class="no-print-toolbar">
+    <div class="toolbar-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>เอกสารรายงานโครงงานฉบับสมบูรณ์ (Final Project Report) — Iko-Share</span>
+    </div>
+    <button class="btn-action" onclick="window.print()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      พิมพ์รายงานเป็น PDF (A4)
+    </button>
+  </div>
+
+  <div class="report-container">
+
+    <!-- COVER PAGE -->
+    <div class="cover-page">
+      <div class="cover-badge">FINAL RELEASE • PRODUCTION VERSION 2.3.0</div>
+      <h1 class="cover-title">รายงานสรุปผลการดำเนินงานโครงงาน<br>ระบบแชร์การเดินทางร่วมกันสู่อีเวนต์และสถานที่ท่องเที่ยว<br>(Iko-Share: Eco-Friendly Carpooling Platform)</h1>
+      <p class="cover-subtitle">การพัฒนาระบบแบ่งปันการเดินทางอัจฉริยะบนสถาปัตยกรรม 3-Tier พร้อมระบบความปลอดภัยและการประเมินคาร์บอนฟุตพริ้นท์</p>
+
+      <div class="cover-meta-grid">
+        <div class="cover-meta-item">
+          <strong>ชื่อระบบและโครงงาน</strong>
+          <span>Iko-Share (ไอโกะแชร์)</span>
+        </div>
+        <div class="cover-meta-item">
+          <strong>เวอร์ชันซอฟต์แวร์</strong>
+          <span>Version 2.3.0 (Production Release)</span>
+        </div>
+        <div class="cover-meta-item">
+          <strong>สถาปัตยกรรมระบบ</strong>
+          <span>3-Tier Architecture (Client - Logic - Data)</span>
+        </div>
+        <div class="cover-meta-item">
+          <strong>วันที่จัดทำรายงาน</strong>
+          <span>ตุลาคม 2569</span>
+        </div>
+        <div class="cover-meta-item">
+          <strong>ผลการทดสอบระบบ</strong>
+          <span>165 Test Cases (Pass Rate 97.0%)</span>
+        </div>
+        <div class="cover-meta-item">
+          <strong>สถานะการพัฒนา</strong>
+          <span>เสร็จสมบูรณ์ 100% พร้อมใช้งานจริง</span>
+        </div>
+      </div>
+
+      <div class="cover-status-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>ระบบผ่านการทดสอบคุณภาพและการตรวจสอบความมั่นคงปลอดภัยตามมาตรฐาน PDPA</span>
+      </div>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc-card avoid-break">
+      <div class="toc-title">สารบัญรายงาน (Table of Contents)</div>
+      <ul class="toc-list">
+        <li><a href="#section-1">1. แนวคิดหรือที่มาของโครงงาน (Project Background & Rationale)</a> <span>หน้า 2</span></li>
+        <li><a href="#section-2">2. ภาพรวมของระบบ 3-Tier Architecture ที่ได้ออกแบบเสร็จสมบูรณ์</a> <span>หน้า 4</span></li>
+        <li><a href="#section-3">3. Functional & Non-Functional Requirements ที่ได้ออกแบบไว้</a> <span>หน้า 7</span></li>
+        <li><a href="#section-4">4. Use Case Model (Actors, Diagram & Specifications)</a> <span>หน้า 10</span></li>
+        <li><a href="#section-5">5. Data Model และ ER Diagram (Database Schema 3NF)</a> <span>หน้า 13</span></li>
+        <li><a href="#section-6">6. Testing & Results (การทดสอบระบบและผลลัพธ์)</a> <span>หน้า 16</span></li>
+        <li><a href="#section-7">7. Conclusion (ปัญหา อุปสรรค และแนวทางการพัฒนาต่อยอด)</a> <span>หน้า 20</span></li>
+      </ul>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="callout avoid-break">
+      <div class="callout-title">บทสรุปสำหรับผู้บริหาร (Executive Summary)</div>
+      <p style="margin-bottom: 0;">
+        โครงงาน <strong>Iko-Share</strong> ถูกพัฒนาขึ้นเพื่อแก้ไขปัญหาวิกฤตค่าใช้จ่ายในการเดินทาง ปัญหาการจราจรติดขัด และปัญหาการปล่อยก๊าซเรือนกระจกจากการเดินทางสู่งานอีเวนต์ คอนเสิร์ต และสถานที่ท่องเที่ยว ด้วยการสร้างแพลตฟอร์มคาร์พูล (Carpooling) อัจฉริยะที่ยึดหลัก <strong>"การแบ่งปันต้นทุนตามจริง (True Cost-Sharing)"</strong> ระบบได้รับการออกแบบภายใต้สถาปัตยกรรม <strong>3-Tier Architecture</strong> ประกอบด้วย Client Tier (React 18 + Tailwind CSS 120 FPS), Application Tier (Node.js + Express.js Serverless Gateway บน Vercel) และ Data Tier (PostgreSQL บน Supabase Cloud) ระบบรองรับ 10 ฟังก์ชันแกนหลัก เช่น แผนที่ Google Maps แบบโต้ตอบ, ห้องแชทเรียลไทม์ผ่าน SSE, การยืนยันสลิป PromptPay EMVCo, ระบบตรวจสอบภาพถ่ายป้ายทะเบียนรถยนต์ที่สอดคล้องกับ PDPA 100% และระบบคำนวณการลดก๊าซ $CO_2$ ผ่านการทดสอบ 165 Test Cases ด้วย Pass Rate 97.0% ปราศจากข้อบกพร่องระดับวิกฤต
+      </p>
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="page-break"></div>
+    <h2 id="section-1">1. แนวคิดหรือที่มาของโครงงาน (Project Background & Rationale)</h2>
+
+    <h3>1.1 สภาพปัญหาและความสำคัญ (Problem Statement)</h3>
+    <p>
+      ในยุคปัจจุบัน การเดินทางไปยังงานกิจกรรมขนาดใหญ่ (Event) เช่น คอนเสิร์ต เทศกาลดนตรี งานรับปริญญา มหกรรมกีฬา ตลอดจนการท่องเที่ยวข้ามจังหวัด ประสบปัญหาสำคัญ 4 ประการที่ส่งผลกระทบต่อทั้งเศรษฐกิจ คุณภาพชีวิต และสิ่งแวดล้อม:
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="info-card">
+        <h4>1. ภาระค่าใช้จ่ายในการเดินทางสูง</h4>
+        <p>ราคาน้ำมันเชื้อเพลิงและค่าผ่านทางปรับตัวสูงขึ้น การขับรถยนต์ส่วนบุคคลคนเดียวทำให้เกิดต้นทุนเฉลี่ยต่อคนต่อกิโลเมตรสูง และสร้างภาระทางการเงินที่ไม่จำเป็น</p>
+      </div>
+      <div class="info-card">
+        <h4>2. ปัญหาการจราจรและพื้นที่จอดรถไม่เพียงพอ</h4>
+        <p>ช่วงเวลาจัดงานอีเวนต์ขนาดใหญ่และแหล่งท่องเที่ยว ยานพาหนะหลั่งไหลเข้ามาพร้อมกัน ทำให้เกิดการจราจรติดขัดสะสมนับชั่วโมง และพื้นที่จอดรถรองรับได้ไม่เพียงพอ</p>
+      </div>
+      <div class="info-card">
+        <h4>3. ปัญหารถสาธารณะขาดแคลนและการโก่งราคา</h4>
+        <p>หลังเลิกงานอีเวนต์หรือในพื้นที่ต่างจังหวัด มักพบการปฏิเสธผู้โดยสาร หรือการปรับขึ้นค่าบริการสูงเกินจริง (Surge Pricing 200–300%) ของรถรับจ้างสาธารณะ</p>
+      </div>
+      <div class="info-card">
+        <h4>4. มลพิษและก๊าซเรือนกระจก ($CO_2$)</h4>
+        <p>การใช้รถยนต์แยกคันก่อให้เกิดการปล่อยก๊าซคาร์บอนไดออกไซด์เฉลี่ย 120 กรัม/กม. ต่อคัน เร่งวิกฤตการเปลี่ยนแปลงสภาพภูมิอากาศ (Global Warming)</p>
+      </div>
+    </div>
+
+    <h3>1.2 นิยามและความแตกต่างระหว่าง Carpooling กับ Ride-Hailing</h3>
+    <p>
+      ในประเทศไทย ประชาชนมักสับสนระหว่าง <em>Ride-Hailing เชิงพาณิชย์</em> (เช่น Grab, Bolt) กับ <em>Carpooling (การร่วมเดินทาง)</em> ทางทีมพัฒนาจึงได้วางกรอบแนวคิดให้ Iko-Share เป็น <strong>True Carpooling Platform</strong> อย่างเคร่งครัด:
+    </p>
+
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 25%;">คุณลักษณะ</th>
+          <th style="width: 37%;">บริการ Ride-Hailing เชิงพาณิชย์ (Grab, Bolt)</th>
+          <th style="width: 38%;">Iko-Share (True Cost-Sharing Carpooling)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>เจตนาการเดินทาง</strong></td>
+          <td>คนขับวิ่งรถวนเพื่อแสวงหาลูกค้าและสร้างรายได้เชิงพาณิชย์</td>
+          <td>คนขับมีแผนเดินทางไปยังจุดหมายนั้นอยู่แล้ว และเปิดรับเพื่อนร่วมทาง</td>
+        </tr>
+        <tr>
+          <td><strong>โครงสร้างราคา</strong></td>
+          <td>คิดราคาแสวงหากำไร + มีระบบ Surge Pricing เมื่ออุปสงค์สูง</td>
+          <td>หารต้นทุนค่าน้ำมันและค่าสึกหรอตามจริง (Fair Share Formula) ปราศจากค่าบริการแพลตฟอร์มส่วนเพิ่ม</td>
+        </tr>
+        <tr>
+          <td><strong>สถานะทางกฎหมาย</strong></td>
+          <td>ต้องใช้ใบขับขี่สาธารณะและจดทะเบียนรถรับจ้างสาธารณะ</td>
+          <td>การแบ่งปันค่าใช้จ่ายระหว่างผู้มีเส้นทางเดียวกัน (Cost-sharing) ถูกต้องตามหลักสิทธิเสรีภาพและกฎหมายไทย</td>
+        </tr>
+        <tr>
+          <td><strong>มิติทางสิ่งแวดล้อม</strong></td>
+          <td>เพิ่มจำนวนเที่ยววิ่งของรถบนถนน (Empty deadheading trips)</td>
+          <td>ลดจำนวนรถยนต์บนท้องถนนโดยตรง (Maximize Occupancy) และคำนวณ $CO_2$ ที่ลดได้จริง</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>1.3 วัตถุประสงค์ของโครงงาน (Project Objectives)</h3>
+    <ol>
+      <li><strong>เพื่อพัฒนาเว็บแอปพลิเคชันแบ่งปันการเดินทาง (Carpooling Web Application):</strong> ที่ช่วยจับคู่ผู้ขับขี่และผู้โดยสารที่มีจุดหมายปลายทางหรือเส้นทางร่วมกันได้อย่างมีประสิทธิภาพและใช้งานง่าย</li>
+      <li><strong>เพื่อพัฒนาระบบคำนวณราคาแนะนำที่เป็นธรรม (Fair Share Pricing Model):</strong> ประเมินต้นทุนค่าน้ำมันและค่าเสื่อมสภาพตามระยะทางจริง โดยกำหนดเพดานราคาป้องกันการแสวงหากำไรเกินควร</li>
+      <li><strong>เพื่อสร้างมาตรฐานความปลอดภัยหลายชั้น (Multi-Layer Safety Standard):</strong> ยืนยันตัวตนสมาชิก (KYC), การตรวจสอบภาพถ่ายป้ายทะเบียนรถจริงโดยผู้ดูแลระบบ และระบบรีวิวเพื่อนร่วมทางแบบสองทาง (Mutual Peer Review)</li>
+      <li><strong>เพื่อปฏิบัติตามกฎหมายคุ้มครองข้อมูลส่วนบุคคล (PDPA Compliance 100%):</strong> ขอความยินยอมในการจัดเก็บภาพถ่ายยานพาหนะ จัดการคุกกี้ และจัดทำระบบรองรับการใช้สิทธิของเจ้าของข้อมูลส่วนบุคคล (Data Subject Rights)</li>
+      <li><strong>เพื่อส่งเสริมการท่องเที่ยวและการเดินทางสีเขียว (Green Travel & ESG Promotion):</strong> แสดงผลการลดการปล่อยก๊าซคาร์บอนไดออกไซด์ ($CO_2$) และเทียบเคียงเป็นจำนวนต้นไม้ที่ช่วยฟื้นฟูสิ่งแวดล้อม</li>
+    </ol>
+
+    <!-- SECTION 2 -->
+    <div class="page-break"></div>
+    <h2 id="section-2">2. ภาพรวมของระบบ 3-Tier Architecture ที่ได้ออกแบบเสร็จสมบูรณ์</h2>
+
+    <p>
+      ระบบ <strong>Iko-Share</strong> ได้รับการออกแบบโครงสร้างสถาปัตยกรรมแบบ <strong>3-Tier Architecture (Components + Tools + 3rd-Party)</strong> ฉบับสมบูรณ์ (Final Production Version) โดยได้รับการปรับปรุงและเติมเต็มจากโครงร่างเริ่มต้นให้ครอบคลุมเครื่องมือ ไลบรารี และบริการภายนอกที่ใช้งานจริงในระบบทั้งหมดอย่างครบถ้วน:
+    </p>
+
+    <!-- Detailed Comparison & Modification Table -->
+    <div class="callout avoid-break" style="margin-bottom: 20px;">
+      <div class="callout-title">ตารางแจกแจงจุดที่เพิ่ม แก้ไข และลบออกจากโครงร่างสถาปัตยกรรมเดิม (Architecture Alignment Matrix)</div>
+      <p style="font-size: 13px; margin-bottom: 8px;">เปรียบเทียบระหว่างภาพร่างเริ่มต้น (Draft Diagram) กับสถาปัตยกรรมที่พัฒนาเสร็จสมบูรณ์และใช้งานจริงบนเว็บ Iko-Share (Completed Version):</p>
+      <table style="font-size: 12.5px; margin: 8px 0 0 0;">
+        <thead>
+          <tr>
+            <th style="width: 22%;">ส่วนประกอบ (Component)</th>
+            <th style="width: 38%;">สิ่งที่อยู่ในภาพร่างเดิม (Original Draft)</th>
+            <th style="width: 40%;">สิ่งที่ปรับปรุง เพิ่มเติม หรือลบออก (Final Updates & Additions)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. ระดับ Client (Client Tier)</strong></td>
+            <td>ระบุ <code>Web Application</code>, <code>Web Browser</code>, และ <code>Admin Web server</code></td>
+            <td><strong style="color: #dc2626;">[❌ ลบออก / แก้ไข]</strong> ลบคำว่า <em>Admin Web server</em> ออก เพราะ Web Server อยู่ใน Backend Tier ส่วนแอดมินคือผู้ใช้งาน (Actor) ที่เปิดผ่าน <strong>Web Browser</strong> เช่นเดียวกับผู้ใช้ทั่วไป พร้อมระบุ 3 กลุ่มผู้ใช้งาน (Passenger, Driver, Admin)</td>
+          </tr>
+          <tr>
+            <td><strong>2. ส่วน App Tier (UI & Runtime)</strong></td>
+            <td>มี React, Vite, Admin Dashboard, Node.js, Express.js</td>
+            <td><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> เพิ่ม <strong>Tailwind CSS (120 FPS GPU Motion)</strong>, <strong>In-Flight Request Deduplication</strong>, <strong>EventSource (SSE Client)</strong> สำหรับห้องแชทเรียลไทม์ และ <strong>Interactive Google Maps UI Component</strong></td>
+          </tr>
+          <tr>
+            <td><strong>3. ส่วน Service TIER (API / Logic)</strong></td>
+            <td>มีเฉพาะ <code>Authentication</code>, <code>Calculation</code>, <code>UI Service</code> (หรือ CAL)</td>
+            <td><strong style="color: #dc2626;">[❌ ลบออก]</strong> ลบคำว่า <em>UI Service</em> ใน Backend ออก<br><strong style="color: #16a34a;">[➕ เพิ่มให้ครบ 10 โมดูล]</strong> เพิ่ม <strong>Booking State Machine</strong>, <strong>Car Plate Verification & PDPA Consent</strong>, <strong>In-Trip SSE Chat Engine</strong>, <strong>PromptPay EMVCo QR & Slip</strong>, <strong>Mutual Peer Review</strong>, <strong>In-App Notification Dispatcher</strong>, และ <strong>Eco $CO_2$ Offset Engine</strong></td>
+          </tr>
+          <tr>
+            <td><strong>4. บริการภายนอก (3rd-Party)</strong></td>
+            <td>มีเพียงโลโก้ <strong>Google</strong> อันเดียว</td>
+            <td><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> ระบุเป็น <strong>Google Maps Embed & Directions API</strong> และเพิ่ม <strong>PromptPay BOT EMVCo Standard</strong>, <strong>Vercel Serverless Platform</strong>, <strong>Cloud Storage (Supabase/Cloudinary)</strong> และ <strong>Web Share API (LINE, FB, X)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>5. ส่วน DATA TIER (Storage)</strong></td>
+            <td>มีคำผิด <code>DATA storange</code>, Neon PostgreSQL, Environment Variables, Replication, Backup</td>
+            <td><strong style="color: #2563eb;">[✏️ แก้คำผิด]</strong> แก้เป็น <strong>DATA Storage</strong><br><strong style="color: #16a34a;">[➕ เพิ่มตามเว็บจริง]</strong> เพิ่ม <strong>14 Relational Tables (3NF Schema)</strong>, <strong>Connection Pooler (pg.Pool)</strong>, <strong>B-Tree Indexes Optimization</strong>, <strong>Protected File Storage (uploaded_images Bytea)</strong> และ <strong>Self-Healing Auto-Migration Engine</strong></td>
+          </tr>
+          <tr>
+            <td><strong>6. แถบข้าง (Management & Governance)</strong></td>
+            <td>Vercel + Admin Dashboard, PostgreSQL Schema / Constraints, Security (JWT, Bcrypt, Helmet, CORS, Rate Limit)</td>
+            <td><strong style="color: #16a34a;">[➕ เสริมความสมบูรณ์]</strong> เพิ่ม <strong>Foreign Key Cascades</strong>, <strong>PDPA Data Compliance</strong>, <strong>Parameterized SQL Queries 100%</strong> ป้องกัน SQL Injection และ <strong>Role-Based Access Control (RBAC Middleware)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Complete Aligned SVG Diagram -->
+    <div class="diagram-container avoid-break">
+      <svg viewBox="0 0 980 660" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 620px;">
+        <!-- Defs & Filters -->
+        <defs>
+          <filter id="boxShadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+          </filter>
+        </defs>
+
+        <!-- Diagram Header -->
+        <text x="30" y="32" font-family="'Prompt', sans-serif" font-size="22" font-weight="800" fill="#0f172a">Components + Tools + 3rd-Party</text>
+        <text x="560" y="32" font-family="'Prompt', sans-serif" font-size="24" font-weight="800" fill="#0f766e">Iko Share</text>
+
+        <!-- Top Client Row -->
+        <text x="175" y="66" font-family="'Prompt', sans-serif" font-size="14" font-weight="700" fill="#334155">Client</text>
+        
+        <rect x="235" y="48" width="155" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="312" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Web Application (SPA)</text>
+
+        <rect x="400" y="48" width="165" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="482" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Web Browser (User / Driver)</text>
+
+        <rect x="575" y="48" width="155" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="652" y="67" font-family="'Prompt', sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#0f172a">Admin Dashboard (UI)</text>
+
+        <rect x="740" y="48" width="215" height="28" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="3,2"/>
+        <text x="847" y="66" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" text-anchor="middle" fill="#b91c1c">❌ ลบ 'Admin Web server' ออก</text>
+
+        <!-- 3rd Party Box (Left) -->
+        <rect x="25" y="100" width="170" height="535" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+        <rect x="35" y="112" width="150" height="28" rx="6" fill="#16a34a"/>
+        <text x="110" y="131" font-family="'Prompt', sans-serif" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3rd-Party Services</text>
+
+        <!-- Google Maps -->
+        <g transform="translate(40, 155)">
+          <rect x="0" y="0" width="140" height="95" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <circle cx="70" cy="30" r="18" fill="#f8fafc" stroke="#ea4335" stroke-width="2"/>
+          <text x="70" y="37" font-family="'Prompt', sans-serif" font-size="20" font-weight="800" fill="#4285f4" text-anchor="middle">G</text>
+          <text x="70" y="65" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Google Maps Platform</text>
+          <text x="70" y="80" font-size="9" fill="#64748b" text-anchor="middle">Embed & Directions API</text>
+        </g>
+
+        <!-- PromptPay -->
+        <g transform="translate(40, 260)">
+          <rect x="0" y="0" width="140" height="85" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <rect x="20" y="10" width="100" height="24" rx="4" fill="#003764"/>
+          <text x="70" y="26" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">พร้อมเพย์ PromptPay</text>
+          <text x="70" y="52" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">BOT EMVCo QR</text>
+          <text x="70" y="68" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Thai QR Payment</text>
+        </g>
+
+        <!-- Vercel Serverless -->
+        <g transform="translate(40, 355)">
+          <rect x="0" y="0" width="140" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <polygon points="70,12 85,36 55,36" fill="#000000"/>
+          <text x="70" y="52" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Vercel Cloud</text>
+          <text x="70" y="68" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Edge Serverless</text>
+        </g>
+
+        <!-- Cloud Storage & Share -->
+        <g transform="translate(40, 445)">
+          <rect x="0" y="0" width="140" height="85" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="70" y="24" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Cloud Storage (S3)</text>
+          <text x="70" y="40" font-size="9" fill="#64748b" text-anchor="middle">Supabase / Cloudinary</text>
+          <text x="70" y="58" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">Web Share API</text>
+          <text x="70" y="74" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: LINE / FB / X Share</text>
+        </g>
+
+        <!-- Big Arrow From Core to 3rd-Party -->
+        <polygon points="215,225 215,195 198,210" fill="#0f172a"/>
+
+        <!-- Main Blue Container (App, Service, Data Tier) -->
+        <rect x="225" y="100" width="730" height="535" rx="10" fill="#dbeafe" fill-opacity="0.5" stroke="#93c5fd" stroke-width="1.5"/>
+
+        <!-- 1. App Tier (Top Row inside Blue Box) -->
+        <text x="245" y="140" font-family="'Prompt', sans-serif" font-size="15" font-weight="800" fill="#0f172a">App<br/>Tier</text>
+        
+        <!-- App Tier: UI -->
+        <g transform="translate(295, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">UI (Web Application)</text>
+          <rect x="12" y="28" width="60" height="24" rx="4" fill="#38bdf8"/>
+          <text x="42" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">React 18</text>
+          <rect x="85" y="28" width="60" height="24" rx="4" fill="#818cf8"/>
+          <text x="115" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Vite SPA</text>
+          <text x="80" y="68" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 Tailwind CSS (120 FPS)</text>
+          <text x="80" y="80" font-size="9" fill="#16a34a" text-anchor="middle">🟢 In-flight Deduplication & SSE</text>
+        </g>
+
+        <!-- App Tier: Admin UI -->
+        <g transform="translate(465, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Admin UI</text>
+          <rect x="15" y="28" width="130" height="24" rx="4" fill="#3b82f6"/>
+          <text x="80" y="44" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">Admin Dashboard</text>
+          <text x="80" y="68" font-size="9.5" fill="#334155" text-anchor="middle">• ตรวจสอบและอนุมัติ KYC</text>
+          <text x="80" y="80" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 ตรวจสอบภาพป้ายทะเบียน</text>
+        </g>
+
+        <!-- App Tier: Web Service -->
+        <g transform="translate(635, 115)">
+          <rect x="0" y="0" width="160" height="90" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="80" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Web Service</text>
+          <rect x="12" y="28" width="60" height="24" rx="4" fill="#22c55e"/>
+          <text x="42" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Node.js</text>
+          <rect x="85" y="28" width="60" height="24" rx="4" fill="#0f172a"/>
+          <text x="115" y="44" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Express</text>
+          <text x="80" y="68" font-size="9.5" fill="#16a34a" text-anchor="middle">🟢 Vercel Serverless Gateway</text>
+          <text x="80" y="80" font-size="9" fill="#16a34a" text-anchor="middle">🟢 Gzip Compression (75-85%)</text>
+        </g>
+
+        <!-- 2. Service Tier (Middle Row inside Blue Box) -->
+        <text x="235" y="270" font-family="'Prompt', sans-serif" font-size="14" font-weight="800" fill="#0f172a">Service<br/>TIER</text>
+
+        <g transform="translate(295, 215)">
+          <rect x="0" y="0" width="500" height="150" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="250" y="22" font-family="'Prompt', sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#0f172a">Services / API Endpoints & Business Logic Engines</text>
+          
+          <!-- Original blocks -->
+          <rect x="15" y="32" width="145" height="26" rx="4" fill="#3b82f6"/>
+          <text x="87" y="49" font-family="'Prompt', sans-serif" font-size="10" font-weight="600" fill="#ffffff" text-anchor="middle">Authentication & RBAC</text>
+
+          <rect x="175" y="32" width="150" height="26" rx="4" fill="#3b82f6"/>
+          <text x="250" y="49" font-family="'Prompt', sans-serif" font-size="10" font-weight="600" fill="#ffffff" text-anchor="middle">Calculation (Fair Price)</text>
+
+          <rect x="340" y="32" width="145" height="26" rx="4" fill="#fee2e2" stroke="#dc2626"/>
+          <text x="412" y="49" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">❌ ลบ 'UI Service' ออก</text>
+
+          <!-- Added Services -->
+          <g transform="translate(15, 66)">
+            <rect x="0" y="0" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="15" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Booking Lifecycle State Machine</text>
+
+            <rect x="240" y="0" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="15" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Car Plate Verification & PDPA Service</text>
+
+            <rect x="0" y="28" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="43" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 In-Trip SSE Real-time Chat Hub</text>
+
+            <rect x="240" y="28" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="43" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 PromptPay EMVCo QR & Slip Service</text>
+
+            <rect x="0" y="56" width="225" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="112" y="71" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 Mutual Peer Review & Rating Engine</text>
+
+            <rect x="240" y="56" width="230" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="355" y="71" font-size="9.5" fill="#15803d" font-weight="600" text-anchor="middle">🟢 PDPA Rights & Eco ESG ($CO2 Offset)</text>
+          </g>
+        </g>
+
+        <!-- 3. Data Tier (Bottom Row inside Blue Box) -->
+        <text x="245" y="460" font-family="'Prompt', sans-serif" font-size="14" font-weight="800" fill="#0f172a">DATA<br/>TIER</text>
+
+        <!-- Data Storage Box -->
+        <g transform="translate(295, 375)">
+          <rect x="0" y="0" width="500" height="135" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="250" y="22" font-family="'Prompt', sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#0f172a">DATA Storage (✏️ แก้ไขคำสะกดผิดจาก 'storange')</text>
+          
+          <rect x="20" y="32" width="220" height="30" rx="4" fill="#0284c7"/>
+          <text x="130" y="51" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">PostgreSQL 16 (Neon / Supabase)</text>
+
+          <rect x="260" y="32" width="220" height="30" rx="4" fill="#0284c7"/>
+          <text x="370" y="51" font-family="'Prompt', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">Environment Variables (.env)</text>
+
+          <text x="250" y="80" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: 14 Relational Tables (3NF) + Connection Pooling (pg.Pool)</text>
+          <text x="250" y="96" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: B-Tree Indexes Optimization (idx_trips, idx_cars, idx_bookings)</text>
+          <text x="250" y="112" font-size="9.5" fill="#16a34a" font-weight="600" text-anchor="middle">🟢 เพิ่ม: Protected File Storage (uploaded_images Bytea for Plates & Slips)</text>
+        </g>
+
+        <!-- Replication & Backup Sub-boxes -->
+        <g transform="translate(295, 520)">
+          <rect x="0" y="0" width="240" height="95" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="120" y="22" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Replication</text>
+          <rect x="25" y="32" width="190" height="26" rx="4" fill="#3b82f6"/>
+          <text x="120" y="49" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Neon / Cloud Managed</text>
+          <text x="120" y="74" font-size="9.5" fill="#334155" text-anchor="middle">• Multi-AZ High Availability</text>
+          <text x="120" y="88" font-size="9.5" fill="#334155" text-anchor="middle">• Read Replica Routing</text>
+
+          <rect x="260" y="0" width="240" height="95" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="380" y="22" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">Backup & Migration</text>
+          <rect x="285" y="32" width="190" height="26" rx="4" fill="#3b82f6"/>
+          <text x="380" y="49" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Neon / Cloud Managed</text>
+          <text x="380" y="74" font-size="9.5" fill="#334155" text-anchor="middle">• Point-in-Time Recovery (PITR)</text>
+          <text x="380" y="88" font-size="9" fill="#16a34a" text-anchor="middle">🟢 เพิ่ม: Self-Healing Auto-Migration</text>
+        </g>
+
+        <!-- Right Sidebars (Management, Data Governance, Security) -->
+        <!-- Management -->
+        <g transform="translate(805, 115)">
+          <rect x="0" y="0" width="65" height="350" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="32" y="28" font-family="'Prompt', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle" transform="rotate(-90 32,28)" letter-spacing="1">MANAGEMENT</text>
+          <rect x="10" y="110" width="45" height="225" rx="4" fill="#0284c7"/>
+          <text x="32" y="220" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#ffffff" text-anchor="middle" transform="rotate(-90 32,220)">Vercel + Admin Dashboard + DB</text>
+        </g>
+
+        <!-- Data Governance -->
+        <g transform="translate(880, 115)">
+          <rect x="0" y="0" width="65" height="350" rx="6" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="32" y="28" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="800" fill="#0f172a" text-anchor="middle" transform="rotate(-90 32,28)" letter-spacing="0.5">DATA GOVERNANCE</text>
+          <rect x="10" y="110" width="45" height="225" rx="4" fill="#0284c7"/>
+          <text x="32" y="220" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#ffffff" text-anchor="middle" transform="rotate(-90 32,220)">PostgreSQL 3NF Schema & PDPA</text>
+        </g>
+
+        <!-- Security (Bottom Right) -->
+        <g transform="translate(805, 480)">
+          <rect x="0" y="0" width="140" height="135" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#boxShadow)"/>
+          <text x="70" y="20" font-family="'Prompt', sans-serif" font-size="12" font-weight="800" fill="#0f172a" text-anchor="middle">SECURITY</text>
+          <rect x="10" y="28" width="120" height="95" rx="4" fill="#0f172a"/>
+          <text x="70" y="46" font-family="'Prompt', sans-serif" font-size="10.5" font-weight="700" fill="#38bdf8" text-anchor="middle">JWT Stateless Auth</text>
+          <text x="70" y="62" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#4ade80" text-anchor="middle">Bcryptjs Password Hash</text>
+          <text x="70" y="78" font-family="'Prompt', sans-serif" font-size="10" font-weight="700" fill="#facc15" text-anchor="middle">Helmet CSP + CORS</text>
+          <text x="70" y="94" font-family="'Prompt', sans-serif" font-size="9.5" font-weight="700" fill="#f87171" text-anchor="middle">Rate Limiter (Anti-DDoS)</text>
+          <text x="70" y="110" font-family="'Prompt', sans-serif" font-size="8.5" font-weight="700" fill="#38bdf8" text-anchor="middle">🟢 Parameterized SQL 100%</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">ภาพที่ 2.1: แผนผังสถาปัตยกรรม 3-Tier Architecture ฉบับสมบูรณ์ที่ปรับปรุงตามระบบจริง (Components + Tools + 3rd-Party Final Version)</div>
+    </div>
+
+    <h3>2.1 รายละเอียดการทำงานของแต่ละ Tier</h3>
+    <ul class="avoid-break">
+      <li><strong>1. Presentation Tier (Client Layer):</strong> พัฒนาด้วย <em>React 18</em> และบันเดิลด้วย <em>Vite</em> มีโครงสร้างแบบ Single Page Application (SPA) ใช้ <em>Tailwind CSS</em> ร่วมกับเทคนิคการเร่งกราฟิกด้วยฮาร์ดแวร์ GPU (Hardware-accelerated) ทำให้ได้ความลื่นไหลระดับ 120 FPS ตัดปัญหากระตุกในหน้าจอสมาร์ตโฟน มีระบบ <strong>In-Flight API Request Deduplication</strong> ในตัว ช่วยลดการยิง API ซ้ำซ้อน และใช้ <em>React Context API</em> จัดการสถานะสิทธิ์และการสลับภาษา (TH/EN)</li>
+      <li><strong>2. Application Tier (Business Logic Layer):</strong> รันบน <em>Node.js + Express.js</em> ผ่านโครงสร้าง <em>Vercel Serverless Functions</em> ทำหน้าที่ประมวลผลกฎทางธุรกิจทั้งหมด มีระบบความปลอดภัยด้วย <em>Helmet</em> (HTTP Security Headers), <em>express-rate-limit</em> ป้องกัน Brute-force/DDoS, <em>JWT Stateless Authentication</em>, และโมดูลบริการหลัก เช่น การคำนวณราคาเฉลี่ยที่เป็นธรรม, การกระจายข้อความแชทผ่าน <em>Server-Sent Events (SSE)</em>, และระบบตรวจสอบความยินยอม PDPA</li>
+      <li><strong>3. Data Tier (Persistence & Storage Layer):</strong> ใช้ฐานข้อมูลเชิงสัมพันธ์ <em>PostgreSQL 16</em> บน <em>Supabase Cloud Platform</em> พร้อมตัวจัดการการเชื่อมต่อ (Connection Pooler) จัดโครงสร้างข้อมูลตามหลัก 3NF ครบ 14 ตาราง และเชื่อมโยงกับ <em>Supabase Storage (S3-Compatible)</em> ในการจัดเก็บไฟล์ภาพเอกสารสำคัญ เช่น รูปถ่ายป้ายทะเบียนรถยนต์สำหรับตรวจสอบ, รูปภาพสลิปโอนเงิน และเอกสาร KYC</li>
+    </ul>
+
+    <!-- SECTION 3 -->
+    <div class="page-break"></div>
+    <h2 id="section-3">3. Functional & Non-Functional Requirements ที่ได้ออกแบบไว้</h2>
+
+    <h3>3.1 Functional Requirements (ข้อกำหนดเชิงหน้าที่ 10 โมดูลหลัก)</h3>
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 14%;">รหัส FR</th>
+          <th style="width: 26%;">ชื่อโมดูลฟังก์ชัน</th>
+          <th style="width: 60%;">รายละเอียดการทำงานที่ออกแบบและพัฒนาจริง</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>FR-01</strong></td>
+          <td><strong>ระบบยืนยันตัวตนและจัดการบทบาท (Auth & RBAC)</strong></td>
+          <td>รองรับการลงทะเบียน, เข้าสู่ระบบด้วย JWT Token, รีเซ็ตรหัสผ่าน, และจัดการ 4 บทบาท: ผู้โดยสาร (Passenger), คนขับ (Driver), สองบทบาท (Both), และผู้ดูแลระบบ (Admin)</td>
+        </tr>
+        <tr>
+          <td><strong>FR-02</strong></td>
+          <td><strong>ระบบลงทะเบียนรถและตรวจสอบป้ายทะเบียน</strong></td>
+          <td>คนขับลงทะเบียนยี่ห้อ รุ่น ความจุ และอัปโหลดภาพถ่ายป้ายทะเบียนรถจริงเข้าสู่สถานะ "รอดำเนินการ" พร้อมกล่องขอความยินยอม PDPA ให้แอดมินตรวจสอบก่อนเปิดใช้ทริป</td>
+        </tr>
+        <tr>
+          <td><strong>FR-03</strong></td>
+          <td><strong>ระบบสร้างและจัดการเที่ยวเดินทาง (Trip Engine)</strong></td>
+          <td>กำหนดต้นทาง-ปลายทาง, เวลาออกเดินทาง, จุดแวะรับส่ง (Waypoints), จำนวนที่นั่งว่าง, เงื่อนไขผู้โดยสาร, และสไตล์การขับขี่ของคนขับ</td>
+        </tr>
+        <tr>
+          <td><strong>FR-04</strong></td>
+          <td><strong>ระบบประเมินเส้นทางและราคาแนะนำเป็นธรรม (Fair Share)</strong></td>
+          <td>ประเมินระยะทางและเวลาอัตโนมัติ (Google Directions / Spatial Fallback) พร้อมคิดราคาแนะนำต่อที่นั่งตามสูตรต้นทุนน้ำมัน (2.20 บ./กม.) + ค่าสึกหรอ (1.30 บ./กม.)</td>
+        </tr>
+        <tr>
+          <td><strong>FR-05</strong></td>
+          <td><strong>ระบบแผนที่นำทางแบบโต้ตอบ (Interactive Route Map)</strong></td>
+          <td>เชื่อมต่อ Google Maps Embed API แสดงเส้นทางจริง สภาพจราจร จุดแวะพัก และมีปุ่มเปิดระบบ GPS นำทางตรงสู่สมาร์ตโฟน</td>
+        </tr>
+        <tr>
+          <td><strong>FR-06</strong></td>
+          <td><strong>วงจรการจองที่นั่ง (Booking Lifecycle State Machine)</strong></td>
+          <td>ผู้โดยสารส่งคำขอจอง, คนขับตรวจสอบและกดอนุมัติ/ปฏิเสธ, จัดการตัดและคืนที่นั่งว่างอัตโนมัติตามวงจรสถานะอย่างถูกต้อง</td>
+        </tr>
+        <tr>
+          <td><strong>FR-07</strong></td>
+          <td><strong>การชำระเงินและตรวจสอบสลิป (PromptPay QR & Slip)</strong></td>
+          <td>สร้าง Dynamic QR Code มาตรฐาน BOT EMVCo ตามยอดเงินค่าโดยสาร ผู้โดยสารอัปโหลดสลิปโอนเงิน และคนขับกดยืนยันการรับเงิน</td>
+        </tr>
+        <tr>
+          <td><strong>FR-08</strong></td>
+          <td><strong>ห้องแชทเรียลไทม์ประจำทริป (In-Trip SSE Chat)</strong></td>
+          <td>เฉพาะคนขับและผู้โดยสารที่ได้รับการอนุมัติเท่านั้นที่เข้าห้องแชทได้ พุชข้อความด้วย Server-Sent Events แบบ Real-time พร้อม Fallback Polling 15 วิ</td>
+        </tr>
+        <tr>
+          <td><strong>FR-09</strong></td>
+          <td><strong>ระบบรีวิวเพื่อนร่วมทาง (Mutual Peer Review)</strong></td>
+          <td>เปิดให้คนขับและผู้โดยสารประเมินคะแนน 1–5 ดาว และข้อความรีวิวซึ่งกันและกันหลังการเดินทางสำเร็จ เพื่อสร้างคะแนนความน่าเชื่อถือ</td>
+        </tr>
+        <tr>
+          <td><strong>FR-10</strong></td>
+          <td><strong>การคุ้มครองข้อมูลส่วนบุคคลและสิ่งแวดล้อม (PDPA & ESG)</strong></td>
+          <td>มีหน้าขอใช้สิทธิ PDPA (ลบ/ส่งออกข้อมูล), จัดการ Cookie Consent, และแสดงสถิติการลด $CO_2$ พร้อมจำนวนต้นไม้ที่ช่วยฟื้นฟู</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Non-Functional Requirements (ข้อกำหนดเชิงคุณภาพ 5 ด้าน)</h3>
+    <div class="grid-2 avoid-break">
+      <div class="info-card">
+        <h4>1. ประสิทธิภาพและความลื่นไหล (Performance)</h4>
+        <p>• หน้าเว็บโหลดครั้งแรก (FCP) ภายใน 1.0 วินาที และ LCP ภายใน 1.8 วินาที<br>
+        • หน้าแรกทำงานด้วย GPU Hardware Acceleration ลื่นไหลระดับ 60/120 FPS ไร้การ Re-render ซ้ำซ้อน<br>
+        • บีบอัดข้อมูล API ด้วย Gzip/Deflate ลดขนาดทราฟฟิกเครือข่ายลง 70–85%</p>
+      </div>
+      <div class="info-card">
+        <h4>2. ความมั่นคงปลอดภัยและการรักษาความลับ (Security)</h4>
+        <p>• เข้ารหัสรหัสผ่านด้วย <code>bcryptjs</code> (Salt Rounds 10)<br>
+        • ป้องกัน SQL Injection 100% ด้วย Parameterized Queries (<code>$1, $2</code>)<br>
+        • ติดตั้ง Helmet ป้องกัน XSS/Clickjacking และ Rate Limiter ป้องกันการสแปม</p>
+      </div>
+      <div class="info-card">
+        <h4>3. ความพร้อมใช้งานและการขยายตัว (Scalability)</h4>
+        <p>• สถาปัตยกรรม Serverless บน Vercel รองรับ Auto-scaling ตามปริมาณผู้ใช้งานจริง<br>
+        • Supabase PostgreSQL Connection Pooler รองรับโหลดการเรียกใช้สูงพร้อมกัน</p>
+      </div>
+      <div class="info-card">
+        <h4>4. ความสะดวกในการใช้งานและการเข้าถึง (Usability)</h4>
+        <p>• Fully Responsive Design 100% ครอบคลุม Mobile, Tablet และ Desktop<br>
+        • รองรับการสลับภาษา ไทย / อังกฤษ และธีมสี Morning Forest สบายตา</p>
+      </div>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="page-break"></div>
+    <h2 id="section-4">4. Use Case Model</h2>
+
+    <h3>4.1 ผู้มีบทบาทในระบบ (Actors Definition)</h3>
+    <div class="grid-3 avoid-break">
+      <div class="info-card">
+        <h4 style="color: #0284c7;">1. ผู้โดยสาร (Passenger)</h4>
+        <p>ค้นหาทริป, ตรวจสอบรายละเอียดและแผนที่, ส่งคำขอจองที่นั่ง, สแกน QR ชำระเงิน, แนบสลิป, แชทในทริป, และรีวิวคนขับ</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color: #0f766e;">2. คนขับรถ (Driver)</h4>
+        <p>ลงทะเบียนรถยนต์, อัปโหลดภาพป้ายทะเบียนและยินยอม PDPA, สร้างทริป, อนุมัติการจอง, ตรวจสอบสลิปโอนเงิน, และรีวิวผู้โดยสาร</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color: #7c3aed;">3. ผู้ดูแลระบบ (Admin)</h4>
+        <p>ตรวจสอบภาพถ่ายป้ายทะเบียนรถยนต์, อนุมัติเอกสาร KYC, จัดการรายงานข้อความแชท และดำเนินการคำร้องขอด้านสิทธิ PDPA</p>
+      </div>
+    </div>
+
+    <!-- SVG Use Case Diagram -->
+    <div class="diagram-container avoid-break">
+      <svg viewBox="0 0 860 480" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 450px;">
+        <defs>
+          <filter id="ucShadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.1"/>
+          </filter>
+        </defs>
+
+        <!-- System Boundary Box -->
+        <rect x="220" y="20" width="420" height="440" rx="14" fill="#f8fafc" stroke="#0f766e" stroke-width="2"/>
+        <text x="430" y="45" font-family="'Prompt', sans-serif" font-size="15" font-weight="700" fill="#0f766e" text-anchor="middle">ระบบแบ่งปันการเดินทาง Iko-Share (Use Case Model)</text>
+
+        <!-- Left Actors (Passenger & Driver) -->
+        <!-- Passenger Actor -->
+        <g transform="translate(60, 110)">
+          <circle cx="35" cy="20" r="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+          <line x1="35" y1="34" x2="35" y2="70" stroke="#0284c7" stroke-width="2"/>
+          <line x1="15" y1="48" x2="55" y2="48" stroke="#0284c7" stroke-width="2"/>
+          <line x1="35" y1="70" x2="15" y2="95" stroke="#0284c7" stroke-width="2"/>
+          <line x1="35" y1="70" x2="55" y2="95" stroke="#0284c7" stroke-width="2"/>
+          <text x="35" y="115" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#0369a1" text-anchor="middle">ผู้โดยสาร (Passenger)</text>
+        </g>
+
+        <!-- Driver Actor -->
+        <g transform="translate(60, 270)">
+          <circle cx="35" cy="20" r="14" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+          <line x1="35" y1="34" x2="35" y2="70" stroke="#0f766e" stroke-width="2"/>
+          <line x1="15" y1="48" x2="55" y2="48" stroke="#0f766e" stroke-width="2"/>
+          <line x1="35" y1="70" x2="15" y2="95" stroke="#0f766e" stroke-width="2"/>
+          <line x1="35" y1="70" x2="55" y2="95" stroke="#0f766e" stroke-width="2"/>
+          <text x="35" y="115" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#0f766e" text-anchor="middle">คนขับรถ (Driver)</text>
+        </g>
+
+        <!-- Right Actor (Admin) -->
+        <g transform="translate(730, 190)">
+          <circle cx="35" cy="20" r="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="35" y1="34" x2="35" y2="70" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="15" y1="48" x2="55" y2="48" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="35" y1="70" x2="15" y2="95" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="35" y1="70" x2="55" y2="95" stroke="#7c3aed" stroke-width="2"/>
+          <text x="35" y="115" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#6d28d9" text-anchor="middle">ผู้ดูแลระบบ (Admin)</text>
+        </g>
+
+        <!-- Use Cases (Ellipses) -->
+        <!-- UC 1: Auth -->
+        <g transform="translate(250, 65)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-01: สมัครสมาชิกและยืนยันตัวตน (KYC)</text>
+        </g>
+
+        <!-- UC 2: Car Register -->
+        <g transform="translate(250, 115)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-02: ลงทะเบียนรถ ยินยอม PDPA & แนบภาพป้าย</text>
+        </g>
+
+        <!-- UC 3: Create Trip -->
+        <g transform="translate(250, 165)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-03: เปิดทริปและคำนวณราคาค่าน้ำมันอัตโนมัติ</text>
+        </g>
+
+        <!-- UC 4: Search & Book -->
+        <g transform="translate(250, 215)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-04: ค้นหาทริป ดูเส้นทาง Google Maps & ขอจอง</text>
+        </g>
+
+        <!-- UC 5: Approve & Pay -->
+        <g transform="translate(250, 265)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-05: อนุมัติที่นั่ง / จ่ายเงิน PromptPay & เช็กสลิป</text>
+        </g>
+
+        <!-- UC 6: Chat & Review -->
+        <g transform="translate(250, 315)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-06: แชทประจำตี้เรียลไทม์ (SSE) และรีวิวการเดินทาง</text>
+        </g>
+
+        <!-- UC 7: Admin Verification -->
+        <g transform="translate(250, 365)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-07: ตรวจสอบภาพป้ายทะเบียน / ข้อความแชท</text>
+        </g>
+
+        <!-- UC 8: PDPA Rights -->
+        <g transform="translate(250, 415)">
+          <ellipse cx="180" cy="18" rx="140" ry="18" fill="#ffffff" stroke="#cbd5e1" filter="url(#ucShadow)"/>
+          <text x="180" y="22" font-family="'Prompt', sans-serif" font-size="11" text-anchor="middle" fill="#0f172a">UC-08: จัดการสิทธิข้อมูลส่วนบุคคล (PDPA Rights Portal)</text>
+        </g>
+
+        <!-- Association Lines -->
+        <!-- Passenger Links -->
+        <line x1="120" y1="140" x2="280" y2="83" stroke="#0284c7" stroke-width="1.2"/>
+        <line x1="120" y1="145" x2="280" y2="233" stroke="#0284c7" stroke-width="1.2"/>
+        <line x1="120" y1="150" x2="280" y2="283" stroke="#0284c7" stroke-width="1.2"/>
+        <line x1="120" y1="155" x2="280" y2="333" stroke="#0284c7" stroke-width="1.2"/>
+        <line x1="120" y1="160" x2="280" y2="433" stroke="#0284c7" stroke-width="1.2"/>
+
+        <!-- Driver Links -->
+        <line x1="120" y1="300" x2="280" y2="83" stroke="#0f766e" stroke-width="1.2"/>
+        <line x1="120" y1="305" x2="280" y2="133" stroke="#0f766e" stroke-width="1.2"/>
+        <line x1="120" y1="310" x2="280" y2="183" stroke="#0f766e" stroke-width="1.2"/>
+        <line x1="120" y1="315" x2="280" y2="283" stroke="#0f766e" stroke-width="1.2"/>
+        <line x1="120" y1="320" x2="280" y2="333" stroke="#0f766e" stroke-width="1.2"/>
+
+        <!-- Admin Links -->
+        <line x1="720" y1="220" x2="570" y2="383" stroke="#7c3aed" stroke-width="1.2"/>
+        <line x1="720" y1="225" x2="570" y2="433" stroke="#7c3aed" stroke-width="1.2"/>
+      </svg>
+      <div class="diagram-caption">ภาพที่ 4.1: แผนภาพ Use Case Diagram แสดงความสัมพันธ์ระหว่าง Actors และฟังก์ชันการทำงานหลัก</div>
+    </div>
+
+    <h3>4.2 รายละเอียด Use Case หลักและขั้นตอนการทำงาน (Use Case Scenarios)</h3>
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Use Case ID & ชื่อ</th>
+          <th style="width: 20%;">Actor</th>
+          <th style="width: 55%;">เงื่อนไขและลำดับขั้นตอนการทำงานหลัก (Main Scenario)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>UC-02: ลงทะเบียนยานพาหนะ</strong></td>
+          <td>คนขับรถ (Driver)</td>
+          <td>1. คนขับกรอกป้ายทะเบียน, ยี่ห้อ, รุ่น, จำนวนที่นั่ง<br>2. ถ่ายภาพหรืออัปโหลดรูปป้ายทะเบียนรถจริง<br>3. เปิดอ่านและกดยินยอมข้อตกลง <em>Vehicle PDPA Consent</em><br>4. ระบบบันทึกสถานะเป็น "รอดำเนินการ" และส่งไปยังแดชบอร์ดแอดมิน</td>
+        </tr>
+        <tr>
+          <td><strong>UC-04: ค้นหาและขอจองที่นั่ง</strong></td>
+          <td>ผู้โดยสาร (Passenger)</td>
+          <td>1. ค้นหาทริปตามจุดหมายหรืออีเวนต์<br>2. เปิดดูรายละเอียดทริป แผนที่ Google Maps จุดแวะ และราคา<br>3. กดยืนยันขอจองที่นั่ง ระบบส่งการแจ้งเตือนไปยังคนขับทันที</td>
+        </tr>
+        <tr>
+          <td><strong>UC-05: อนุมัติและชำระเงิน</strong></td>
+          <td>คนขับ + ผู้โดยสาร</td>
+          <td>1. คนขับกดยอมรับคำขอจอง ระบบหักที่นั่งว่างทันที<br>2. ระบบสร้าง QR Code พร้อมเพย์ตามยอดเงินให้ผู้โดยสารสแกน<br>3. ผู้โดยสารแนบภาพสลิป คนขับตรวจสอบสลิปและกดยืนยันชำระเงิน</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- SECTION 5 -->
+    <div class="page-break"></div>
+    <h2 id="section-5">5. Data Model และ ER Diagram (Database Schema 3NF)</h2>
+
+    <p>
+      ระบบจัดเก็บข้อมูลใน <strong>PostgreSQL 16</strong> โดยได้รับการออกแบบตามหลักการจัดโครงสร้างฐานข้อมูลเชิงสัมพันธ์ในระดับ <strong>Third Normal Form (3NF)</strong> เพื่อขจัดความซ้ำซ้อนของข้อมูล (Data Redundancy) ป้องกันปัญหาความผิดปกติของการปรับปรุงข้อมูล (Update Anomalies) และรักษาความสมบูรณ์ของความสัมพันธ์ (Referential Integrity) อย่างเคร่งครัด ครอบคลุม 14 ตารางหลัก:
+    </p>
+
+    <!-- SVG ER Diagram -->
+    <div class="diagram-container avoid-break">
+      <svg viewBox="0 0 880 500" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 460px;">
+        <defs>
+          <filter id="erdShadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.08"/>
+          </filter>
+        </defs>
+
+        <!-- Table 1: users -->
+        <g transform="translate(30, 30)">
+          <rect x="0" y="0" width="170" height="180" rx="6" fill="#ffffff" stroke="#0f766e" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="170" height="28" rx="6" fill="#0f766e"/>
+          <text x="85" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">users (ผู้ใช้งาน)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  user_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" fill="#1e293b">    name : varchar(100)</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" fill="#1e293b">UK  email : varchar(100)</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" fill="#1e293b">    password : hash</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    role : Driver/Pass/Both</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    is_admin : boolean</text>
+          <text x="10" y="154" font-family="Consolas" font-size="10" fill="#1e293b">    is_verified : boolean</text>
+          <text x="10" y="172" font-family="Consolas" font-size="10" fill="#1e293b">    avatar_url : text</text>
+        </g>
+
+        <!-- Table 2: cars -->
+        <g transform="translate(250, 30)">
+          <rect x="0" y="0" width="170" height="180" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="170" height="28" rx="6" fill="#0284c7"/>
+          <text x="85" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">cars (ยานพาหนะ)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  license_plate : vch</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  user_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" fill="#1e293b">    model : varchar(100)</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" fill="#1e293b">    capacity : int</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    car_image_url : text</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    verification_status</text>
+          <text x="10" y="154" font-family="Consolas" font-size="10" fill="#1e293b">    consent_pdpa : bool</text>
+          <text x="10" y="172" font-family="Consolas" font-size="10" fill="#1e293b">    consent_at : timestamp</text>
+        </g>
+
+        <!-- Table 3: trips -->
+        <g transform="translate(470, 30)">
+          <rect x="0" y="0" width="180" height="200" rx="6" fill="#ffffff" stroke="#10b981" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="180" height="28" rx="6" fill="#10b981"/>
+          <text x="90" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">trips (เที่ยวเดินทาง)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  trip_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  organizer_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  license_plate : vch</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  event_id : int</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    origin : varchar</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    destination : varchar</text>
+          <text x="10" y="154" font-family="Consolas" font-size="10" fill="#1e293b">    price_seat : numeric</text>
+          <text x="10" y="172" font-family="Consolas" font-size="10" fill="#1e293b">    available_seats : int</text>
+          <text x="10" y="190" font-family="Consolas" font-size="10" fill="#1e293b">    trip_status : active/done</text>
+        </g>
+
+        <!-- Table 4: bookings -->
+        <g transform="translate(680, 30)">
+          <rect x="0" y="0" width="170" height="180" rx="6" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="170" height="28" rx="6" fill="#f59e0b"/>
+          <text x="85" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">bookings (การจองที่นั่ง)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  booking_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  user_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  trip_id : int</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" fill="#1e293b">    booking_status : vch</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    payment_status : vch</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    payment_slip_url : txt</text>
+          <text x="10" y="154" font-family="Consolas" font-size="10" fill="#1e293b">    payment_time : tstz</text>
+          <text x="10" y="172" font-family="Consolas" font-size="10" fill="#1e293b">    booking_time : tstz</text>
+        </g>
+
+        <!-- Table 5: chat_messages -->
+        <g transform="translate(470, 270)">
+          <rect x="0" y="0" width="180" height="140" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="180" height="28" rx="6" fill="#6366f1"/>
+          <text x="90" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">chat_messages (ข้อความ)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  message_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  trip_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  user_id : int</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" fill="#1e293b">    message : text</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    created_at : timestamp</text>
+        </g>
+
+        <!-- Table 6: reviews -->
+        <g transform="translate(250, 270)">
+          <rect x="0" y="0" width="170" height="150" rx="6" fill="#ffffff" stroke="#ec4899" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="170" height="28" rx="6" fill="#ec4899"/>
+          <text x="85" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">reviews (คะแนนรีวิว)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  review_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  trip_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  reviewer_id : int</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  target_user_id : int</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    rating : int (1-5)</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    comment : text</text>
+        </g>
+
+        <!-- Table 7: notifications -->
+        <g transform="translate(30, 270)">
+          <rect x="0" y="0" width="170" height="150" rx="6" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" filter="url(#erdShadow)"/>
+          <rect x="0" y="0" width="170" height="28" rx="6" fill="#8b5cf6"/>
+          <text x="85" y="19" font-family="'Prompt', sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">notifications (แจ้งเตือน)</text>
+          <text x="10" y="46" font-family="Consolas" font-size="10" font-weight="700" fill="#dc2626">PK  notification_id : int</text>
+          <text x="10" y="64" font-family="Consolas" font-size="10" font-weight="700" fill="#2563eb">FK  user_id : int</text>
+          <text x="10" y="82" font-family="Consolas" font-size="10" fill="#1e293b">    title : varchar(150)</text>
+          <text x="10" y="100" font-family="Consolas" font-size="10" fill="#1e293b">    message : text</text>
+          <text x="10" y="118" font-family="Consolas" font-size="10" fill="#1e293b">    is_read : boolean</text>
+          <text x="10" y="136" font-family="Consolas" font-size="10" fill="#1e293b">    created_at : timestamp</text>
+        </g>
+
+        <!-- Relationship Connectors -->
+        <!-- users to cars (1 to N) -->
+        <path d="M 200 80 L 250 80" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="210" y="74" font-size="10" font-weight="700" fill="#0284c7">1</text>
+        <text x="240" y="74" font-size="10" font-weight="700" fill="#0284c7">N</text>
+
+        <!-- cars to trips (1 to N) -->
+        <path d="M 420 80 L 470 80" stroke="#10b981" stroke-width="1.5"/>
+        <text x="430" y="74" font-size="10" font-weight="700" fill="#10b981">1</text>
+        <text x="460" y="74" font-size="10" font-weight="700" fill="#10b981">N</text>
+
+        <!-- trips to bookings (1 to N) -->
+        <path d="M 650 80 L 680 80" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="655" y="74" font-size="10" font-weight="700" fill="#f59e0b">1</text>
+        <text x="672" y="74" font-size="10" font-weight="700" fill="#f59e0b">N</text>
+
+        <!-- trips to chat_messages (1 to N) -->
+        <path d="M 560 230 L 560 270" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="565" y="245" font-size="10" font-weight="700" fill="#6366f1">1</text>
+        <text x="565" y="265" font-size="10" font-weight="700" fill="#6366f1">N</text>
+
+        <!-- users to notifications (1 to N) -->
+        <path d="M 115 210 L 115 270" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="120" y="225" font-size="10" font-weight="700" fill="#8b5cf6">1</text>
+        <text x="120" y="265" font-size="10" font-weight="700" fill="#8b5cf6">N</text>
+      </svg>
+      <div class="diagram-caption">ภาพที่ 5.1: แผนภาพ Entity Relationship Diagram (ERD) แสดงตารางหลักและความสัมพันธ์ (Relational Schema 3NF)</div>
+    </div>
+
+    <h3>5.1 การเพิ่มประสิทธิภาพฐานข้อมูลด้วย B-Tree Indexing</h3>
+    <p>
+      เพื่อรองรับการสืบค้นข้อมูลที่มีความถี่สูงและป้องกันปัญหาคอขวด (Database Bottleneck) ระบบได้สร้าง <strong>B-Tree Indexes</strong> บนคอลัมน์สำคัญ:
+    </p>
+    <ul class="avoid-break">
+      <li><code>idx_trips_departure_time</code>: เร่งความเร็วการค้นหาและเรียงลำดับเที่ยวเดินทางตามวันและเวลา</li>
+      <li><code>idx_trips_trip_status</code>: ช่วยให้คัดกรองเฉพาะทริปที่ยังเปิดให้บริการ (<code>active</code>) ได้ในระดับเวลา Sub-millisecond</li>
+      <li><code>idx_cars_user_id</code> & <code>idx_cars_verification_status</code>: ดึงข้อมูลรถของผู้ใช้และรถที่รอการตรวจสอบของแอดมิน</li>
+      <li><code>idx_bookings_trip_id</code>: โหลดรายชื่อผู้โดยสารและสถานะการชำระเงินของแต่ละทริปอย่างรวดเร็ว</li>
+      <li><code>idx_notifications_user</code>: ดึงข้อความแจ้งเตือนส่วนบุคคลเรียงจากล่าสุดได้ทันทีโดยไม่ต้อง Full Table Scan</li>
+    </ul>
+
+    <!-- SECTION 6 -->
+    <div class="page-break"></div>
+    <h2 id="section-6">6. Testing & Results (การทดสอบระบบและผลลัพธ์)</h2>
+
+    <h3>6.1 แผนการทดสอบและกระบวนการประกันคุณภาพ (QA Methodology)</h3>
+    <p>
+      การทดสอบคุณภาพของระบบ Iko-Share ดำเนินการอย่างเป็นระบบตามมาตรฐานวิศวกรรมซอฟต์แวร์ ครอบคลุมทั้งการทดสอบเชิงหน้าที่ (Functional Testing), การทดสอบการผสานการทำงาน (Integration Testing), การทดสอบความมั่นคงปลอดภัยและความสอดคล้องกับ PDPA (Security & PDPA Testing), และการทดสอบประสิทธิภาพการทำงาน (Performance Testing)
+    </p>
+
+    <div class="grid-4 avoid-break">
+      <div class="stat-card">
+        <div class="stat-number">165</div>
+        <div class="stat-label">ชุดทดสอบทั้งหมด (Total)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color: var(--success);">160</div>
+        <div class="stat-label">ผ่านการทดสอบ (Passed)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color: #0284c7;">97.0%</div>
+        <div class="stat-label">อัตราความสำเร็จ (Pass Rate)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color: var(--danger);">0</div>
+        <div class="stat-label">ข้อบกพร่องวิกฤตคงค้าง (Critical)</div>
+      </div>
+    </div>
+
+    <h3>6.2 ตารางสรุปผลการทดสอบจำแนกตามประเภท (Test Execution Matrix)</h3>
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 25%;">ประเภทการทดสอบ (Test Type)</th>
+          <th style="width: 15%; text-align: center;">ทั้งหมด (Total)</th>
+          <th style="width: 15%; text-align: center;">ผ่าน (Pass)</th>
+          <th style="width: 15%; text-align: center;">ไม่ผ่าน (Fail)</th>
+          <th style="width: 15%; text-align: center;">ข้าม (Skip)</th>
+          <th style="width: 15%; text-align: center;">Pass Rate (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Functional Testing</strong></td>
+          <td style="text-align: center;">110</td>
+          <td style="text-align: center;">107</td>
+          <td style="text-align: center;">2</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;"><strong>97.3%</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Integration Testing</strong></td>
+          <td style="text-align: center;">30</td>
+          <td style="text-align: center;">30</td>
+          <td style="text-align: center;">0</td>
+          <td style="text-align: center;">0</td>
+          <td style="text-align: center;"><strong>100.0%</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Security & PDPA Testing</strong></td>
+          <td style="text-align: center;">15</td>
+          <td style="text-align: center;">15</td>
+          <td style="text-align: center;">0</td>
+          <td style="text-align: center;">0</td>
+          <td style="text-align: center;"><strong>100.0%</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Performance Testing</strong></td>
+          <td style="text-align: center;">10</td>
+          <td style="text-align: center;">8</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;"><strong>80.0%</strong></td>
+        </tr>
+        <tr style="background: #f1f5f9; font-weight: 700;">
+          <td>สรุปรวมทั้งหมด (Overall)</td>
+          <td style="text-align: center;">165</td>
+          <td style="text-align: center; color: var(--success);">160</td>
+          <td style="text-align: center; color: var(--danger);">3</td>
+          <td style="text-align: center; color: var(--warning);">2</td>
+          <td style="text-align: center; color: var(--success); font-size: 15px;">97.0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.3 การจัดการข้อบกพร่องและการแก้ไข (Defect Resolution Matrix)</h3>
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Bug ID</th>
+          <th style="width: 15%;">ระดับความรุนแรง</th>
+          <th style="width: 35%;">รายละเอียดข้อบกพร่องที่พบ</th>
+          <th style="width: 20%;">วิธีแก้ไขที่ดำเนินการ</th>
+          <th style="width: 15%;">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>BUG-01</strong></td>
+          <td><span class="badge badge-high">Critical</span></td>
+          <td>การจองที่นั่งซ้ำซ้อนพร้อมกันในเสี้ยววินาที ทำให้ที่นั่งติดลบ (Race Condition)</td>
+          <td>ปรับปรุง Transaction Locking และใช้ Atomic UPDATE SQL ในระดับฐานข้อมูล</td>
+          <td><span class="badge badge-pass">แก้ไขแล้ว 100%</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-02</strong></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td>ภาพถ่ายป้ายทะเบียนรถถูกเปิดดูได้โดยตรงโดยไม่มีการตรวจสอบสิทธิ์ PDPA</td>
+          <td>ย้ายไฟล์รูปภาพเข้าสู่ Protected Storage และอนุญาตเฉพาะสิทธิ์ Admin และเจ้าของรถ</td>
+          <td><span class="badge badge-pass">แก้ไขแล้ว 100%</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-03</strong></td>
+          <td><span class="badge badge-medium">Medium</span></td>
+          <td>การค้นหาชื่อสถานที่ภาษาไทยเฉพาะถิ่นบน OpenStreetMap ปักหมุดผิดพลาด</td>
+          <td>ปรับเปลี่ยนสถาปัตยกรรมแผนที่มาใช้ Google Maps Embed API แทน 100%</td>
+          <td><span class="badge badge-pass">แก้ไขแล้ว 100%</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-04</strong></td>
+          <td><span class="badge badge-low">Low</span></td>
+          <td>แอนิเมชันหน้าแรกกระตุกเมื่อเปิดบนสมาร์ตโฟนที่มีจอ 120Hz</td>
+          <td>ใช้ <code>requestAnimationFrame</code> และขับเคลื่อน CSS Variables ผ่าน GPU ตรง</td>
+          <td><span class="badge badge-pass">แก้ไขแล้ว 100%</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.4 ผลการทดสอบประสิทธิภาพซอฟต์แวร์ (Core Web Vitals & Benchmarks)</h3>
+    <div class="grid-3 avoid-break">
+      <div class="stat-card">
+        <div class="stat-number" style="color: #0f766e;">0.8 วินาที</div>
+        <div class="stat-label">First Contentful Paint (FCP)<br>(เกณฑ์มาตรฐาน &lt; 1.8s)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color: #0f766e;">1.4 วินาที</div>
+        <div class="stat-label">Largest Contentful Paint (LCP)<br>(เกณฑ์มาตรฐาน &lt; 2.5s)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color: #0f766e;">120 FPS</div>
+        <div class="stat-label">Motion Smoothness<br>(GPU Hardware Render)</div>
+      </div>
+    </div>
+
+    <!-- SECTION 7 -->
+    <div class="page-break"></div>
+    <h2 id="section-7">7. Conclusion (ปัญหา อุปสรรค และแนวทางการพัฒนาต่อยอด)</h2>
+
+    <h3>7.1 สรุปผลสัมฤทธิ์ของโครงงาน (Project Achievements)</h3>
+    <p>
+      การดำเนินโครงงาน <strong>Iko-Share</strong> ประสบความสำเร็จตามวัตถุประสงค์ที่กำหนดไว้อย่างสมบูรณ์ ทีมพัฒนาสามารถสร้างแพลตฟอร์มคาร์พูลต้นแบบที่ใช้งานได้จริง (Working Production Prototype) ภายใต้สถาปัตยกรรม 3-Tier Architecture ที่มีความเสถียรและปลอดภัย ระบบช่วยลดภาระค่าใช้จ่ายในการเดินทางของผู้ใช้งานได้ถึง 50–70% เมื่อเทียบกับบริการรถรับจ้างส่วนบุคคล ช่วยบรรเทาวิกฤตการจราจรและปัญหาที่จอดรถในงานอีเวนต์ และสร้างแรงจูงใจในการลดการปล่อยก๊าซเรือนกระจกสู่ชั้นบรรยากาศ
+    </p>
+
+    <h3>7.2 ปัญหา อุปสรรคที่พบระหว่างการพัฒนา และแนวทางแก้ไข (Challenges & Resolutions)</h3>
+    <table class="avoid-break">
+      <thead>
+        <tr>
+          <th style="width: 25%;">ปัญหา/อุปสรรคที่พบ</th>
+          <th style="width: 35%;">ผลกระทบต่อระบบ</th>
+          <th style="width: 40%;">แนวทางการแก้ไขที่ได้ดำเนินการจริง</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. ข้อจำกัดของ OpenStreetMap กับสถานที่ภาษาไทย</strong></td>
+          <td>การค้นหาชื่อเฉพาะภาษาไทย เช่น "วค.สุราษฎร์ธานี", มหาวิทยาลัย, จุดนัดพบในต่างจังหวัด มีพิกัดเพี้ยนหลุดไปต่างประเทศ</td>
+          <td>ยกระดับไปใช้ <strong>Google Maps Embed API & Directions</strong> ซึ่งมีฐานข้อมูลสถานที่และเครือข่ายถนนในไทยสมบูรณ์ 100% พร้อมปุ่มกดเปิด GPS นำทาง</td>
+        </tr>
+        <tr>
+          <td><strong>2. ความท้าทายของ Serverless กับ Real-time Chat</strong></td>
+          <td>โครงสร้าง Serverless Functions (Vercel) ทำงานแบบ Stateless ไม่รองรับ WebSocket ที่ต้องการ State Connection ค้างไว้ตลอดเวลา</td>
+          <td>ประยุกต์ใช้ <strong>Server-Sent Events (SSE)</strong> สำหรับการ Push สตรีมข้อความใหม่แบบ HTTP ปกติ ควบคู่กับ <strong>Adaptive Fallback Polling (15 วิ)</strong> สำรอง</td>
+        </tr>
+        <tr>
+          <td><strong>3. ข้อกังวลด้านความปลอดภัยของรถยนต์และกฎหมาย PDPA</strong></td>
+          <td>ผู้โดยสารกังวลเรื่องการสวมทะเบียนรถ ขณะเดียวกันภาพถ่ายป้ายทะเบียนรถจัดเป็นข้อมูลระบุตัวบุคคลตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562</td>
+          <td>สร้างระบบตรวจสอบภาพถ่ายป้ายทะเบียนรถโดยแอดมิน ร่วมกับการจัดทำ <strong>Vehicle PDPA Consent Modal</strong> บังคับยินยอมก่อนส่งข้อมูล และเก็บภาพเป็นความลับ</td>
+        </tr>
+        <tr>
+          <td><strong>4. ปัญหา In-flight API Request Spams</strong></td>
+          <td>ผู้ใช้งานกดย้ำหรือเปลี่ยนแท็บบนหน้าเว็บอย่างรวดเร็ว ส่งผลให้เบราว์เซอร์ส่ง HTTP GET Request ข้อมูลเดียวกันซ้ำซ้อนในระดับมิลลิวินาที</td>
+          <td>ออกแบบระบบ <strong>In-Flight Promise Sharing & Request Deduplication</strong> ในโมดูล API Client ตัดการยิงคำขอซ้ำซ้อนออกทั้งหมด</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>7.3 ทิศทางการพัฒนาต่อยอดในอนาคต (Future Development Guidelines)</h3>
+    <div class="grid-2 avoid-break">
+      <div class="info-card">
+        <h4>1. ระบบชำระเงินอัตโนมัติ (Automated Escrow Payment Gateway)</h4>
+        <p>เชื่อมต่อ Payment Gateway ระดับองค์กร (เช่น Omise หรือ 2C2P) เพื่อตัดเงินและพักไว้ในระบบ Escrow กลาง และโอนเงินเข้าบัญชีคนขับอัตโนมัติเมื่อสิ้นสุดการเดินทางอย่างปลอดภัย</p>
+      </div>
+      <div class="info-card">
+        <h4>2. ระบบติดตามพิกัดรถสด (Live GPS Driver Tracking)</h4>
+        <p>เชื่อมต่อ Geolocation API แบบความถี่สูง เพื่อให้ผู้โดยสารสามารถติดตามตำแหน่งรถของคนขับบนแผนที่ Google Maps ได้แบบสด ๆ (Real-Time) ในวันเดินทางจริง</p>
+      </div>
+      <div class="info-card">
+        <h4>3. การตรวจสอบภาพป้ายทะเบียนด้วย AI (AI-Powered OCR)</h4>
+        <p>นำแบบจำลอง Computer Vision / OCR มาช่วยตรวจจับและอ่านตัวอักษรบนภาพถ่ายป้ายทะเบียนรถยนต์อัตโนมัติก่อนส่งให้ผู้ดูแลระบบ ช่วยลดเวลาในการตรวจสอบลงกว่า 80%</p>
+      </div>
+      <div class="info-card">
+        <h4>4. แอปพลิเคชันบนมือถือและระบบแจ้งเตือน (PWA & Web Push)</h4>
+        <p>ต่อยอดระบบสู่ Progressive Web Application (PWA) ติดตั้งบนหน้าจอมือถือได้เสมือน Native App พร้อมระบบ Web Push Notification แจ้งเตือนแม้ผู้ใช้ปิดเบราว์เซอร์</p>
+      </div>
+    </div>
+
+    <div class="callout callout-success avoid-break" style="margin-top: 30px;">
+      <div class="callout-title">สรุปบทส่งท้าย (Closing Remark)</div>
+      <p style="margin-bottom: 0;">
+        โครงงาน <strong>Iko-Share</strong> พิสูจน์ให้เห็นว่าการผสานนวัตกรรมซอฟต์แวร์สถาปัตยกรรม 3-Tier ร่วมกับหลักการแบ่งปันต้นทุนที่เป็นธรรมและความใส่ใจในสิ่งแวดล้อม (ESG) สามารถสร้างสรรค์บริการสาธารณะดิจิทัลที่ตอบโจทย์วิถีชีวิตคนรุ่นใหม่ได้อย่างยั่งยืน ทั้งในมิติเศรษฐกิจ สังคม และสิ่งแวดล้อม
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>

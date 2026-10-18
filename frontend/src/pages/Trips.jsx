@@ -1,3 +1,5 @@
+import { groupRoundTrips } from '../utils/roundTrips';
+import RoundTripSchedule from '../components/RoundTripSchedule';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
@@ -87,7 +89,7 @@ export default function Trips() {
   };
 
   const filteredTrips = useMemo(() => {
-    let result = [...trips];
+    let result = groupRoundTrips(trips);
 
     // 1. Time of day filter
     if (timeFilter !== 'all') {
@@ -132,7 +134,7 @@ export default function Trips() {
     }
 
     return result;
-  }, [trips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
+  }, [groupedTrips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
 
   useEffect(() => {
     if (events.length === 0) {
@@ -278,9 +280,9 @@ export default function Trips() {
               {isTh
                 ? `พบ ${filteredTrips.length} ทริป`
                 : `Found ${filteredTrips.length} trips`}
-              {trips.length !== filteredTrips.length && (
+              {groupedTrips.length !== filteredTrips.length && (
                 <span className="text-slate-400 font-medium ml-1">
-                  ({isTh ? `จากทั้งหมด ${trips.length}` : `out of ${trips.length}`})
+                  ({isTh ? `จากทั้งหมด ${groupedTrips.length}` : `out of ${groupedTrips.length}`})
                 </span>
               )}
             </span>
@@ -650,6 +652,8 @@ export default function Trips() {
                     )}
                   </div>
 
+                  <RoundTripSchedule trip={trip} isTh={isTh} />
+
                   {/* Personality / Requirements Preview */}
                   {trip.driver_personality && (
                     <div className="text-[11px] text-emerald-800 bg-emerald-50/80 px-3 py-1.5 rounded-xl border border-emerald-200 font-medium truncate">
@@ -686,7 +690,7 @@ export default function Trips() {
                     </button>
 
                     <div className="text-right">
-                      <div className="text-[9px] font-bold text-slate-400">{isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat'}</div>
+                      <div className="text-[9px] font-bold text-slate-400">{trip.is_round_trip ? (isTh ? 'ราคาไป-กลับ / ที่นั่ง' : 'Round-trip / seat') : (isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat')}</div>
                       <div className="text-lg font-black text-emerald-700">
                         {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
                       </div>
