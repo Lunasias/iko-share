@@ -1,3 +1,5 @@
+const { withPairedBooking } = require('../services/pairedBookingService');
+const { combinePassengers } = require('../services/roundTripView');
 const db = require('../config/db');
 const { estimateRoute, calculateOperatingCost } = require('../services/routeService');
 const { cleanupOrphanEvents } = require('./eventController');
@@ -66,8 +68,12 @@ const getTripById = async (req, res) => {
                 u.name as driver_name, u.phone as driver_phone, u.email as driver_email,
                 u.is_verified as driver_is_verified,
                 u.avatar_url as driver_avatar, u.role as driver_role, u.bio as driver_bio,
-                COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location
+                COALESCE(e.event_name, t.custom_event_name) as event_name, e.location as event_location,
+                t.price_seat + COALESCE(p.price_seat, 0) AS price_seat,
+                CASE WHEN p.trip_id IS NOT NULL THEN LEAST(t.available_seats, p.available_seats) ELSE t.available_seats END AS available_seats,
+                CASE WHEN p.departure_time < t.departure_time THEN p.trip_id ELSE t.trip_id END AS canonical_trip_id
          FROM trips t
+         LEFT JOIN trips p ON p.trip_id = t.paired_trip_id AND p.paired_trip_id = t.trip_id AND t.is_round_trip AND p.is_round_trip
          LEFT JOIN cars c ON t.license_plate = c.license_plate
          JOIN users u ON u.user_id = COALESCE(t.organizer_id, c.user_id)
          LEFT JOIN events e ON t.event_id = e.event_id
@@ -80,7 +86,9 @@ const getTripById = async (req, res) => {
                 u.avatar_url as passenger_avatar, u.bio as passenger_bio, u.role as passenger_role
          FROM bookings b
          JOIN users u ON b.user_id = u.user_id
-         WHERE b.trip_id = $1
+         WHERE b.trip_id = $1 OR b.trip_id = (SELECT p.trip_id FROM trips t JOIN trips p
+           ON p.trip_id = t.paired_trip_id AND p.paired_trip_id = t.trip_id
+           WHERE t.trip_id = $1 AND t.is_round_trip AND p.is_round_trip)
          ORDER BY b.booking_time DESC`,
         [id]
       )
@@ -93,7 +101,7 @@ const getTripById = async (req, res) => {
     res.json({
       success: true,
       trip: tripRes.rows[0],
-      passengers: bookingsRes.rows || [],
+      passengers: combinePassengers(bookingsRes.rows || [], tripRes.rows[0].paired_trip_id),
     });
   } catch (error) {
     console.error('Get trip by id error:', error);
@@ -115,6 +123,7 @@ const createTrip = async (req, res) => {
       departure_time,
       available_seats,
       price_seat,
+      one_way_price_seat,
       driver_personality,
       passenger_requirements,
       distance_km,
@@ -136,7 +145,7 @@ const createTrip = async (req, res) => {
     if (!allowedTripTypes.includes(trip_type)) {
       return res.status(400).json({ success: false, message: 'รูปแบบทริปไม่ถูกต้อง (อนุญาตเฉพาะ carpool, find_driver, public_transport)' });
     }
-    if (!origin || !destination || !available_seats || price_seat === undefined) {
+    if (!origin || !destination || !available_seats || (price_seat === undefined && one_way_price_seat === undefined)) {
       return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลการเดินทางให้ครบถ้วน' });
     }
 
@@ -174,7 +183,12 @@ const createTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: `จำนวนที่นั่งเปิดรับ (${seatsToOffer}) ต้องไม่เกินความจุที่นั่งของรถ (${capacity} ที่นั่ง)` });
     }
 
-    const parsedPrice = parseFloat(price_seat);
+    const parsedPrice = one_way_price_seat !== undefined
+      ? Number(one_way_price_seat) * (isRoundTripBool ? 2 : 1)
+      : Number(price_seat);
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({ success: false, message: 'ค่าโดยสารต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป' });
+    }
     const parsedDistance = distance_km ? parseFloat(distance_km) : null;
     // Validate reasonable minimum fare:
     // If price == 0, it's a generous free ride (allowed).
@@ -473,7 +487,7 @@ module.exports = {
   createTrip,
   completeTrip,
   deleteTrip,
-  kickPassenger,
+  kickPassenger: withPairedBooking('kick', kickPassenger),
   getUserTrips,
   estimateTripRoute,
 };
