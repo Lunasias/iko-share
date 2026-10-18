@@ -134,7 +134,7 @@ export default function Trips() {
     }
 
     return result;
-  }, [trips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
+  }, [groupedTrips, timeFilter, priceFilter, tripTypeFilter, verifiedOnly, sortBy]);
 
   useEffect(() => {
     if (events.length === 0) {
@@ -280,9 +280,9 @@ export default function Trips() {
               {isTh
                 ? `พบ ${filteredTrips.length} ทริป`
                 : `Found ${filteredTrips.length} trips`}
-              {trips.length !== filteredTrips.length && (
+              {groupedTrips.length !== filteredTrips.length && (
                 <span className="text-slate-400 font-medium ml-1">
-                  ({isTh ? `จากทั้งหมด ${trips.length}` : `out of ${trips.length}`})
+                  ({isTh ? `จากทั้งหมด ${groupedTrips.length}` : `out of ${groupedTrips.length}`})
                 </span>
               )}
             </span>
