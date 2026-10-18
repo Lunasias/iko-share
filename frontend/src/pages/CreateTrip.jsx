@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CarLoader from '../components/CarLoader';
+import RouteMap from '../components/RouteMap';
+import { computeGoogleRoutes, routeSummary } from '../services/googleRoutes';
 import {
   PlusCircle, MapPin, Calendar, Clock, Users, Car, AlertCircle,
   ShieldAlert, Sparkles, HeartHandshake, Tag, Navigation, Gauge, Calculator, Lock, ExternalLink, Map
@@ -50,9 +52,14 @@ export default function CreateTrip() {
   const [price, setPrice] = useState(0);
 
   // Google Maps Distance & Travel Duration & Depreciation state
-  const [distanceKm, setDistanceKm] = useState(null);
-  const [durationText, setDurationText] = useState('');
-  const [costBreakdown, setCostBreakdown] = useState(null);
+  const [routeResult, setRouteResult] = useState(null);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [routeRefresh, setRouteRefresh] = useState(0);
+  const routeRequest = useRef(0);
+  const currentRoutes = routeResult?.origin === origin.trim() && routeResult?.destination === destination.trim()
+    ? routeResult.routes : [];
+  const selectedRoute = currentRoutes[selectedRouteIndex] || null;
+  const { distanceKm, durationText } = routeSummary(selectedRoute);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
 
   // Round-trip (ไป-กลับ) state
@@ -142,21 +149,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
 
   const handleToggleRoundTrip = (round) => {
     setIsRoundTrip(round);
-    if (distanceKm) {
-      const recalculated = computeCostBreakdown(distanceKm, seats, round);
-      setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
-    }
-  };
-
-  const handleDistanceChange = (newVal) => {
-    const newDist = parseFloat(newVal) || 0;
-    setDistanceKm(newDist);
-    if (newDist > 0) {
-      const recalculated = computeCostBreakdown(newDist, seats, isRoundTrip);
-      setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
-    }
   };
 
   const handleCarChange = (plate) => {
@@ -164,23 +156,17 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     const selected = cars.find((c) => c.license_plate === plate);
     if (selected) {
       setSeats(selected.capacity);
-      if (distanceKm) {
-        const recalculated = computeCostBreakdown(distanceKm, selected.capacity, isRoundTrip);
-        setCostBreakdown(recalculated);
-        setPrice(recalculated.recommendedSeatPrice);
-      }
     }
   };
 
   const handleSeatsChange = (newSeatsVal) => {
     setSeats(newSeatsVal);
-    const count = parseInt(newSeatsVal) || 1;
-    if (distanceKm) {
-      const recalculated = computeCostBreakdown(distanceKm, count, isRoundTrip);
-      setCostBreakdown(recalculated);
-      setPrice(recalculated.recommendedSeatPrice);
-    }
   };
+
+  const costBreakdown = selectedRoute ? computeCostBreakdown(distanceKm, seats, isRoundTrip) : null;
+  useEffect(() => {
+    setPrice(selectedRoute ? computeCostBreakdown(distanceKm, seats, isRoundTrip).recommendedSeatPrice : 0);
+  }, [selectedRoute, distanceKm, seats, isRoundTrip]);
 
   // Today's date in the local (Thai) timezone — used as the min value of the date picker.
   const todayStr = (() => {
@@ -196,54 +182,48 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
     return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   })();
 
-  const handleCalculateRoute = async (customOrigin = origin, customDest = destination) => {
-    const o = (customOrigin || '').trim();
-    const d = (customDest || '').trim();
-    if (!o || !d) {
-      return;
-    }
-    setCalculatingRoute(true);
-    setError('');
-    try {
-      const res = await API.post('/trips/estimate-route', {
-        origin: o,
-        destination: d,
-        available_seats: seats || 4,
-        is_round_trip: isRoundTrip,
-      });
-      if (res.data.success) {
-        setDistanceKm(res.data.distanceKm);
-        setDurationText(res.data.durationText);
-        const breakdown = computeCostBreakdown(res.data.distanceKm, seats || 4, isRoundTrip);
-        setCostBreakdown(breakdown);
-        setPrice(breakdown.recommendedSeatPrice);
-      }
-    } catch (err) {
-      console.warn('Calculate route estimate error:', err);
-      // Only set error if called directly by user button
-      if (customOrigin === origin && customDest === destination) {
-        setError(String(err.response?.data?.message || err.message || 'ไม่สามารถคำนวณเส้นทางได้'));
-      }
-    } finally {
-      setCalculatingRoute(false);
-    }
-  };
+  const handleCalculateRoute = () => setRouteRefresh((value) => value + 1);
 
-  // Auto-calculate exact highway road distance and cost breakdown automatically in real-time
+  // Discard out-of-order results; never keep an estimate for a different pair of inputs.
   useEffect(() => {
     const o = origin.trim();
     const d = destination.trim();
+    const request = ++routeRequest.current;
+    setRouteResult(null);
+    setSelectedRouteIndex(0);
+    setError('');
+    setCalculatingRoute(false);
     if (o && d && o.toLowerCase() !== d.toLowerCase()) {
-      const timer = setTimeout(() => {
-        handleCalculateRoute(o, d);
+      setCalculatingRoute(true);
+      const timer = setTimeout(async () => {
+        try {
+          const routes = await computeGoogleRoutes(o, d);
+          if (routeRequest.current === request) setRouteResult({ origin: o, destination: d, routes });
+        } catch (err) {
+          if (routeRequest.current === request) {
+            setError(String(err.message || 'ไม่สามารถคำนวณเส้นทางได้ กรุณาลองใหม่'));
+          }
+        } finally {
+          if (routeRequest.current === request) setCalculatingRoute(false);
+        }
       }, 500);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        routeRequest.current++;
+      };
+    } else if (o && d) {
+      setError('กรุณาระบุต้นทางและปลายทางที่ต่างกัน');
     }
-  }, [origin, destination, seats, isRoundTrip]);
+  }, [origin, destination, routeRefresh]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!selectedRoute || calculatingRoute) {
+      setError('กรุณาคำนวณและเลือกเส้นทางบนแผนที่ให้สำเร็จก่อนเปิดทริป');
+      return;
+    }
 
     if (!date || !time) {
       setError('กรุณาระบุวันและเวลาออกเดินทางให้ครบถ้วน');
@@ -556,11 +536,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                     placeholder={isTh ? "เช่น สจล.ชุมพร, ตลาดปะทิว, บขส.ชุมพร" : "e.g. KMITL Chumphon, Pathio, Chumphon Bus Terminal"}
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
-                    onBlur={() => {
-                      if (origin.trim() && destination.trim()) {
-                        handleCalculateRoute();
-                      }
-                    }}
                     className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                   />
                 </div>
@@ -579,11 +554,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                     placeholder={isTh ? "เช่น เขาทุ่งชาง, ปั๊มบางขัน, ทุ่งสง, หาดใหญ่, กรุงเทพ" : "e.g. Khao Thung Chang, PTT Bang Khan, Hat Yai, Bangkok"}
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
-                    onBlur={() => {
-                      if (origin.trim() && destination.trim()) {
-                        handleCalculateRoute();
-                      }
-                    }}
                     className="bg-transparent border-none text-slate-900 text-sm focus:outline-none w-full font-medium"
                   />
                 </div>
@@ -714,33 +684,13 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                   </span>
                 </span>
 
-                {/* Editable Distance & Duration to match Google Maps iframe */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
-                    <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'ระยะทางขาเดียว:' : 'One-way:'}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0.1"
-                      value={distanceKm ?? ''}
-                      onChange={(e) => handleDistanceChange(e.target.value)}
-                      className="w-16 text-center font-black text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
-                      title={isTh ? 'แก้ไขระยะทางให้ตรงกับ Google Maps ได้ทันที' : 'Adjust distance to match Google Maps'}
-                    />
-                    <span className="font-bold text-emerald-800">{isTh ? 'กม.' : 'km'}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-emerald-200 text-xs shadow-2xs">
-                    <span className="text-[11px] text-slate-500 font-medium">{isTh ? 'เวลาเดินทาง:' : 'Duration:'}</span>
-                    <input
-                      type="text"
-                      value={durationText || ''}
-                      onChange={(e) => setDurationText(e.target.value)}
-                      placeholder={isTh ? "เช่น 11 นาที" : "e.g. 11 min"}
-                      className="w-20 text-center font-bold text-emerald-800 bg-emerald-50/60 rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
-                      title={isTh ? 'แก้ไขเวลาเดินทางให้ตรงกับ Google Maps ได้ทันที' : 'Adjust duration to match Google Maps'}
-                    />
-                  </div>
+                  <span className="bg-white px-3 py-1 rounded-full border border-emerald-200">
+                    {isTh ? 'ระยะทางขาเดียว:' : 'One-way:'} <strong>{distanceKm} {isTh ? 'กม.' : 'km'}</strong>
+                  </span>
+                  <span className="bg-white px-3 py-1 rounded-full border border-emerald-200">
+                    {isTh ? 'เวลาเดินทาง:' : 'Duration:'} <strong>{durationText}</strong>
+                  </span>
                 </div>
               </div>
 
@@ -786,70 +736,32 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                 </div>
               </div>
 
-              {/* Live Interactive Google Maps Embed Preview with Direct Sync Bar */}
-              <div className="rounded-2xl overflow-hidden border border-emerald-300 shadow-xs mt-2 bg-slate-100">
-                <div className="p-2.5 bg-slate-100 border-b border-emerald-200 flex flex-wrap items-center justify-between text-xs text-slate-800 font-bold gap-2">
-                  <span className="flex items-center gap-1.5 text-emerald-950 font-black">
-                    🗺️ <span>แผนที่ Google Maps ({origin} ➔ {destination})</span>
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-emerald-300 shadow-2xs">
-                    <span className="text-[11px] text-emerald-900 font-bold">📍 ระยะทางในแผนที่:</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0.1"
-                      value={distanceKm ?? ''}
-                      onChange={(e) => handleDistanceChange(e.target.value)}
-                      className="w-16 text-center font-black text-emerald-950 bg-emerald-50 rounded border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
-                      title="ปรับระยะทางให้ตรงกับตัวเลขบนแผนที่ Google Maps ด้านล่างนี้ได้ทันที"
-                      placeholder="เช่น 8"
-                    />
-                    <span className="text-[11px] font-bold text-emerald-950">กม.</span>
-                    <input
-                      type="text"
-                      value={durationText || ''}
-                      onChange={(e) => setDurationText(e.target.value)}
-                      placeholder="เช่น 11 นาที"
-                      className="w-20 text-center font-bold text-emerald-950 bg-emerald-50 rounded border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 py-0.5 text-xs"
-                      title="ปรับเวลาเดินทางให้ตรงกับบนแผนที่"
-                    />
-                  </div>
+              <div className="rounded-2xl overflow-hidden border border-emerald-300 mt-2 bg-slate-100">
+                <div className="p-3 text-xs text-emerald-950 font-bold">
+                  🗺️ Google Maps ({origin} ➔ {destination})
                 </div>
-
-                <iframe
-                  title="Google Maps Route Preview"
-                  width="100%"
-                  height="230"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(origin + ' to ' + destination)}&output=embed`}
-                />
-
-                <div className="px-3 py-2 bg-emerald-50/80 border-t border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                  <span className="text-emerald-900 font-medium">
-                    ✨ เมื่อตัวเลขระยะทาง (กม.) เปลี่ยน ระบบจะคำนวณค่าน้ำมัน ค่าเสื่อม และราคาแนะนำด้านบนใหม่อัตโนมัติทันที
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-slate-500 font-medium">ระยะทางด่วน:</span>
-                    {[5, 8, 10, 15, 20, 30].map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => {
-                          handleDistanceChange(d);
-                          setDurationText(d <= 10 ? `${Math.round(d * 1.4)} นาที` : `${Math.round(d * 1.2)} นาที`);
-                        }}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
-                          Math.round(distanceKm) === d
-                            ? 'bg-emerald-700 text-white border-emerald-700'
-                            : 'bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100'
-                        }`}
-                      >
-                        {d} กม.
-                      </button>
-                    ))}
+                {currentRoutes.length > 1 && (
+                  <div className="flex flex-wrap gap-2 px-3 pb-3" aria-label="เลือกเส้นทาง">
+                    {currentRoutes.map((route, index) => {
+                      const summary = routeSummary(route);
+                      return (
+                        <button key={index} type="button" aria-pressed={selectedRouteIndex === index}
+                          onClick={() => setSelectedRouteIndex(index)}
+                          className={selectedRouteIndex === index
+                            ? 'px-3 py-2 rounded-xl border text-xs bg-emerald-700 text-white border-emerald-700'
+                            : 'px-3 py-2 rounded-xl border text-xs bg-white text-emerald-950 border-emerald-200'}>
+                          {isTh ? 'เส้นทาง ' + (index + 1) : 'Route ' + (index + 1)} · {summary.distanceKm} กม. · {summary.durationText}
+                          {route.description && <span className="block mt-1">{route.description}</span>}
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
+                )}
+                <RouteMap route={selectedRoute} origin={origin} destination={destination} />
+                <p className="px-3 py-2 text-[11px] text-emerald-900 bg-emerald-50">
+                  {isTh ? 'ระยะทาง เวลา และค่าเดินทางคำนวณจากเส้นทางที่แสดงบนแผนที่นี้'
+                    : 'Distance, duration and costs use the route shown on this map.'}
+                </p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
@@ -1089,11 +1001,15 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
 
           <button
             type="submit"
-            disabled={submitting || !acceptedDriverTerms || !isCarApproved}
+            disabled={submitting || !acceptedDriverTerms || !isCarApproved || !selectedRoute || calculatingRoute}
             className="w-full py-4 travel-btn-primary font-bold text-sm disabled:opacity-50 mt-2 shadow-lg cursor-pointer"
           >
             {submitting ? (
               isTh ? 'กำลังเปิดการเดินทาง...' : 'Creating journey...'
+            ) : calculatingRoute ? (
+              isTh ? 'กำลังคำนวณเส้นทาง...' : 'Calculating route...'
+            ) : !selectedRoute ? (
+              isTh ? 'กรุณาคำนวณเส้นทางให้สำเร็จก่อน' : 'Calculate a route first'
             ) : !isCarApproved ? (
               isTh ? '⚠️ รถคันนี้ยังไม่ผ่านการอนุมัติจากแอดมิน' : '⚠️ Car not approved by admin yet'
             ) : (
