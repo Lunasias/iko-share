@@ -1,3 +1,4 @@
+const { withPairedBooking } = require('../services/pairedBookingService');
 const db = require('../config/db');
 const { createNotification } = require('./notificationController');
 
@@ -423,10 +424,10 @@ const verifyPayment = async (req, res) => {
 };
 
 module.exports = {
-  createBooking,
-  approveBooking,
-  rejectBooking,
-  cancelBooking,
-  submitPaymentSlip,
-  verifyPayment,
+  createBooking: withPairedBooking('book', createBooking),
+  approveBooking: withPairedBooking('approve', approveBooking),
+  rejectBooking: withPairedBooking('reject', rejectBooking),
+  cancelBooking: withPairedBooking('cancel', cancelBooking),
+  submitPaymentSlip: withPairedBooking('slip', submitPaymentSlip),
+  verifyPayment: withPairedBooking('verify', verifyPayment),
 };

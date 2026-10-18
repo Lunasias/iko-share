@@ -134,6 +134,10 @@ export default function TripDetail() {
     try {
       const res = await API.get(`/trips/${id}`);
       if (res.data.success) {
+        if (res.data.trip.canonical_trip_id && String(res.data.trip.canonical_trip_id) !== String(id)) {
+          navigate(`/trips/${res.data.trip.canonical_trip_id}`, { replace: true });
+          return;
+        }
         setTrip(res.data.trip);
         setPassengers(res.data.passengers || []);
       } else {
@@ -154,6 +158,23 @@ export default function TripDetail() {
         setMemories(res.data.memories || []);
       }
     } catch (e) {}
+  };
+
+  const handleCompleteRoundTrip = async () => {
+    if (isActionInProgressRef.current) return;
+    isActionInProgressRef.current = true;
+    setSubmitting(true);
+    setActionError('');
+    try {
+      const result = await API.post('/bookings', { trip_id: trip.trip_id, location: myBooking?.location || meetupLocation });
+      setSuccessMsg(result.data.message);
+      await fetchTripDetail();
+    } catch (error) {
+      setActionError(error.response?.data?.message || error.message);
+    } finally {
+      isActionInProgressRef.current = false;
+      setSubmitting(false);
+    }
   };
 
   const handleJoin = async (e) => {
@@ -444,7 +465,7 @@ export default function TripDetail() {
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="text-right">
               {/* User request: "ไม่ต้องวงเล็บตรงที่ บนขวา trip" */}
-              <div className="text-[11px] font-bold text-slate-500">{trip.is_round_trip && !trip.paired_trip_id ? (isTh ? 'ราคาไป-กลับ / ที่นั่ง' : 'Round-trip / seat') : (isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat')}</div>
+              <div className="text-[11px] font-bold text-slate-500">{trip.is_round_trip ? (isTh ? 'ราคาไป-กลับ / ที่นั่ง' : 'Round-trip / seat') : (isTh ? 'ค่าโดยสาร / ที่นั่ง' : 'Fare / seat')}</div>
               <div className="text-3xl font-black text-emerald-700">
                 {parseFloat(trip.price_seat) > 0 ? `฿${trip.price_seat}` : (isTh ? 'ฟรี' : 'Free')}
               </div>
@@ -547,11 +568,7 @@ export default function TripDetail() {
 
           <div className="col-span-1 sm:col-span-2 md:col-span-4">
             <RoundTripSchedule trip={trip} isTh={isTh} />
-            {trip.paired_trip_id && (
-              <Link to={`/trips/${trip.paired_trip_id}`} className="block mt-2 text-xs font-bold text-blue-800 underline">
-                {isTh ? 'ดูการจองเดิมของอีกขา' : 'Manage existing bookings for the other journey'}
-              </Link>
-            )}
+
           </div>
 
           {(trip.distance_km || trip.duration_text || (trip.origin && trip.destination)) && (
@@ -675,7 +692,7 @@ export default function TripDetail() {
                   </span>
                   <div>
                     <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                      <span>{isTh ? 'ชำระค่าเดินทางผ่าน PromptPay' : 'PromptPay QR Payment'}</span>
+                      <span>{trip.is_round_trip ? (isTh ? 'ชำระค่าเดินทางรวมไป-กลับ' : 'Pay total round-trip fare') : (isTh ? 'ชำระค่าเดินทางผ่าน PromptPay' : 'PromptPay QR Payment')}</span>
                       <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">
                         {isTh ? 'ระบบอัตโนมัติ' : 'Dynamic QR'}
                       </span>
@@ -976,6 +993,11 @@ export default function TripDetail() {
                 ? (isTh ? '✓ คำขอของคุณได้รับการอนุมัติแล้ว คุณอยู่ในตี้ร่วมเดินทางนี้' : '✓ Your request is confirmed. You are in this travel party!')
                 : (isTh ? '⏳ คำขอร่วมเดินทางของคุณกำลังรอคนขับอนุมัติ...' : '⏳ Your request is pending approval from the driver...')}
             </div>
+            {trip.paired_trip_id && !myBooking.round_trip_complete && (
+              <button onClick={handleCompleteRoundTrip} disabled={submitting} className="travel-btn-primary px-5 py-2.5 text-xs font-bold">
+                {isTh ? 'จองไป-กลับให้ครบทั้งสองขา' : 'Book both outbound and return journeys'}
+              </button>
+            )}
             <button
               onClick={handleLeaveTrip}
               disabled={submitting}
@@ -987,7 +1009,7 @@ export default function TripDetail() {
           </div>
         ) : (
           <form onSubmit={handleJoin} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-            <h3 className="text-sm font-black text-slate-900">{isTh ? 'ขอเข้าร่วมเดินทางในตี้ (Request to Join Party)' : 'Request to Join Party'}</h3>
+            <h3 className="text-sm font-black text-slate-900">{isTh ? (trip.is_round_trip ? 'จองไป-กลับในครั้งเดียว' : 'ขอเข้าร่วมเดินทางในตี้') : (trip.is_round_trip ? 'Book both journeys together' : 'Request to Join Party')}</h3>
 
             {actionError && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2.5">
@@ -1032,7 +1054,7 @@ export default function TripDetail() {
               disabled={submitting || trip.available_seats <= 0 || !acceptedPassengerTerms}
               className="w-full py-3.5 travel-btn-primary font-bold text-xs disabled:opacity-50 shadow-md"
             >
-              {submitting ? (isTh ? 'กำลังส่งคำขอเข้าตี้...' : 'Sending request...') : trip.available_seats <= 0 ? (isTh ? 'ที่นั่งเต็มแล้ว' : 'Seats full') : (isTh ? '🚀 ขอเข้าร่วมตี้เดินทาง' : '🚀 Request to Join Party')}
+              {submitting ? (isTh ? 'กำลังส่งคำขอเข้าตี้...' : 'Sending request...') : trip.available_seats <= 0 ? (isTh ? 'ที่นั่งเต็มแล้ว' : 'Seats full') : (trip.is_round_trip ? (isTh ? 'จองไป-กลับ ฿' + trip.price_seat : 'Book round trip ฿' + trip.price_seat) : (isTh ? '🚀 ขอเข้าร่วมตี้เดินทาง' : '🚀 Request to Join Party'))}
             </button>
 
           </form>

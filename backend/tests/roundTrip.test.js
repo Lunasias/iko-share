@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const db = require('../src/config/db');
 const { createTrip } = require('../src/controllers/tripController');
+const { calculateOperatingCost } = require('../src/services/routeService');
 
 test('round-trip creation stores both dates and full fare in one trip, even for an older client', async () => {
   const original = db.query;
@@ -65,4 +66,38 @@ test('one-way trips still store one fare and no return date', async () => {
     assert.equal(res.code, 201);
     assert.equal(inserts, 1);
   } finally { db.query = original; }
+});
+
+test('one-way input is doubled exactly once for a round trip', async () => {
+  const original = db.query;
+  let inserts = 0;
+  db.query = async (sql, params) => {
+    inserts++;
+    assert.equal(params[9], 760);
+    return { rows: [{ trip_id: 101, price_seat: params[9] }] };
+  };
+  try {
+    let result;
+    const res = { status(code) { this.code = code; return this; }, json(value) { result = value; } };
+    await createTrip({ user: { user_id: 1 }, body: {
+      trip_type: 'public_transport', origin: 'A', destination: 'B', available_seats: 3,
+      one_way_price_seat: 380, price_seat: 760, is_round_trip: true,
+      departure_time: new Date(Date.now() + 86400000).toISOString(),
+      return_departure_time: new Date(Date.now() + 172800000).toISOString(),
+    } }, res);
+    assert.equal(res.code, 201);
+    assert.equal(result.trip.price_seat, 760);
+    assert.equal(inserts, 1);
+  } finally { db.query = original; }
+});
+
+test('recommended round-trip fares and minimums are twice their one-way values', () => {
+  for (const distance of [0, 8, 28.2, 40, 436.8]) {
+    for (const seats of [1, 3, 4]) {
+      const single = calculateOperatingCost(distance, seats, false);
+      const round = calculateOperatingCost(distance, seats, true);
+      assert.equal(round.recommendedSeatPrice, single.recommendedSeatPrice * 2);
+      assert.equal(round.reasonableMinPrice, single.reasonableMinPrice * 2);
+    }
+  }
 });

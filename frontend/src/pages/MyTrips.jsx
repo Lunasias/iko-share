@@ -28,7 +28,7 @@ export default function MyTrips() {
       const res = await API.get('/trips/my');
       if (res.data.success) {
         setCreatedTrips(groupRoundTrips(res.data.created || []));
-        setJoinedTrips(res.data.joined || []);
+        setJoinedTrips(groupRoundTrips(res.data.joined || []));
       } else {
         setError(String(res.data.message || 'ไม่สามารถดึงข้อมูลรายการได้'));
       }

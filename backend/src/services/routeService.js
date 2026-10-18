@@ -910,8 +910,9 @@ function calculateOperatingCost(distanceKm, seats = 4, isRoundTrip = false) {
   const estimatedFuelCost = Math.round(totalDist * FUEL_RATE_PER_KM);
   const estimatedDepreciationCost = Math.round(totalDist * DEPRECIATION_RATE_PER_KM);
   const totalOperatingCost = estimatedFuelCost + estimatedDepreciationCost;
-  const recommendedPricePerSeat = Math.max(isRound ? 50 : 25, Math.round((totalOperatingCost / seatCount) / 10) * 10);
-  const minReasonablePrice = Math.max(isRound ? 40 : 20, Math.round(recommendedPricePerSeat * 0.4));
+  const oneWayCost = Math.round(baseDist * FUEL_RATE_PER_KM) + Math.round(baseDist * DEPRECIATION_RATE_PER_KM);
+  const recommendedPricePerSeat = Math.max(25, Math.round((oneWayCost / seatCount) / 10) * 10) * multiplier;
+  const minReasonablePrice = Math.max(20, Math.round((recommendedPricePerSeat / multiplier) * 0.4)) * multiplier;
 
   return {
     is_round_trip: isRound,
