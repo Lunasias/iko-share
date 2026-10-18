@@ -81,10 +81,11 @@ const getTripById = async (req, res) => {
         [id]
       ),
       db.query(
-        `SELECT b.*, u.name as passenger_name, u.phone as passenger_phone,
+        `SELECT b.*, bt.price_seat AS leg_price_seat, u.name as passenger_name, u.phone as passenger_phone,
                 u.is_verified as passenger_is_verified,
                 u.avatar_url as passenger_avatar, u.bio as passenger_bio, u.role as passenger_role
          FROM bookings b
+         JOIN trips bt ON bt.trip_id = b.trip_id
          JOIN users u ON b.user_id = u.user_id
          WHERE b.trip_id = $1 OR b.trip_id = (SELECT p.trip_id FROM trips t JOIN trips p
            ON p.trip_id = t.paired_trip_id AND p.paired_trip_id = t.trip_id
@@ -101,7 +102,7 @@ const getTripById = async (req, res) => {
     res.json({
       success: true,
       trip: tripRes.rows[0],
-      passengers: combinePassengers(bookingsRes.rows || [], tripRes.rows[0].paired_trip_id),
+      passengers: combinePassengers(bookingsRes.rows || [], tripRes.rows[0].paired_trip_id, tripRes.rows[0].price_seat),
     });
   } catch (error) {
     console.error('Get trip by id error:', error);

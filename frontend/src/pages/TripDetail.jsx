@@ -682,7 +682,7 @@ export default function TripDetail() {
         )}
 
         {/* PromptPay Dynamic Payment Box for Confirmed Passenger */}
-        {isApprovedMember && !isTripOwner && myBooking && parseFloat(trip.price_seat) > 0 && (
+        {isApprovedMember && !isTripOwner && myBooking && (!trip.paired_trip_id || myBooking.round_trip_complete) && parseFloat(trip.price_seat) > 0 && (
           <div className="travel-card p-6 sm:p-8 space-y-6 shadow-md border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/30 rounded-3xl">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-emerald-100 pb-5">
               <div className="space-y-1">
@@ -706,7 +706,7 @@ export default function TripDetail() {
 
               <div className="text-right">
                 <div className="text-[11px] font-bold text-slate-500">{isTh ? 'ยอดที่ต้องชำระ' : 'Amount Due'}</div>
-                <div className="text-2xl font-black text-emerald-700">฿{trip.price_seat}</div>
+                <div className="text-2xl font-black text-emerald-700">฿{myBooking.payment_due ?? trip.price_seat}</div>
               </div>
             </div>
 
@@ -714,9 +714,11 @@ export default function TripDetail() {
               {/* QR Code Container */}
               <div className="flex flex-col items-center justify-center p-5 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3">
                 <div className="relative p-2 bg-white rounded-xl border-2 border-emerald-600/30 shadow-sm">
-                  {trip.driver_phone ? (
+                  {Number(myBooking.payment_due ?? trip.price_seat) <= 0 ? (
+                    <span className="text-sm font-bold text-emerald-700">{isTh ? 'ชำระครบแล้ว' : 'Paid in full'}</span>
+                  ) : trip.driver_phone ? (
                     <img
-                      src={getPromptPayQrUrl(trip.driver_phone, trip.price_seat, 220)}
+                      src={getPromptPayQrUrl(trip.driver_phone, myBooking.payment_due ?? trip.price_seat, 220)}
                       alt="PromptPay QR Code"
                       loading="lazy"
                       decoding="async"
