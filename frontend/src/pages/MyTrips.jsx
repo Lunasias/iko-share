@@ -1,3 +1,5 @@
+import { groupRoundTrips } from '../utils/roundTrips';
+import RoundTripSchedule from '../components/RoundTripSchedule';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
@@ -25,7 +27,7 @@ export default function MyTrips() {
     try {
       const res = await API.get('/trips/my');
       if (res.data.success) {
-        setCreatedTrips(res.data.created || []);
+        setCreatedTrips(groupRoundTrips(res.data.created || []));
         setJoinedTrips(res.data.joined || []);
       } else {
         setError(String(res.data.message || 'ไม่สามารถดึงข้อมูลรายการได้'));
@@ -150,6 +152,8 @@ export default function MyTrips() {
                   <div>{isTh ? 'ราคา:' : 'Price:'} ฿{trip.price_seat}</div>
                 </div>
 
+                <RoundTripSchedule trip={trip} isTh={isTh} />
+
                 <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                   <div className="flex items-center gap-3">
                     <Link to={`/trips/${trip.trip_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
@@ -228,6 +232,8 @@ export default function MyTrips() {
                     <div>{isTh ? 'วันเดินทาง:' : 'Date:'} {new Date(booking.departure_time).toLocaleDateString(isTh ? 'th-TH' : 'en-US')}</div>
                     <div>{isTh ? 'ราคา:' : 'Price:'} ฿{booking.price_seat}</div>
                   </div>
+
+                  <RoundTripSchedule trip={booking} isTh={isTh} />
 
                   <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                     <div className="flex items-center gap-3">

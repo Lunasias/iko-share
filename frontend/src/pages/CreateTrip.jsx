@@ -59,7 +59,6 @@ export default function CreateTrip() {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [returnDate, setReturnDate] = useState('');
   const [returnTime, setReturnTime] = useState('');
-  const [createPairedReturn, setCreatePairedReturn] = useState(true);
 
   // New fields requested by user: Driver personality & passenger requirements
   const [driverPersonality, setDriverPersonality] = useState(isTh ? 'สายชิล ชอบฟังเพลง ขับนิ่มปลอดภัย' : 'Chill driver, loves music, safe drive');
@@ -310,7 +309,6 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
         duration_text: durationText,
         is_round_trip: isRoundTrip,
         return_departure_time: returnDepartureTime,
-        create_paired_return: isRoundTrip ? createPairedReturn : false,
       });
 
       if (res.data.success) {
@@ -960,19 +958,9 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
                 </div>
               </div>
 
-              <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={createPairedReturn}
-                  onChange={(e) => setCreatePairedReturn(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300 cursor-pointer shrink-0"
-                />
-                <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
-                  {isTh
-                    ? 'สร้างเที่ยวเดินทางขากลับให้อัตโนมัติ (ระบบจะเปิดอีก 1 ทริปสลับต้นทางและปลายทางตามเวลาขากลับทันที)'
-                    : 'Automatically generate a paired return trip (swapping origin and destination at the return time)'}
-                </span>
-              </label>
+              <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                {isTh ? 'ขาไปและขากลับอยู่ในทริปเดียว จองครั้งเดียวสำหรับทั้งสองขา' : 'Outbound and return journeys share one trip and one booking.'}
+              </p>
             </div>
           )}
 
@@ -1023,8 +1011,8 @@ const computeCostBreakdown = (distKm, seatCount, roundTrip = false) => {
               {isRoundTrip && (
                 <p className="text-[10px] text-emerald-700 font-semibold mt-1">
                   {isTh
-                    ? `🔄 ราคานี้เป็นราคารวมไป-กลับ (หากเปิดแยกขากลับ ระบบจะบันทึกขาละ ฿${Math.round((parseFloat(price) || 0) / 2)} ต่อที่นั่ง)`
-                    : `🔄 Round-trip total fare (if paired return is generated, each leg is ฿${Math.round((parseFloat(price) || 0) / 2)} / seat)`}
+                    ? '🔄 ราคานี้เป็นราคารวมไป-กลับต่อที่นั่ง จองครั้งเดียวครบทั้งสองขา'
+                    : '🔄 Total round-trip fare per seat. One booking covers both journeys.'}
                 </p>
               )}
             </div>

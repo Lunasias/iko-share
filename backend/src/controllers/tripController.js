@@ -121,7 +121,6 @@ const createTrip = async (req, res) => {
       duration_text,
       is_round_trip = false,
       return_departure_time = null,
-      create_paired_return = false,
     } = req.body;
 
     const isRoundTripBool = is_round_trip === true || is_round_trip === 'true';
@@ -177,12 +176,6 @@ const createTrip = async (req, res) => {
 
     const parsedPrice = parseFloat(price_seat);
     const parsedDistance = distance_km ? parseFloat(distance_km) : null;
-    const createPairedBool = isRoundTripBool && (create_paired_return === true || create_paired_return === 'true');
-
-    // When creating paired return trips, the input price represents the total round-trip fare.
-    // Each separate leg trip in the database stores price_seat = Math.round(parsedPrice / 2).
-    const legPrice = createPairedBool ? Math.round(parsedPrice / 2) : parsedPrice;
-
     // Validate reasonable minimum fare:
     // If price == 0, it's a generous free ride (allowed).
     // If price > 0 and distance is significant (>= 40 km), enforce reasonable floor to prevent unrealistic pricing.
@@ -204,6 +197,10 @@ const createTrip = async (req, res) => {
     const departureInstant = departureDate || new Date();
     if (departureInstant.getTime() < Date.now() - 60 * 1000) {
       return res.status(400).json({ success: false, message: 'ไม่สามารถตั้งเวลาออกเดินทางย้อนหลังได้ กรุณาเลือกวันและเวลาในอนาคต' });
+    }
+
+    if (isRoundTripBool && (!returnDepartureIso || new Date(returnDepartureIso) <= departureInstant)) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุวันและเวลาขากลับที่ถูกต้องและอยู่หลังเวลาขาไป' });
     }
 
     let finalEventId = event_id ? parseInt(event_id) : null;
@@ -254,7 +251,7 @@ const createTrip = async (req, res) => {
         destination.trim(),
         departureInstant.toISOString(),
         seatsToOffer,
-        legPrice,
+        parsedPrice,
         driver_personality ? driver_personality.trim() : null,
         passenger_requirements ? passenger_requirements.trim() : null,
         parsedDistance,
@@ -266,58 +263,10 @@ const createTrip = async (req, res) => {
 
     const createdTrip = newTrip.rows && newTrip.rows[0] ? newTrip.rows[0] : null;
 
-    // If user requested an automatic paired return trip
-    let pairedTrip = null;
-    if (createdTrip && isRoundTripBool && returnDepartureIso && (create_paired_return === true || create_paired_return === 'true')) {
-      try {
-        const returnTripRes = await db.query(
-          `INSERT INTO trips (
-            license_plate, trip_type, organizer_id, event_id, custom_event_name, origin, destination,
-            departure_time, available_seats, price_seat, driver_personality,
-            passenger_requirements, trip_status, distance_km, duration_text,
-            is_round_trip, return_departure_time, paired_trip_id, created_at
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, NOW())
-           RETURNING *`,
-          [
-            license_plate || null,
-            trip_type,
-            userId,
-            finalEventId,
-            trimmedCustomEvent ? `[ขากลับ] ${trimmedCustomEvent}` : null,
-            destination.trim(),
-            origin.trim(),
-            returnDepartureIso,
-            seatsToOffer,
-            legPrice,
-            driver_personality ? driver_personality.trim() : null,
-            passenger_requirements ? passenger_requirements.trim() : null,
-            parsedDistance,
-            duration_text ? duration_text.trim() : null,
-            true,
-            departureInstant.toISOString(),
-            createdTrip.trip_id,
-          ]
-        );
-
-        if (returnTripRes.rows && returnTripRes.rows[0]) {
-          pairedTrip = returnTripRes.rows[0];
-          await db.query(
-            'UPDATE trips SET paired_trip_id = $1 WHERE trip_id = $2',
-            [pairedTrip.trip_id, createdTrip.trip_id]
-          );
-          createdTrip.paired_trip_id = pairedTrip.trip_id;
-        }
-      } catch (pairedErr) {
-        console.warn('Paired return trip creation notice:', pairedErr.message);
-      }
-    }
-
     res.status(201).json({
       success: true,
-      message: pairedTrip ? 'เปิดการเดินทางไป-กลับ (ทั้งขาไปและขากลับ) สำเร็จเรียบร้อยแล้ว' : 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
+      message: isRoundTripBool ? 'เปิดทริปไป-กลับในรายการเดียวสำเร็จเรียบร้อยแล้ว' : 'เปิดรายการเดินทางสำเร็จเรียบร้อยแล้ว',
       trip: createdTrip,
-      pairedTrip: pairedTrip,
     });
   } catch (error) {
     console.error('Create trip error:', error);
